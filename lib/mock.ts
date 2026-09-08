@@ -1,4 +1,4 @@
-import type { AnalyzeResponse, Signal } from './types';
+import type { AnalyzeResponse, ExtractionResult, Signal } from './types';
 
 /**
  * モック判定 — APIキーなしでデモを成立させるための固定応答
@@ -97,3 +97,12 @@ export const MOCK_FIXTURES: Record<Signal, AnalyzeResponse> = {
 export function isSignal(v: unknown): v is Signal {
   return v === 'blue' || v === 'yellow' || v === 'red';
 }
+
+/** 在庫登録（/api/extract）用のモック応答 */
+export const MOCK_EXTRACTION: ExtractionResult = {
+  product_name: 'ビタミンC誘導体 化粧水',
+  category: 'スキンケア',
+  form: '化粧水',
+  ingredients: ['水', 'BG', 'アスコルビルグルコシド', 'グリセリン', 'クエン酸'],
+  confidence: 'high',
+};

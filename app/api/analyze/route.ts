@@ -8,6 +8,7 @@ import {
   buildJudgementUserMessage,
 } from '@/lib/prompts';
 import { MOCK_FIXTURES, isSignal } from '@/lib/mock';
+import { parseDataUrl, sanitizeStock } from '@/lib/request';
 import type { ApiErrorCode, ExtractionResult, Judgement, StockItem } from '@/lib/types';
 
 /**
@@ -23,10 +24,6 @@ import type { ApiErrorCode, ExtractionResult, Judgement, StockItem } from '@/lib
 export const maxDuration = 60;
 
 const MODEL = 'claude-opus-5';
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-const MAX_STOCK_ITEMS = 50;
-const MAX_FIELD_LEN = 200;
-
 /**
  * モックモード — 設計仕様書には無い運用上の分岐。
  * ANTHROPIC_API_KEY が設定されていなければ固定応答を返す。
@@ -43,47 +40,8 @@ function getClient(): Anthropic {
   return _client;
 }
 
-type MediaType = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
-
 function fail(code: ApiErrorCode, message: string, status: number) {
   return NextResponse.json({ error: { code, message } }, { status });
-}
-
-/** data URL を Vision 入力用に分解する */
-function parseDataUrl(image: unknown): { mediaType: MediaType; data: string } | null {
-  if (typeof image !== 'string') return null;
-  const m = /^data:(image\/(?:jpeg|png|webp|gif));base64,([A-Za-z0-9+/=]+)$/.exec(image);
-  if (!m) return null;
-  const data = m[2];
-  // base64 は元データの約4/3のサイズになる
-  if ((data.length * 3) / 4 > MAX_IMAGE_BYTES) return null;
-  return { mediaType: m[1] as MediaType, data };
-}
-
-/**
- * stock はクライアント由来の入力として検証する（§8.3）。
- * デモではシード固定だが、外部入力をそのままLLMへ渡す経路であることに変わりはない。
- */
-function sanitizeStock(input: unknown): StockItem[] | null {
-  if (!Array.isArray(input) || input.length === 0) return null;
-  if (input.length > MAX_STOCK_ITEMS) return null;
-
-  const clip = (v: unknown) => (typeof v === 'string' ? v.slice(0, MAX_FIELD_LEN) : '');
-
-  return input.map((raw) => {
-    const item = raw as Partial<StockItem>;
-    return {
-      id: clip(item.id),
-      name: clip(item.name),
-      category: clip(item.category) as StockItem['category'],
-      ingredients: Array.isArray(item.ingredients)
-        ? item.ingredients.slice(0, 30).map(clip).filter(Boolean)
-        : [],
-      status: clip(item.status),
-      isPrescription: Boolean(item.isPrescription),
-      bodyPart: item.bodyPart ? clip(item.bodyPart) : undefined,
-    };
-  });
 }
 
 export async function POST(req: Request) {
