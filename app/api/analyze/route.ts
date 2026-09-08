@@ -7,6 +7,7 @@ import {
   JUDGEMENT_SYSTEM_PROMPT,
   buildJudgementUserMessage,
 } from '@/lib/prompts';
+import { MOCK_FIXTURES, isSignal } from '@/lib/mock';
 import type { ApiErrorCode, ExtractionResult, Judgement, StockItem } from '@/lib/types';
 
 /**
@@ -26,7 +27,21 @@ const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const MAX_STOCK_ITEMS = 50;
 const MAX_FIELD_LEN = 200;
 
-const client = new Anthropic({ timeout: 60_000 }); // TypeScript SDK はミリ秒指定
+/**
+ * モックモード — 設計仕様書には無い運用上の分岐。
+ * ANTHROPIC_API_KEY が設定されていなければ固定応答を返す。
+ * キーを設定すれば、コード変更なしで本物のパイプラインに切り替わる。
+ */
+function useMock(): boolean {
+  return process.env.OVERLAI_MOCK === '1' || !process.env.ANTHROPIC_API_KEY;
+}
+
+// キー未設定でも起動できるよう遅延生成する
+let _client: Anthropic | null = null;
+function getClient(): Anthropic {
+  if (!_client) _client = new Anthropic({ timeout: 60_000 }); // SDK はミリ秒指定
+  return _client;
+}
 
 type MediaType = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
 
@@ -74,7 +89,7 @@ function sanitizeStock(input: unknown): StockItem[] | null {
 export async function POST(req: Request) {
   const started = Date.now();
 
-  let body: { image?: unknown; stock?: unknown };
+  let body: { image?: unknown; stock?: unknown; demo?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -91,10 +106,24 @@ export async function POST(req: Request) {
     return fail('INVALID_IMAGE', '在庫データが不正です', 400);
   }
 
+  // ── モック応答 ──────────────────────────────────────────────────
+  // AIを呼ばない。デモ動画の撮影とUI確認のための経路。
+  if (useMock()) {
+    console.warn('[analyze] モックモードで応答しています（ANTHROPIC_API_KEY 未設定）');
+    const scenario = isSignal(body.demo) ? body.demo : 'yellow';
+    // 2段階ローディングが映る程度の待ち時間を入れる
+    await new Promise((r) => setTimeout(r, 5200));
+    return NextResponse.json({
+      ...MOCK_FIXTURES[scenario],
+      elapsed_ms: Date.now() - started,
+      mocked: true,
+    });
+  }
+
   try {
     // ── ステップ1: 成分抽出（Vision） ────────────────────────────────
     // thinking は明示的に無効化しない（既定の adaptive のまま）。§7.5
-    const step1 = await client.messages.parse({
+    const step1 = await getClient().messages.parse({
       model: MODEL,
       max_tokens: 16000, // thinking トークンもここから消費されるため切り詰めない
       output_config: { format: zodOutputFormat(ExtractionSchema), effort: 'medium' },
@@ -129,7 +158,7 @@ export async function POST(req: Request) {
 
     // ── ステップ2: 在庫照合判定 ──────────────────────────────────────
     // effort はここでは下げない。判定品質がそのまま評価対象になるため（§7.5）
-    const step2 = await client.messages.parse({
+    const step2 = await getClient().messages.parse({
       model: MODEL,
       max_tokens: 16000,
       output_config: { format: zodOutputFormat(JudgementSchema), effort: 'high' },

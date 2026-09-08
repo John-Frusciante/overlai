@@ -26,6 +26,8 @@ export default function ScanPage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [stock, setStock] = useState<StockItem[]>(SEED_STOCK);
+  // モックモードで判定シナリオを選ぶための指定（?demo=yellow|red|blue）
+  const [demo, setDemo] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>('idle');
   const [cameraReady, setCameraReady] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -33,6 +35,7 @@ export default function ScanPage() {
 
   useEffect(() => {
     setStock(loadStock());
+    setDemo(new URLSearchParams(window.location.search).get('demo'));
   }, []);
 
   // カメラ起動（FR-03）。失敗しても画像選択で完走できるため致命的ではない
@@ -72,7 +75,7 @@ export default function ScanPage() {
         const res = await fetch('/api/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: dataUrl, stock }),
+          body: JSON.stringify({ image: dataUrl, stock, demo }),
         });
 
         if (!res.ok) {
@@ -90,7 +93,7 @@ export default function ScanPage() {
         clearTimeout(timer);
       }
     },
-    [stock],
+    [stock, demo],
   );
 
   const shoot = useCallback(async () => {
