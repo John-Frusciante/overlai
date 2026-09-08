@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { ExpiryAlert, StockCategory, StockItem } from '@/lib/types';
 import { CATEGORY_ORDER } from '@/lib/seed';
 
@@ -46,13 +47,22 @@ export function StockList({
                       </span>
                     )}
                     {editing && (
-                      <button
-                        onClick={() => onRemove(item.id)}
-                        aria-label={`${item.name} を削除`}
-                        className="-mt-1 shrink-0 rounded-full bg-red-50 px-2 py-1 text-[12px] font-medium text-red-600 active:bg-red-100"
-                      >
-                        削除
-                      </button>
+                      <>
+                        <Link
+                          href={`/stock/new?id=${item.id}`}
+                          aria-label={`${item.name} を編集`}
+                          className="-mt-1 shrink-0 rounded-full bg-zinc-100 px-2 py-1 text-[12px] font-medium text-zinc-700 active:bg-zinc-200"
+                        >
+                          編集
+                        </Link>
+                        <button
+                          onClick={() => onRemove(item.id)}
+                          aria-label={`${item.name} を削除`}
+                          className="-mt-1 shrink-0 rounded-full bg-red-50 px-2 py-1 text-[12px] font-medium text-red-600 active:bg-red-100"
+                        >
+                          削除
+                        </button>
+                      </>
                     )}
                   </div>
 

@@ -27,7 +27,7 @@ export default function MyStockPage() {
   const low = lowStock(stock);
 
   return (
-    <main className="mx-auto min-h-dvh max-w-md px-4 pb-32 pt-14">
+    <main className="mx-auto min-h-dvh max-w-md px-4 pb-32 pt-safe">
       <header className="flex items-start justify-between px-1">
         <div>
           <p className="text-[13px] font-medium tracking-wide text-zinc-400">Overlai</p>

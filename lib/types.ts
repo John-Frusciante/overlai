@@ -149,3 +149,34 @@ export interface ConflictWarning {
   ingredients: [string, string];
   detail: string;
 }
+
+// ── 肌質プロフィールと洗浄基剤 ────────────────────────────────────────
+
+/**
+ * 肌質・頭皮状態。ユーザーの自己申告であり、診断ではない。
+ * 画面にもその旨を明示すること（設計仕様書 §12）。
+ */
+export type SkinType = '乾燥' | '脂性' | '混合' | '敏感' | '普通';
+export type ScalpType = '乾燥' | '脂性' | 'ふけ・かゆみ' | '普通';
+
+export interface Profile {
+  skin?: SkinType;
+  scalp?: ScalpType;
+}
+
+/** 洗浄成分の系統 */
+export type CleanserBase =
+  | 'アミノ酸系'
+  | 'ベタイン系'
+  | '高級アルコール系'
+  | '石鹸系'
+  | '不明';
+
+/** 洗浄基剤と肌質・頭皮の相性 */
+export interface CleanserMatch {
+  base: CleanserBase;
+  /** 主剤と判定した成分名。根拠として必ず示す */
+  ingredient: string | null;
+  level: 'good' | 'caution' | 'neutral';
+  message: string;
+}

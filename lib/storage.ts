@@ -1,4 +1,4 @@
-import type { DoseLog, DoseTime, StockItem } from './types';
+import type { DoseLog, DoseTime, Profile, StockItem } from './types';
 import { SEED_STOCK } from './seed';
 
 /**
@@ -11,6 +11,7 @@ import { SEED_STOCK } from './seed';
 
 const STOCK_KEY = 'overlai.stock.v2';
 const DOSE_KEY = 'overlai.dose.v1';
+const PROFILE_KEY = 'overlai.profile.v1';
 
 function read<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
@@ -69,7 +70,19 @@ export function removeStock(id: string): StockItem[] {
 export function resetStock(): StockItem[] {
   saveStock(SEED_STOCK);
   write(DOSE_KEY, []);
+  write(PROFILE_KEY, {});
   return SEED_STOCK;
+}
+
+// ── 肌質プロフィール ─────────────────────────────────────────────────
+
+/** 肌質・頭皮状態。未設定なら空オブジェクトを返す（設定は任意） */
+export function loadProfile(): Profile {
+  return read<Profile>(PROFILE_KEY, {});
+}
+
+export function saveProfile(profile: Profile): void {
+  write(PROFILE_KEY, profile);
 }
 
 // ── 服薬記録 ─────────────────────────────────────────────────────────
@@ -81,6 +94,19 @@ export function todayKey(d = new Date()): string {
 export function loadDoseLog(date = todayKey()): DoseLog {
   const logs = read<DoseLog[]>(DOSE_KEY, []);
   return logs.find((l) => l.date === date) ?? { date, taken: [] };
+}
+
+/** 直近 n 日分の服薬記録を、古い日付から順に返す */
+export function loadRecentDoseLogs(n = 7): DoseLog[] {
+  const logs = read<DoseLog[]>(DOSE_KEY, []);
+  const out: DoseLog[] = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const date = todayKey(d);
+    out.push(logs.find((l) => l.date === date) ?? { date, taken: [] });
+  }
+  return out;
 }
 
 function saveDoseLog(log: DoseLog): void {

@@ -1,17 +1,19 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toResizedDataUrl } from '@/lib/image';
-import { addStock } from '@/lib/storage';
+import { addStock, loadStock, updateStock } from '@/lib/storage';
 import { toItemForm, toStockCategory } from '@/lib/mapping';
 import type { ApiErrorBody, ExtractionResult, ItemForm, RoutineKind, StockCategory } from '@/lib/types';
 
 /**
- * 在庫の追加 — 企画書 §4 ①「登録は3経路」のうちカメラ読み取りと手入力
+ * 在庫の追加・編集 — 企画書 §4 ①「登録は3経路」のうちカメラ読み取りと手入力
  *
  * 「まず全部登録してください」を要求しない設計が鍵なので、
  * 成分の読み取りは任意であり、手入力だけでも登録できる。
+ *
+ * `?id=` が付いていれば既存アイテムの編集として動く。
  */
 
 const CATEGORIES: StockCategory[] = [
@@ -42,6 +44,24 @@ export default function NewStockPage() {
 
   const [reading, setReading] = useState(false);
   const [readError, setReadError] = useState('');
+  /** 編集対象のid。null なら新規追加 */
+  const [editId, setEditId] = useState<string | null>(null);
+
+  // 既存アイテムの編集として開かれた場合は値を読み込む
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('id');
+    if (!id) return;
+    const item = loadStock().find((i) => i.id === id);
+    if (!item) return;
+    setEditId(id);
+    setName(item.name);
+    setCategory(item.category);
+    setForm(item.form);
+    setIngredients(item.ingredients.join('、'));
+    setStatus(item.status);
+    setOpenedAt(item.openedAt ?? '');
+    setRoutine(item.routine ?? '');
+  }, []);
 
   const readFromImage = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -75,7 +95,7 @@ export default function NewStockPage() {
 
   const save = useCallback(() => {
     if (!name.trim()) return;
-    addStock({
+    const values = {
       name: name.trim(),
       category,
       form,
@@ -87,14 +107,18 @@ export default function NewStockPage() {
       isPrescription: category === '処方薬' || category === '処方薬(外用)',
       openedAt: openedAt || undefined,
       routine: routine || undefined,
-    });
+    };
+    if (editId) updateStock(editId, values);
+    else addStock(values);
     router.push('/');
-  }, [name, category, form, ingredients, status, openedAt, routine, router]);
+  }, [editId, name, category, form, ingredients, status, openedAt, routine, router]);
 
   return (
-    <main className="mx-auto min-h-dvh max-w-md px-4 pb-32 pt-14">
+    <main className="mx-auto min-h-dvh max-w-md px-4 pb-32 pt-safe">
       <header className="flex items-center justify-between px-1">
-        <h1 className="text-[22px] font-bold tracking-tight text-zinc-900">ストックを追加</h1>
+        <h1 className="text-[22px] font-bold tracking-tight text-zinc-900">
+          {editId ? 'ストックを編集' : 'ストックを追加'}
+        </h1>
         <button
           onClick={() => router.back()}
           className="text-[14px] font-medium text-zinc-500 active:text-zinc-900"
@@ -196,13 +220,13 @@ export default function NewStockPage() {
         </Field>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 mx-auto max-w-md px-4 pb-8">
+      <div className="fixed inset-x-0 bottom-0 mx-auto max-w-md px-4 pb-safe">
         <button
           onClick={save}
           disabled={!name.trim()}
           className="w-full rounded-2xl bg-zinc-900 py-4 text-[15px] font-semibold text-white shadow-lg shadow-zinc-900/20 active:bg-zinc-700 disabled:opacity-30"
         >
-          追加する
+          {editId ? '保存する' : '追加する'}
         </button>
       </div>
     </main>

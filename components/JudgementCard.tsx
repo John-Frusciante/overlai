@@ -1,7 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import type { AnalyzeResponse, Signal, StockItem } from '@/lib/types';
+import { matchCleanser } from '@/lib/cleanser';
+import { toItemForm } from '@/lib/mapping';
+import { CleanserMatchRow } from '@/components/CleanserMatchCard';
+import type { AnalyzeResponse, Profile, Signal, StockItem } from '@/lib/types';
 
 /**
  * 判定カード — 設計仕様書 §9.4
@@ -39,21 +42,28 @@ const SIGNAL_STYLE: Record<
 export function JudgementCard({
   result,
   stock,
+  profile = {},
   onClose,
 }: {
   result: AnalyzeResponse;
   stock: StockItem[];
+  profile?: Profile;
   onClose: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const { extraction, judgement } = result;
   const style = SIGNAL_STYLE[judgement.signal];
   const matched = stock.filter((s) => judgement.matched_item_ids.includes(s.id));
+  // 洗浄料なら、肌質・頭皮との相性をルールベースで補足する（企画書 §6-13）
+  const cleanser = matchCleanser(
+    { form: toItemForm(extraction.form), ingredients: extraction.ingredients },
+    profile,
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white">
       {/* シグナル — 画面上部に大きく */}
-      <div className={`${style.bar} px-5 pt-14 pb-8 text-white`}>
+      <div className={`${style.bar} px-5 pt-safe pb-8 text-white`}>
         <div className="flex items-start justify-between">
           <span className="text-5xl leading-none">{style.emoji}</span>
           <button
@@ -102,6 +112,18 @@ export function JudgementCard({
             </p>
           )}
         </section>
+
+        {/* 洗浄基剤 × 肌質 */}
+        {cleanser && (
+          <section className="mt-7">
+            <h2 className="text-xs font-semibold tracking-wide text-zinc-500">
+              洗浄力とあなたの状態
+            </h2>
+            <div className="mt-2">
+              <CleanserMatchRow match={cleanser} />
+            </div>
+          </section>
+        )}
 
         {/* 該当する自宅アイテム */}
         {matched.length > 0 && (
@@ -177,7 +199,7 @@ export function JudgementCard({
       </div>
 
       {/* 相談導線 — 全判定色で常設（FR-10） */}
-      <div className="fixed inset-x-0 bottom-0 border-t border-zinc-200 bg-white/95 px-5 pb-7 pt-3 backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 border-t border-zinc-200 bg-white/95 px-5 pb-safe pt-3 backdrop-blur">
         <button className="w-full rounded-xl bg-zinc-900 py-3.5 text-[15px] font-semibold text-white active:bg-zinc-700">
           薬剤師・皮膚科に相談する
         </button>

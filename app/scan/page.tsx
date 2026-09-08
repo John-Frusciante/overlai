@@ -4,9 +4,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { JudgementCard } from '@/components/JudgementCard';
 import { toResizedDataUrl } from '@/lib/image';
-import { loadStock } from '@/lib/storage';
+import { loadProfile, loadStock } from '@/lib/storage';
 import { SEED_STOCK } from '@/lib/seed';
-import type { AnalyzeResponse, ApiErrorBody, StockItem } from '@/lib/types';
+import type { AnalyzeResponse, ApiErrorBody, Profile, StockItem } from '@/lib/types';
 
 /** スキャン画面 — 設計仕様書 §9.3 */
 
@@ -26,6 +26,7 @@ export default function ScanPage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [stock, setStock] = useState<StockItem[]>(SEED_STOCK);
+  const [profile, setProfile] = useState<Profile>({});
   // モックモードで判定シナリオを選ぶための指定（?demo=yellow|red|blue）
   const [demo, setDemo] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>('idle');
@@ -35,6 +36,7 @@ export default function ScanPage() {
 
   useEffect(() => {
     setStock(loadStock());
+    setProfile(loadProfile());
     setDemo(new URLSearchParams(window.location.search).get('demo'));
   }, []);
 
@@ -187,7 +189,7 @@ export default function ScanPage() {
 
       {/* 操作バー */}
       {!busy && phase !== 'error' && (
-        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-8 pb-11">
+        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-8 pb-safe">
           <button
             onClick={() => router.push('/')}
             className="text-[14px] font-medium text-white/80 active:text-white"
@@ -224,6 +226,7 @@ export default function ScanPage() {
         <JudgementCard
           result={result}
           stock={stock}
+          profile={profile}
           onClose={() => {
             setResult(null);
             setPhase('idle');

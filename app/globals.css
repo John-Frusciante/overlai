@@ -26,3 +26,11 @@ video {
   -webkit-user-select: none;
   user-select: none;
 }
+
+/* PWA（standalone）起動時の安全領域。ホームインジケーターに重ならないようにする */
+.pb-safe {
+  padding-bottom: max(1.75rem, env(safe-area-inset-bottom));
+}
+.pt-safe {
+  padding-top: max(3.5rem, calc(env(safe-area-inset-top) + 1.25rem));
+}

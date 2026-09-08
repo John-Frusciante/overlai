@@ -10,7 +10,7 @@ export function BottomNav({ scanHref = '/scan' }: { scanHref?: string }) {
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white/95 backdrop-blur">
-      <div className="mx-auto flex max-w-md items-center justify-around px-2 pb-6 pt-2">
+      <div className="mx-auto flex max-w-md items-center justify-around px-2 pb-safe pt-2">
         <Link
           href="/"
           className={`flex flex-1 flex-col items-center gap-1 py-1.5 ${

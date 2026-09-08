@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { JudgementCard } from '@/components/JudgementCard';
-import { loadStock } from '@/lib/storage';
+import { loadProfile, loadStock } from '@/lib/storage';
 import { SEED_STOCK } from '@/lib/seed';
 import { MOCK_FIXTURES as FIXTURES } from '@/lib/mock';
-import type { Signal, StockItem } from '@/lib/types';
+import type { Profile, Signal, StockItem } from '@/lib/types';
 
 /**
  * 判定カードのプレビュー（開発用）— Issue #3 の受け入れ条件
@@ -17,14 +17,16 @@ import type { Signal, StockItem } from '@/lib/types';
 
 export default function PreviewPage() {
   const [stock, setStock] = useState<StockItem[]>(SEED_STOCK);
+  const [profile, setProfile] = useState<Profile>({});
   const [signal, setSignal] = useState<Signal | null>(null);
 
   useEffect(() => {
     setStock(loadStock());
+    setProfile(loadProfile());
   }, []);
 
   return (
-    <main className="mx-auto min-h-dvh max-w-md px-5 pt-16">
+    <main className="mx-auto min-h-dvh max-w-md px-5 pt-safe">
       <h1 className="text-[22px] font-bold text-zinc-900">判定カード プレビュー</h1>
       <p className="mt-2 text-[13.5px] leading-relaxed text-zinc-500">
         開発用。APIを呼ばずに3色の表示を確認できます。
@@ -52,6 +54,7 @@ export default function PreviewPage() {
         <JudgementCard
           result={FIXTURES[signal]}
           stock={stock}
+          profile={profile}
           onClose={() => setSignal(null)}
         />
       )}
