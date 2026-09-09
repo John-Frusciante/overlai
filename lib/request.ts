@@ -1,4 +1,4 @@
-import type { DoseTime, Profile, ScalpType, SkinType, StockItem } from './types';
+import type { AgeBand, DoseTime, Gender, Profile, ScalpType, SkinType, StockItem } from './types';
 
 /** リクエスト入力の検証 — 設計仕様書 §8.3（クライアント由来の入力として扱う） */
 
@@ -69,6 +69,8 @@ function sanitizeDose(input: unknown): StockItem['dose'] {
 
 const SKINS: SkinType[] = ['乾燥', '脂性', '混合', '敏感', '普通'];
 const SCALPS: ScalpType[] = ['乾燥', '脂性', 'ふけ・かゆみ', '普通'];
+const AGES: AgeBand[] = ['10代', '20代', '30代', '40代', '50代', '60代以上'];
+const GENDERS: Gender[] = ['女性', '男性', 'その他', '答えない'];
 
 /** 肌質・頭皮の自己申告。想定外の値はプロンプトに混ぜず落とす */
 export function sanitizeProfile(input: unknown): Profile {
@@ -77,6 +79,8 @@ export function sanitizeProfile(input: unknown): Profile {
   return {
     skin: SKINS.find((s) => s === p.skin),
     scalp: SCALPS.find((s) => s === p.scalp),
+    age: AGES.find((a) => a === p.age),
+    gender: GENDERS.find((g) => g === p.gender),
     // 自由記述はそのままプロンプトへ結合される。長さだけは必ず切る
     note: typeof p.note === 'string' && p.note.trim()
       ? p.note.trim().slice(0, MAX_PROFILE_NOTE)

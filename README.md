@@ -98,7 +98,8 @@ app/
   routine/page.tsx      今日のルーティン
   scan/page.tsx         スキャン
   stock/new/page.tsx    在庫の追加・編集
-  profile/page.tsx      肌質の設定
+  profile/page.tsx      肌質の設定（自由記述を含む）
+  settings/page.tsx     設定（年代・性別・カテゴリ・ルーティン・初期化）
   api/analyze/route.ts  判定API（抽出 → 照合）
   api/extract/route.ts  成分抽出のみ（在庫登録用）
   api/routine/route.ts  ルーティンの解説（順序はルール、言葉だけAI）

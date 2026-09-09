@@ -216,7 +216,7 @@ export function routineSignature(stock: StockItem[], profile: Profile): string {
     )
     .sort()
     .join('|');
-  return `${profile.skin ?? ''}/${profile.scalp ?? ''}/${profile.note ?? ''}#${items}`;
+  return `${profile.skin ?? ''}/${profile.scalp ?? ''}/${profile.age ?? ''}/${profile.gender ?? ''}/${profile.note ?? ''}#${items}`;
 }
 
 export function loadRoutineAdvice(signature: string): RoutineAdvice | null {

@@ -10,20 +10,16 @@ import {
   ChevronRight,
   RotateCcw,
   Sparkles,
-  X,
 } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { CleanserMatchRow, ProfilePrompt } from '@/components/CleanserMatchCard';
 import {
   buildRoutine,
-  countInRoutine,
   findConflicts,
-  isBuiltinRoutine,
   isReordered,
   orderedRoutines,
   routineCaption,
-  routineChipLabel,
   routineTitle,
 } from '@/lib/routine';
 import { isCleanser } from '@/lib/cleanser';
@@ -36,11 +32,9 @@ import {
   loadCustomRoutines,
   loadRoutineAdvice,
   loadStock,
-  moveRoutine,
   reorderRoutine,
   resetRoutineOrder,
   routineSignature,
-  saveCustomRoutines,
   saveRoutineAdvice,
   toggleDose,
   todayKey,
@@ -107,15 +101,6 @@ export default function RoutinePage() {
 
   const onResetOrder = useCallback((kind: RoutineKind) => {
     setStock(resetRoutineOrder(kind));
-  }, []);
-
-  /** 区分を消す。中身は移動先へ回すか、ルーティンから外すだけで、在庫は消さない */
-  const onRemoveRoutine = useCallback((name: string, moveTo?: RoutineKind) => {
-    setStock(moveRoutine(name, moveTo));
-    const next = loadCustomRoutines().filter((n) => n !== name);
-    saveCustomRoutines(next);
-    setCustomRoutines(next);
-    setReordering(null);
   }, []);
 
   const onToggle = useCallback((item: StockItem, time: DoseTime) => {
@@ -361,14 +346,6 @@ export default function RoutinePage() {
         </section>
       )}
 
-      {customRoutines.length > 0 && (
-        <RoutineManager
-          routines={customRoutines}
-          stock={stock}
-          onRemove={onRemoveRoutine}
-        />
-      )}
-
       {hasPrescription && (
         <p className="mt-9 px-1 text-[11.5px] leading-relaxed text-faint">
           処方薬の塗る順番や間隔について指示を受けている場合は、医師・薬剤師の指示が優先されます。
@@ -602,121 +579,6 @@ function RoutineSection({
           );
         })}
       </ol>
-    </section>
-  );
-}
-
-/**
- * 自分で作ったルーティンの管理 — カテゴリと同じ流儀（app/page.tsx）
- *
- * 作るのは在庫の登録画面から。ここでは消すことだけができる。
- * **中身がある区分を消すときは、移動先を選ばせる。** 選ばなければルーティンから
- * 外れるだけで、在庫そのものは消えない。
- */
-function RoutineManager({
-  routines,
-  stock,
-  onRemove,
-}: {
-  routines: string[];
-  stock: StockItem[];
-  onRemove: (name: string, moveTo?: RoutineKind) => void;
-}) {
-  const [removing, setRemoving] = useState<string | null>(null);
-  const [moveTo, setMoveTo] = useState<RoutineKind | ''>('');
-
-  const movable: RoutineKind[] = removing
-    ? orderedRoutines(routines, stock).filter((k) => k !== removing)
-    : [];
-
-  return (
-    <section className="mt-9">
-      <SectionHeader title="自分で作ったルーティン" />
-
-      <ul className="mt-2.5 flex flex-wrap gap-1.5">
-        {routines.map((name) => {
-          const used = countInRoutine(stock, name);
-          return (
-            <li
-              key={name}
-              className="flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-[13px] font-medium text-muted"
-            >
-              {name}
-              {used > 0 && (
-                <span className="rounded-full bg-surface-sunken px-2 py-0.5 text-[11px] tabular-nums text-faint">
-                  {used}件
-                </span>
-              )}
-              <button
-                onClick={() => {
-                  setRemoving(removing === name ? null : name);
-                  setMoveTo('');
-                }}
-                aria-label={`${name} を削除`}
-                className="flex h-5 w-5 items-center justify-center rounded-full text-faint transition-transform active:scale-90"
-              >
-                <X size={13} strokeWidth={2.6} />
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-
-      {removing && (
-        <div className="mt-2.5 rounded-xl bg-red-50 p-3">
-          <p className="text-[12.5px] font-semibold text-red-700">
-            「{removing}」を削除します
-          </p>
-          <p className="mt-1 text-[12.5px] leading-relaxed text-red-600">
-            中の
-            <span className="tabular-nums"> {countInRoutine(stock, removing)} </span>
-            件は消えません。移す先を選ばなければ、ルーティンから外れるだけです。
-          </p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            <button
-              onClick={() => setMoveTo('')}
-              className={`rounded-full px-2.5 py-1.5 text-[12px] font-medium transition-colors ${
-                moveTo === '' ? 'bg-brand text-white' : 'border border-line bg-surface text-muted'
-              }`}
-            >
-              どこにも入れない
-            </button>
-            {movable.map((m) => (
-              <button
-                key={m}
-                onClick={() => setMoveTo(m)}
-                className={`rounded-full px-2.5 py-1.5 text-[12px] font-medium transition-colors ${
-                  moveTo === m ? 'bg-brand text-white' : 'border border-line bg-surface text-muted'
-                }`}
-              >
-                {routineChipLabel(m)}
-              </button>
-            ))}
-          </div>
-          <div className="mt-2.5 flex gap-2">
-            <button
-              onClick={() => setRemoving(null)}
-              className="flex-1 rounded-xl bg-surface py-2.5 text-[13px] font-medium text-muted transition-transform active:scale-95"
-            >
-              やめる
-            </button>
-            <button
-              onClick={() => {
-                onRemove(removing, moveTo || undefined);
-                setRemoving(null);
-              }}
-              className="flex-1 rounded-xl bg-red-600 py-2.5 text-[13px] font-semibold text-white transition-transform active:scale-95"
-            >
-              削除する
-            </button>
-          </div>
-        </div>
-      )}
-
-      <p className="mt-2.5 px-1 text-[11.5px] leading-relaxed text-faint">
-        ルーティンはストックの登録・編集画面から作れます。
-        もとからある2つは消せません。
-      </p>
     </section>
   );
 }

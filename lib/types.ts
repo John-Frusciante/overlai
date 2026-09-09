@@ -209,9 +209,20 @@ export interface ConflictWarning {
 export type SkinType = '乾燥' | '脂性' | '混合' | '敏感' | '普通';
 export type ScalpType = '乾燥' | '脂性' | 'ふけ・かゆみ' | '普通';
 
+/**
+ * 年代・性別。どちらも任意で、AIが書く一言の手がかりにだけ使う。
+ *
+ * 判定（/api/analyze）には渡さない。🟡🔴の分かれ目は在庫との関係だけで決めており、
+ * そこに属性を持ち込むと「なぜこの色になったか」の説明が変わってしまう。
+ */
+export type AgeBand = '10代' | '20代' | '30代' | '40代' | '50代' | '60代以上';
+export type Gender = '女性' | '男性' | 'その他' | '答えない';
+
 export interface Profile {
   skin?: SkinType;
   scalp?: ScalpType;
+  age?: AgeBand;
+  gender?: Gender;
   /**
    * 自由記述。選択肢に収まらない事情をユーザー自身の言葉で書く欄。
    *

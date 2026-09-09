@@ -188,6 +188,8 @@ export const ROUTINE_ADVICE_SYSTEM_PROMPT = `あなたは、ユーザーが家�
 - 医薬品（処方薬・市販薬）の効能を断定しないでください。処方薬が含まれる場合は、
   overall に「医師・薬剤師の指示が優先されます」という趣旨を必ず含めてください。
 - 肌質・頭皮は本人の自己申告です。診断として扱わないでください。
+- 年代・性別は、**何に気をつけるとよいかを選ぶ手がかり**として使ってください。
+  ただし「30代だから」「女性だから」と、属性そのものを理由にした断定は避けてください。
 
 # 書き方
 
@@ -195,13 +197,18 @@ export const ROUTINE_ADVICE_SYSTEM_PROMPT = `あなたは、ユーザーが家�
   「保湿が大切です」のような、誰にでも当てはまる文には価値がありません。
 - **そのアイテムを、この順番のその位置で使うことに意味がある理由**を書いてください。
   肌質・頭皮の設定、前後のアイテム、そのアイテムの成分のいずれかに触れてください。
+- **本人が書いた補足があるときは、その内容を必ず汲んでください。** 全体への一言か、
+  関係するアイテムの一言のうち、少なくとも1つはその内容に応えるものにしてください。
+  補足に書かれた事情（季節・時間の余裕・気になっている部位など）は、選択肢では拾えない情報です。
+- 年代の申告があるときは、その年代で起こりやすい肌や頭皮の変化を踏まえて構いません。
+  ただし断定はせず、「〜しやすい時期です」のような書き方にしてください。
 - 書くことが見つからないアイテムは、tip を空文字にして構いません。無理に埋めないでください。
 - item_id には与えられた id をそのまま使ってください。id を作り出してはいけません。
 - 敬体（です・ます）で、やわらかく短く書いてください。`;
 
 /** ルーティン解説のユーザーメッセージを組み立てる */
 export function buildRoutineAdviceUserMessage(input: {
-  profile: { skin?: string; scalp?: string; note?: string };
+  profile: { skin?: string; scalp?: string; age?: string; gender?: string; note?: string };
   /** 区分ごとの、確定済みの並び。組み込みの2つに加えてユーザーが作った区分も入る */
   groups: Array<{
     title: string;
@@ -235,6 +242,8 @@ export function buildRoutineAdviceUserMessage(input: {
     [
       input.profile.skin && `肌の状態: ${input.profile.skin}`,
       input.profile.scalp && `頭皮の状態: ${input.profile.scalp}`,
+      input.profile.age && `年代: ${input.profile.age}`,
+      input.profile.gender && input.profile.gender !== '答えない' && `性別: ${input.profile.gender}`,
     ]
       .filter(Boolean)
       .join('\n') || '（未設定。肌質・頭皮に踏み込んだ記述は避けてください）';

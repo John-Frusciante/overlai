@@ -11,21 +11,17 @@ import type { ExpiryAlert, StockItem } from '@/lib/types';
 export function StockList({
   items,
   alerts,
-  editing,
   customCategories,
   collapsed,
   onToggleCategory,
-  onSelect,
   onRemove,
 }: {
   items: StockItem[];
   alerts: ExpiryAlert[];
-  editing: boolean;
   /** ユーザーが追加したカテゴリ。組み込みの後ろに並ぶ */
   customCategories: string[];
   collapsed: string[];
   onToggleCategory: (category: string) => void;
-  onSelect: (item: StockItem) => void;
   onRemove: (id: string) => void;
 }) {
   /** 削除の確認待ちのid。誤タップで消えると復元できないため二段階にする */
@@ -94,16 +90,8 @@ export function StockList({
                   return (
                     <li
                       key={item.id}
-                      className="relative rounded-2xl border border-line bg-surface p-4 shadow-e1"
+                      className="rounded-2xl border border-line bg-surface p-4 shadow-e1"
                     >
-                      {/* カードのどこを押しても操作シートが開く。
-                          Link を内側に持つため、入れ子のボタンにせず透明な層を重ねる */}
-                      <button
-                        onClick={() => onSelect(item)}
-                        aria-label={`${item.name} の操作`}
-                        className="absolute inset-0 rounded-2xl"
-                      />
-
                       <div className="flex items-start gap-3">
                         <span
                           className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${cat.bg} ${cat.text}`}
@@ -147,32 +135,30 @@ export function StockList({
                           </p>
                         </div>
 
-                        {editing && (
-                          <div className="relative z-10 flex shrink-0 flex-col gap-1.5">
-                            <Link
-                              href={`/stock/new?id=${item.id}`}
-                              aria-label={`${item.name} を編集`}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-sunken text-muted transition-transform active:scale-90"
-                            >
-                              <PencilLine size={15} strokeWidth={2} />
-                            </Link>
-                            <button
-                              onClick={() => setConfirmId(confirming ? null : item.id)}
-                              aria-label={`${item.name} を削除`}
-                              className={`flex h-8 w-8 items-center justify-center rounded-lg transition-transform active:scale-90 ${
-                                confirming
-                                  ? 'bg-red-600 text-white'
-                                  : 'bg-red-50 text-red-600'
-                              }`}
-                            >
-                              <Trash2 size={15} strokeWidth={2} />
-                            </button>
-                          </div>
-                        )}
                       </div>
 
-                      {editing && confirming && (
-                        <div className="relative z-10 mt-3 flex items-center gap-2 rounded-xl bg-red-50 p-2.5 pl-3.5">
+                      {/* 編集と削除はカードの右下に置く。モードに入らずそのまま操作できる */}
+                      <div className="mt-2 flex justify-end gap-1.5">
+                        <Link
+                          href={`/stock/new?id=${item.id}`}
+                          aria-label={`${item.name} を編集`}
+                          className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-sunken text-muted transition-transform active:scale-90"
+                        >
+                          <PencilLine size={15} strokeWidth={2} />
+                        </Link>
+                        <button
+                          onClick={() => setConfirmId(confirming ? null : item.id)}
+                          aria-label={`${item.name} を削除`}
+                          className={`flex h-8 w-8 items-center justify-center rounded-lg transition-transform active:scale-90 ${
+                            confirming ? 'bg-red-600 text-white' : 'bg-red-50 text-red-600'
+                          }`}
+                        >
+                          <Trash2 size={15} strokeWidth={2} />
+                        </button>
+                      </div>
+
+                      {confirming && (
+                        <div className="mt-2 flex items-center gap-2 rounded-xl bg-red-50 p-2.5 pl-3.5">
                           <p className="flex-1 text-[12.5px] font-medium text-red-700">
                             このストックを削除しますか？
                           </p>
