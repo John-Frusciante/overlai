@@ -40,7 +40,9 @@ export async function POST(req: Request) {
   }
 
   try {
-    const extraction = await extractIngredients(image);
+    // 呼び出しは失敗したプロバイダを自動で次に落とす（lib/llm.ts）
+    const extracted = await extractIngredients(image);
+    const extraction = extracted.value;
     if (!extraction || extraction.ingredients.length === 0) {
       return NextResponse.json(
         {
@@ -52,7 +54,11 @@ export async function POST(req: Request) {
         { status: 422 },
       );
     }
-    return NextResponse.json({ extraction, provider });
+    return NextResponse.json({
+      extraction,
+      provider: extracted.provider,
+      fell_back: Boolean(extracted.fellBackFrom),
+    });
   } catch (err) {
     if (classifyError(err) === 'rate_limited') {
       return NextResponse.json(

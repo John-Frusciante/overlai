@@ -73,7 +73,9 @@ export async function POST(req: Request) {
 
   try {
     // ── ステップ1: 成分抽出（Vision） ────────────────────────────────
-    const extraction = await extractIngredients(image);
+    // 呼び出しは失敗したプロバイダを自動で次に落とす（lib/llm.ts）
+    const extracted = await extractIngredients(image);
+    const extraction = extracted.value;
     if (!extraction) {
       return fail('UPSTREAM_ERROR', '成分の解析に失敗しました', 500);
     }
@@ -88,7 +90,8 @@ export async function POST(req: Request) {
     }
 
     // ── ステップ2: 在庫照合判定 ──────────────────────────────────────
-    const raw = await judgeAgainstStock(extraction, stock);
+    const judged = await judgeAgainstStock(extraction, stock);
+    const raw = judged.value;
     if (!raw) {
       return fail('UPSTREAM_ERROR', '判定に失敗しました', 500);
     }
@@ -105,7 +108,9 @@ export async function POST(req: Request) {
       extraction,
       judgement,
       elapsed_ms: Date.now() - started,
-      provider,
+      // 実際に判定を返したプロバイダ。フォールバックが起きると第一候補とは変わる
+      provider: judged.provider,
+      fell_back: Boolean(extracted.fellBackFrom ?? judged.fellBackFrom),
     });
   } catch (err) {
     switch (classifyError(err)) {

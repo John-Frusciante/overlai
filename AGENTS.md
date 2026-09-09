@@ -24,13 +24,18 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 2. **`consult_recommended` のサーバー側上書きを消さない** — 安全に関わる値をLLMに委ねない
 3. **成分名のない `reason` のフィルタを消さない** — 根拠なき警告を出さない
 4. **判定（ステップ2）の設定を弱めない** — 判定品質がそのまま評価対象。
-   Anthropic 経路は `effort: 'high'`、Azure 経路は `gpt-5.1`。速度のために下げるなら**抽出側だけ**にする
+   Anthropic 経路は `effort: 'high'`、Azure 経路は `gpt-5.1`、Gemini 経路は `gemini-2.5-pro`。
+   速度のために下げるなら**抽出側だけ**にする
 5. **Anthropic 経路で `thinking` を明示的に無効化しない** — ツール呼び出しが本文に混入する既知の失敗モードがある
 6. **出力トークン上限を切り詰めない** — Anthropic は `max_tokens: 16000`（thinking 分を含む）、
    Azure の gpt-5 系は **`max_tokens` が使えず `max_completion_tokens`** を指定する
 7. **`localStorage` をコンポーネントから直接呼ばない** — `lib/storage.ts` を経由する
-8. **APIキーに `NEXT_PUBLIC_` を付けない** — `ANTHROPIC_API_KEY` も `AZURE_PROXY_KEY` も Route Handler でのみ読む
+8. **APIキーに `NEXT_PUBLIC_` を付けない** — `ANTHROPIC_API_KEY` も `AZURE_PROXY_KEY` も `GEMINI_API_KEY` も Route Handler でのみ読む
 9. **UIの文言に断定表現を使わない** — 「〜の可能性があります」で統一する
+10. **プロバイダのフォールバックを単一経路に戻さない** — 本番は学校配布のプロキシ1本で動いており、
+    その停止・失効がそのまま機能停止になる。`providerChain()` は独立した事業者を並べるためのもの
+11. **Gemini 経路で `finishReason` のチェックを外さない** — 安全フィルタや出力上限で切れた応答を
+    成功として扱うと、壊れた判定が黙って返る
 
 ## 書く場所
 

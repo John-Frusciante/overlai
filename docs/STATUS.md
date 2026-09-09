@@ -22,14 +22,17 @@
 
 NFR-01（10秒以内）をローカルでは満たしている。
 
-プロバイダは `lib/llm.ts` が環境変数から決める。**Anthropic Claude / Azure OpenAI / モックの3経路**があり、コード変更なしで切り替わる。
+プロバイダは `lib/llm.ts` が環境変数から決める。**Anthropic Claude / Azure OpenAI / Google Gemini / モックの4経路**があり、コード変更なしで切り替わる。
 
 ```
 OVERLAI_MOCK=1     → モック（AIを呼ばない。デモの保険）
 ANTHROPIC_API_KEY  → Anthropic Claude (claude-opus-5)
-AZURE_PROXY_KEY    → Azure OpenAI プロキシ (gpt-5.1)  ← 現在これ
+AZURE_PROXY_KEY    → Azure OpenAI プロキシ (gpt-5.1)  ← 本番はこれが先頭
+GEMINI_API_KEY     → Google Gemini (gemini-3.8-flash / gemini-2.5-pro)
 いずれも無し        → モック
 ```
+
+キーがあるものを上から順に使い、**失敗したら次に落ちる**。本番は学校配布のプロキシ1本に依存していて、クォータ超過やキー失効が起きた瞬間にAI機能が全部止まる。Gemini はそのための保険で、狙いは品質ではなく独立した事業者のクォータに乗ること（[ARCHITECTURE.md §7](ARCHITECTURE.md)）。
 
 ---
 
@@ -80,7 +83,9 @@ AZURE_PROXY_KEY    → Azure OpenAI プロキシ (gpt-5.1)  ← 現在これ
 
 ### 提出前に片付けたいもの
 
-なし。AI経路・カメラ実機・全機能の動作確認がすべて完了した。
+**Gemini フォールバックの疎通確認**（`GEMINI_API_KEY` 取得後）。実装は入っているが一度も実呼び出しをしていない。本番の判定は Azure 経路で動いているので提出物としては成立するが、保険が本当に効くかは未証明。
+
+それ以外は完了している（AI経路・カメラ実機・全機能の動作確認）。
 
 ### 本選（10/1・10/11）までに片付けたいもの
 
@@ -93,6 +98,7 @@ AZURE_PROXY_KEY    → Azure OpenAI プロキシ (gpt-5.1)  ← 現在これ
 | `should` | 判定レイテンシの短縮（抽出側のみ） | 実測 8.6〜10.6秒。動画は編集できるが、ブースでは来場者が実際に待つ | [#24](https://github.com/John-Frusciante/overlai/issues/24) |
 | `should` | ブース展示用のワンタップ初期化 | 前の来場者の在庫が残ると、次の人に見せる判定が変わる | [#25](https://github.com/John-Frusciante/overlai/issues/25) |
 | `should` | Anthropic 経路の動作確認 | キー入手時。プロバイダ抽象が本当に切り替わるかの証明 | [#20](https://github.com/John-Frusciante/overlai/issues/20) |
+| `should` | Gemini フォールバックの疎通確認 | 会場で学校配布キーが止まったときの唯一の復旧手段。スキーマ変換が実際に通るかも未確認 | — |
 
 ### 本選より先（将来構想）
 

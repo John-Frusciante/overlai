@@ -14,7 +14,7 @@
 | 対象バージョン | 2026年9月9日時点の `main` |
 | 実装規模 | TypeScript 約3,000行（`app/` `components/` `lib/`） |
 | 公開URL | https://overlai-delta.vercel.app |
-| 稼働モード | **Azure OpenAI プロキシ（`gpt-5.1`）で実稼働**（§7 参照） |
+| 稼働モード | **Azure OpenAI プロキシ（`gpt-5.1`）で実稼働**。失敗時は Gemini に自動フォールバック（§7 参照） |
 
 ---
 
@@ -80,6 +80,8 @@ graph TB
 | スタイル | Tailwind CSS | 4 | 実装速度 |
 | 言語 | TypeScript | 5 | 型定義がそのままAI入出力の契約になる |
 | AI | `@anthropic-ai/sdk` | 0.124.0 | Vision + 構造化出力 |
+| AI | `openai` | 7.12.1 | Azure 互換プロキシ経由（`baseURL` 差し替え） |
+| AI | `@google/genai` | 2.21.0 | フォールバック経路（§7） |
 | スキーマ | zod | 4.5.4 | 構造化出力のスキーマ定義 |
 | 永続化 | localStorage | — | DB不使用 |
 | デプロイ | Vercel | — | HTTPSの公開URLが即座に得られる（カメラAPIの前提） |
@@ -112,7 +114,7 @@ components/
 lib/
   types.ts              全データ構造の定義。AIの入出力契約でもある
   schemas.ts            zodスキーマ（構造化出力の強制）
-  llm.ts                AIプロバイダの抽象（Anthropic / Azure / モック）
+  llm.ts                AIプロバイダの抽象とフォールバック（Anthropic / Azure / Gemini / モック）
   prompts.ts            全プロンプトを集約
   seed.ts               デモ用シードデータ11件
   storage.ts            localStorage アクセスの集約点（在庫CRUD・服薬記録・カテゴリ）
@@ -239,6 +241,8 @@ sequenceDiagram
 
 **プロンプトとスキーマはプロバイダに依存しない。** 差し替わるのは呼び出し方だけで、2段階パイプラインの構造は変わらない。route から SDK を直接呼ばず、`extractIngredients()` / `judgeAgainstStock()` を経由する。
 
+この2関数は `LlmResult<T>`（`value` と、実際に応答した `provider`）を返す。フォールバックが起きたときにレスポンスの `provider` が実態とズレると、「どのAIで動いているか」の表示が嘘になるため。
+
 ### 4.4 モデル選定と実測
 
 学校配布の Azure OpenAI プロキシで使えるモデルを、**実際の成分表示画像と実際のプロンプト**で比較した。
@@ -256,6 +260,7 @@ sequenceDiagram
 | :--- | :--- | :--- | :--- |
 | Anthropic | `claude-opus-5` / effort `medium` | `claude-opus-5` / effort `high` | `max_tokens: 16000`（thinking 分を含む） |
 | Azure | `gpt-5.1` | `gpt-5.1` | **`max_completion_tokens: 4000`**（gpt-5 系は `max_tokens` を受け付けない） |
+| Gemini | `gemini-3.8-flash` | `gemini-2.5-pro` | 指定しない（`maxOutputTokens` 未設定＝モデル既定の上限） |
 
 **Anthropic 経路で thinking は無効化しない。** adaptive thinking が既定でオンであり、無効化するとツール呼び出しや内部タグが本文に混入する既知の失敗モードがある。レイテンシは `effort` で調整する。
 
@@ -382,16 +387,30 @@ reasons: raw.reasons.filter((r) => r.ingredient.trim().length > 0),
 
 ---
 
-## 7. プロバイダ切り替えとモック
+## 7. プロバイダ切り替えとフォールバック
 
-`lib/llm.ts` の `activeProvider()` が環境変数から決める。**切り替えにコード変更は不要。**
+`lib/llm.ts` の `providerChain()` が環境変数から**優先順のリスト**を作る。**切り替えにコード変更は不要。**
 
 | 環境変数 | 動作 |
 | :--- | :--- |
-| `OVERLAI_MOCK=1` | モック（最優先） |
+| `OVERLAI_MOCK=1` | モック（最優先。以降は評価しない） |
 | `ANTHROPIC_API_KEY` | Anthropic Claude |
-| `AZURE_PROXY_KEY` | Azure OpenAI 互換プロキシ ← **現在これ** |
+| `AZURE_PROXY_KEY` | Azure OpenAI 互換プロキシ ← **本番はこれが先頭** |
+| `GEMINI_API_KEY` | Google Gemini（フォールバック） |
 | いずれも無し | モック |
+
+### なぜフォールバックを置くか
+
+本番は学校配布のプロキシ1本で動いている。クォータ超過・キー失効・配布期間の終了はこちらから残量を確認する手段がなく、起きた瞬間にAI機能が全部止まる。Gemini を置く意味は品質ではなく、**独立した事業者のクォータに乗ること**にある。相関しない障害要因を1つ増やしているだけで、片方が止まってももう片方は無関係でいられる。
+
+先頭のプロバイダがどのエラーで失敗しても次に落ちる（レート制限・キー失効・5xx・スキーマ違反のすべて）。全滅したときだけ例外が route に届き、ユーザー向けの文言に変換される。
+
+### Gemini 経路の注意点
+
+他の2経路に無い事情が2つある。
+
+- **スキーマ変換が要る** — `zodOutputFormat` / `zodResponseFormat` にあたるヘルパーが SDK に無い。`geminiJsonSchema()` が zod を JSON Schema に落としたうえで、Gemini が受け付けない語彙（`$schema`、`type: [A, null]` の配列形式）を削る
+- **途中終了を成功として扱わない** — 安全フィルタや出力上限で切れた応答を `finishReason !== 'STOP'` で検出して失敗にする。医薬品の話題は安全フィルタに触れうるので、黙って壊れた判定を返すより次のプロバイダに落とすほうが安全
 
 ### Azure プロキシの接続
 
@@ -627,6 +646,7 @@ Tailwind の `@theme` に定義し、全画面で共有する。ニュートラ�
 | 12 | 服薬記録と残薬を同一関数で更新 | 別々に管理 | 記録と残量がズレる |
 | 13 | 抽出専用のエンドポイントを分けた | analyze を使い回す | 在庫登録では在庫照合が不要。ステップ2を走らせるのは無駄 |
 | 14 | プロバイダを抽象化した | Azure に置き換える | プロンプトとスキーマはプロバイダに依存しない。Anthropic のキーが手に入れば戻せる |
+| 15 | 失敗時に別プロバイダへ落とす | 学校配布キー1本に依存しない | 本番の唯一の停止要因がプロキシの停止・失効だった。Gemini を保険に置き、相関しない障害要因を1つ増やした（§7） |
 | 15 | 抽出も `gpt-5.1` にした | 抽出だけ安いモデルに落とす | gpt-4o-mini は成分名を誤読する（「いブプロフェン」）。照合が成立しなくなる |
 
 ---
@@ -637,6 +657,7 @@ Tailwind の `@theme` に定義し、全画面で共有する。ニュートラ�
 | :--- | :--- |
 | 本物のAIパイプライン | **動作確認済み**（Azure `gpt-5.1`。🟡🔴とも実画像で検証） |
 | カメラの実機動作 | **確認済み**（背面カメラの起動を実機で確認） |
+| Gemini へのフォールバック | **実装済み・未検証**（APIキー取得後に疎通確認が必要） |
 | エラー系の実挙動（429/500） | 実際に障害を起こさないと確認できないため未検証 |
 | 在庫の追加・編集・削除 | **実装済み**（カメラ読み取り＋手入力。編集は `/stock/new?id=`、削除は編集モードから） |
 | カテゴリ別の折りたたみ | **実装済み**（開閉状態は localStorage に保存） |
@@ -666,6 +687,8 @@ vercel --prod --yes      # デプロイ
 | 環境変数 | 用途 |
 | :--- | :--- |
 | `ANTHROPIC_API_KEY` | 設定すると本物のAIパイプラインに切り替わる |
+| `AZURE_PROXY_KEY` | 学校配布プロキシ（本番はこれが先頭） |
+| `GEMINI_API_KEY` | 先頭のプロバイダが失敗したときのフォールバック先 |
 | `OVERLAI_MOCK=1` | キーがある状態で強制的にモックへ戻す |
 
 ---
