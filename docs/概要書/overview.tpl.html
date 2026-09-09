@@ -22,7 +22,7 @@
   .page + .page { page-break-before: always; }
 
   /* ヘッダー */
-  .masthead { display:flex; align-items:flex-start; gap:10mm; padding-bottom:4.4mm; border-bottom:1.6pt solid var(--brand); }
+  .masthead { display:flex; align-items:flex-start; gap:5mm; padding-bottom:4.4mm; border-bottom:1.6pt solid var(--brand); }
   .brandblock { flex:1; }
   .logoline { display:flex; align-items:center; gap:3mm; }
   .logoline svg { width:7.4mm; height:7.4mm; }
@@ -30,10 +30,15 @@
   .romaji { font-size:7.4pt; color:var(--faint); letter-spacing:.02em; }
   .tagline { margin-top:2.2mm; font-size:11.8pt; font-weight:700; letter-spacing:.015em; }
   .subline { margin-top:1.4mm; font-size:8.4pt; color:var(--muted); }
-  .meta { width:56mm; font-size:7.5pt; line-height:1.54; color:var(--muted); border-left:.7pt solid var(--line2); padding-left:4.6mm; }
+  .meta { width:45mm; font-size:7.5pt; line-height:1.54; color:var(--muted); border-left:.7pt solid var(--line2); padding-left:4.6mm; }
   .meta dt { color:var(--faint); font-size:6.7pt; letter-spacing:.09em; text-transform:uppercase; }
   .meta dd { color:var(--ink); font-weight:600; margin-bottom:1.1mm; }
-  .meta dd.url { font-weight:700; color:var(--brand); word-break:break-all; letter-spacing:0; }
+  .nw { white-space:nowrap; }
+  .qr { width:24mm; text-align:center; }
+  .qr svg { display:block; width:21mm; height:21mm; margin:0 auto; }
+  .qr .lb { margin-top:1.2mm; font-size:6.6pt; line-height:1.4; color:var(--muted); letter-spacing:0; }
+  .qr .lb b { color:var(--ink); font-weight:700; }
+  .qr .u { margin-top:.5mm; font-size:5.4pt; color:var(--faint); letter-spacing:-.02em; white-space:nowrap; }
 
   /* セクション */
   section { margin-top:4.6mm; }
@@ -84,9 +89,9 @@
   .mono { font-family:"SF Mono",Menlo,monospace; font-size:7.2pt; letter-spacing:-.01em; }
 
   /* 主張バンド */
-  .claim { margin-top:3mm; background:var(--brand); color:#fff; border-radius:2.6mm; padding:3.6mm 4.6mm; }
+  .claim { margin-top:2.8mm; background:var(--brand); color:#fff; border-radius:2.6mm; padding:3.2mm 4.4mm; }
   .claim .t { font-size:10pt; font-weight:700; line-height:1.6; }
-  .claim .s { margin-top:1.5mm; font-size:7.9pt; line-height:1.64; color:rgba(255,255,255,.74); }
+  .claim .s { margin-top:1.3mm; font-size:7.7pt; line-height:1.6; color:rgba(255,255,255,.74); }
   .claim .s b { color:#fff; }
 
   /* 機能ブロック */
@@ -163,15 +168,19 @@
           <path d="M36 36 h30 a10 10 0 0 1 10 10 v30 a10 10 0 0 1 -10 10 h-30 a10 10 0 0 1 -10 -10 v-30 a10 10 0 0 1 10 -10 z" fill="#1B2A4A" fill-opacity=".72"/>
         </svg>
         <span class="wordmark">OVERLAI</span>
-        <span class="romaji">オーバーレイ ／ Overlay（重ねる）＋ AI</span>
+        <span class="romaji">Overlay（重ねる）＋ AI</span>
       </div>
       <div class="tagline">買う前に、家の棚を重ねて見る。</div>
-      <div class="subline">ユメカタリ 学生生成AIコンテスト 2026・開発部門 ／ 応募作品概要書</div>
+      <div class="subline">ユメカタリ 学生生成AIコンテスト 2026・開発部門 応募作品概要書</div>
     </div>
     <dl class="meta">
-      <dt>応募者</dt><dd>井上 高志・濱田 圭太郎・杉本 隼都<br><span style="font-weight:400;color:var(--muted)">鈴鹿工業高等専門学校／3名チーム</span></dd>
-      <dt>公開URL（実機で動作）</dt><dd class="url">overlai-delta.vercel.app</dd>
+      <dt>応募者（3名チーム）</dt><dd><span class="nw">井上 高志</span>・<span class="nw">濱田 圭太郎</span>・<span class="nw">杉本 隼都</span><br><span style="font-weight:400;color:var(--muted)">鈴鹿工業高等専門学校</span></dd>
     </dl>
+    <div class="qr">
+      {{QR}}
+      <div class="lb"><b>実機を試せます</b></div>
+      <div class="u">overlai-delta.vercel.app</div>
+    </div>
   </div>
 
   <section>
@@ -228,7 +237,7 @@
       <tr><td class="k">お薬手帳アプリ</td><td>調剤履歴</td><td>飲み合わせは大丈夫か</td><td class="no">棚の商品と被るか</td></tr>
       <tr><td class="k">小売アプリ</td><td>自社全商品・口コミ</td><td>この商品の評判は</td><td class="no">家の在庫と重複するか</td></tr>
     </table>
-    <p style="margin-top:2.4mm">全員が<span class="em">「商品側」のデータベース</span>で戦っている。商品DBをどれだけ大きくしても「あなたの家にもうある」だけは言えません。さらに産業が縦に割れています ── 飲む薬は製薬・調剤、塗る化粧品は化粧品メーカー。<span class="em">処方された塗り薬は、このどこにも居場所がない。</span></p>
+    <p style="margin-top:2.4mm">全員が<span class="em">「商品側」のデータベース</span>で戦っており、商品DBをどれだけ大きくしても「あなたの家にもうある」だけは言えません。さらに産業が縦に割れているため、<span class="em">処方された塗り薬は、飲む薬にも化粧品にも属さないまま取り残されています。</span></p>
     <div class="claim">
       <div class="t">でも、それを全部使う体は、ひとつしかない。</div>
       <div class="s">飲む薬も、塗る薬も、化粧品も、行き着く先は同じひとつの体です。<b>Overlai はそれらを産業の区切りで分けず、ひとつの棚として扱います。</b>判定の基準を商品から「その人の家」へ移す、とはそういう意味です。</div>
