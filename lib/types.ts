@@ -108,11 +108,18 @@ export interface Judgement {
   consult_recommended: boolean;
 }
 
+/** AIプロバイダの識別子。優先順と切り替えは lib/llm.ts が持つ */
+export type Provider = 'anthropic' | 'azure' | 'gemini' | 'mock';
+
 export interface AnalyzeResponse {
   extraction: ExtractionResult;
   judgement: Judgement;
   elapsed_ms: number;
   mocked?: boolean;
+  /** 実際に応答したAIプロバイダ。フォールバックが起きると第一候補とは変わる */
+  provider?: Provider;
+  /** 第一候補が失敗して別のプロバイダに落ちたか */
+  fell_back?: boolean;
 }
 
 export type ApiErrorCode =

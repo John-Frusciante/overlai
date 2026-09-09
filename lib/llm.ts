@@ -11,7 +11,7 @@ import {
   JUDGEMENT_SYSTEM_PROMPT,
   buildJudgementUserMessage,
 } from './prompts';
-import type { ExtractionResult, Judgement, StockItem } from './types';
+import type { ExtractionResult, Judgement, Provider, StockItem } from './types';
 
 /**
  * AIプロバイダの抽象 — 設計仕様書 §7
@@ -30,7 +30,7 @@ import type { ExtractionResult, Judgement, StockItem } from './types';
  * Gemini はそのための保険であり、独立した事業者のクォータに乗ることに意味がある。
  */
 
-export type Provider = 'anthropic' | 'azure' | 'gemini' | 'mock';
+export type { Provider };
 
 /** 使用するプロバイダを優先順で返す。先頭が第一候補、以降がフォールバック先。 */
 export function providerChain(): Provider[] {
