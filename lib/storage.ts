@@ -12,6 +12,7 @@ import { SEED_STOCK } from './seed';
 const STOCK_KEY = 'overlai.stock.v3';
 const DOSE_KEY = 'overlai.dose.v1';
 const PROFILE_KEY = 'overlai.profile.v1';
+const COLLAPSED_KEY = 'overlai.collapsed.v1';
 
 function read<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
@@ -71,7 +72,23 @@ export function resetStock(): StockItem[] {
   saveStock(SEED_STOCK);
   write(DOSE_KEY, []);
   write(PROFILE_KEY, {});
+  write(COLLAPSED_KEY, []);
   return SEED_STOCK;
+}
+
+// ── 一覧の折りたたみ状態 ─────────────────────────────────────────────
+
+/**
+ * 閉じているカテゴリ名。件数が増えると一覧が長くなるため、
+ * 開閉状態を画面遷移をまたいで保つ（撮影中にスキャンから戻っても崩れない）。
+ */
+export function loadCollapsed(): string[] {
+  const v = read<string[]>(COLLAPSED_KEY, []);
+  return Array.isArray(v) ? v : [];
+}
+
+export function saveCollapsed(categories: string[]): void {
+  write(COLLAPSED_KEY, categories);
 }
 
 // ── 肌質プロフィール ─────────────────────────────────────────────────

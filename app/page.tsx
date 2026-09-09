@@ -1,12 +1,27 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { AlertTriangle, Clock, Plus, RotateCcw } from 'lucide-react';
+import {
+  AlertTriangle,
+  Check,
+  Clock,
+  PencilLine,
+  Plus,
+  RotateCcw,
+  SlidersHorizontal,
+  Trash2,
+} from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
 import { StockList } from '@/components/StockList';
 import { ButtonLink } from '@/components/ui/Button';
 import { collectAlerts, lowStock } from '@/lib/expiry';
-import { loadStock, removeStock, resetStock } from '@/lib/storage';
+import {
+  loadCollapsed,
+  loadStock,
+  removeStock,
+  resetStock,
+  saveCollapsed,
+} from '@/lib/storage';
 import { SEED_STOCK } from '@/lib/seed';
 import { overlaySymbolPath } from '@/lib/ui';
 import type { ExpiryAlert, StockItem } from '@/lib/types';
@@ -22,6 +37,8 @@ export default function MyStockPage() {
    */
   const [alerts, setAlerts] = useState<ExpiryAlert[]>([]);
   const [low, setLow] = useState<StockItem[]>([]);
+  /** 閉じているカテゴリ。件数が増えても一覧をたどれるようにする */
+  const [collapsed, setCollapsed] = useState<string[]>([]);
 
   const refresh = useCallback((items: StockItem[]) => {
     setStock(items);
@@ -31,11 +48,28 @@ export default function MyStockPage() {
 
   useEffect(() => {
     refresh(loadStock());
+    setCollapsed(loadCollapsed());
     const demo = new URLSearchParams(window.location.search).get('demo');
     if (demo) setScanHref(`/scan?demo=${encodeURIComponent(demo)}`);
   }, [refresh]);
 
   const onRemove = useCallback((id: string) => refresh(removeStock(id)), [refresh]);
+
+  const onToggleCategory = useCallback((category: string) => {
+    setCollapsed((prev) => {
+      const next = prev.includes(category)
+        ? prev.filter((c) => c !== category)
+        : [...prev, category];
+      saveCollapsed(next);
+      return next;
+    });
+  }, []);
+
+  const onReset = useCallback(() => {
+    refresh(resetStock());
+    setCollapsed([]);
+  }, [refresh]);
+
   const symbol = overlaySymbolPath();
 
   return (
@@ -59,8 +93,14 @@ export default function MyStockPage() {
         </div>
         <button
           onClick={() => setEditing((v) => !v)}
-          className="mt-1 rounded-lg px-2 py-1 text-[14px] font-medium text-muted transition-colors active:text-ink"
+          aria-pressed={editing}
+          className={`mt-1.5 flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-semibold transition-colors active:scale-95 ${
+            editing
+              ? 'bg-brand text-white shadow-e2'
+              : 'border border-line bg-surface text-muted shadow-e1'
+          }`}
         >
+          {editing ? <Check size={14} strokeWidth={2.6} /> : <SlidersHorizontal size={14} strokeWidth={2.4} />}
           {editing ? '完了' : '編集'}
         </button>
       </header>
@@ -91,6 +131,14 @@ export default function MyStockPage() {
         </section>
       )}
 
+      {editing && (
+        <p className="mt-6 rounded-2xl border border-line bg-surface px-4 py-3 text-[12.5px] leading-relaxed text-muted shadow-e1">
+          各項目の <PencilLine size={12} className="inline align-[-1px]" strokeWidth={2.4} /> で内容を編集、
+          <Trash2 size={12} className="inline align-[-1px] text-red-600" strokeWidth={2.4} /> で削除できます。
+          カテゴリ名をタップすると開閉します。
+        </p>
+      )}
+
       <div className="mt-7 flex gap-2">
         <ButtonLink href="/stock/new" variant="secondary" className="py-3 text-[14px]">
           <Plus size={16} strokeWidth={2.4} />
@@ -98,7 +146,7 @@ export default function MyStockPage() {
         </ButtonLink>
         {editing && (
           <button
-            onClick={() => refresh(resetStock())}
+            onClick={onReset}
             aria-label="シードデータに戻す"
             className="flex w-14 shrink-0 items-center justify-center rounded-2xl border border-line bg-surface text-muted shadow-e1 transition-transform active:scale-95"
           >
@@ -108,7 +156,14 @@ export default function MyStockPage() {
       </div>
 
       <div className="mt-8">
-        <StockList items={stock} alerts={alerts} editing={editing} onRemove={onRemove} />
+        <StockList
+          items={stock}
+          alerts={alerts}
+          editing={editing}
+          collapsed={collapsed}
+          onToggleCategory={onToggleCategory}
+          onRemove={onRemove}
+        />
       </div>
 
       <BottomNav scanHref={scanHref} />
