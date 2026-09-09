@@ -62,11 +62,12 @@ export function StockList({
                 <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden />
               )}
               <span className="flex-1" />
+              {/* 閉じているときは横向き、開くと下向き。開閉の向きと矢印の向きを揃える */}
               <ChevronDown
                 size={16}
                 strokeWidth={2.2}
                 className={`text-faint transition-transform duration-300 ${
-                  open ? 'rotate-180' : ''
+                  open ? '' : '-rotate-90'
                 }`}
               />
             </button>
