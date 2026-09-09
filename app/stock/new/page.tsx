@@ -166,6 +166,10 @@ export default function NewStockPage() {
       isPrescription: category === '処方薬' || category === '処方薬(外用)',
       openedAt: openedAt || undefined,
       routine: routine || undefined,
+      // 洗う⇄塗るを移した項目が、移した先で手動の並びに割り込まないようにする
+      ...(editId && loadStock().find((i) => i.id === editId)?.routine !== (routine || undefined)
+        ? { routineOrder: undefined }
+        : {}),
       dose:
         oral && doseTimes.length > 0
           ? {

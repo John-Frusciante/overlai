@@ -45,6 +45,11 @@ export function sanitizeStock(input: unknown): StockItem[] | null {
       routine:
         item.routine === 'inbath' || item.routine === 'outbath' ? item.routine : undefined,
       dose: sanitizeDose(item.dose),
+      // 順序はサーバー側で組み直すので、手で決めた並びもここを通す必要がある
+      routineOrder:
+        typeof item.routineOrder === 'number' && Number.isFinite(item.routineOrder)
+          ? item.routineOrder
+          : undefined,
     };
   });
 }

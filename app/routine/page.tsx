@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, Check, ChevronRight, Sparkles } from 'lucide-react';
+import { AlertTriangle, ArrowDown, ArrowUp, Check, ChevronRight, RotateCcw, Sparkles } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { CleanserMatchRow, ProfilePrompt } from '@/components/CleanserMatchCard';
-import { buildRoutine, findConflicts } from '@/lib/routine';
+import { buildRoutine, findConflicts, isReordered } from '@/lib/routine';
 import { matchCleanser } from '@/lib/cleanser';
 import {
   doseKey,
@@ -15,6 +15,8 @@ import {
   loadRecentDoseLogs,
   loadRoutineAdvice,
   loadStock,
+  reorderRoutine,
+  resetRoutineOrder,
   routineSignature,
   saveRoutineAdvice,
   toggleDose,
@@ -28,6 +30,7 @@ import type {
   Profile,
   RoutineAdvice,
   RoutineAdviceResponse,
+  RoutineKind,
   RoutineStep,
   StockItem,
 } from '@/lib/types';
@@ -51,6 +54,8 @@ export default function RoutinePage() {
 
   const [advice, setAdvice] = useState<RoutineAdvice | null>(null);
   const [advising, setAdvising] = useState(false);
+  /** 並べ替え中の区分。null なら通常表示 */
+  const [reordering, setReordering] = useState<RoutineKind | null>(null);
 
   useEffect(() => {
     setStock(loadStock());
@@ -58,6 +63,24 @@ export default function RoutinePage() {
     setProfile(loadProfile());
     setHistory(loadRecentDoseLogs(7));
     setLoaded(true);
+  }, []);
+
+  /**
+   * ステップを1つ上下に動かす。
+   *
+   * その区分の全件に順番を書き込むので、以降はこの並びが優先される
+   * （剤形の重みは「まだ動かしていないもの」の並びに使われ続ける）。
+   */
+  const onMove = useCallback((steps: RoutineStep[], from: number, to: number) => {
+    if (to < 0 || to >= steps.length) return;
+    const ids = steps.map((s) => s.item.id);
+    const [moved] = ids.splice(from, 1);
+    ids.splice(to, 0, moved);
+    setStock(reorderRoutine(ids));
+  }, []);
+
+  const onResetOrder = useCallback((kind: RoutineKind) => {
+    setStock(resetRoutineOrder(kind));
   }, []);
 
   const onToggle = useCallback((item: StockItem, time: DoseTime) => {
@@ -257,6 +280,10 @@ export default function RoutinePage() {
         steps={inbath}
         profile={profile}
         tips={tips}
+        editing={reordering === 'inbath'}
+        onEdit={() => setReordering(reordering === 'inbath' ? null : 'inbath')}
+        onMove={(from, to) => onMove(inbath, from, to)}
+        onReset={() => onResetOrder('inbath')}
       />
 
       {/* 洗浄基剤 × 肌質（企画書 §6-13）。未設定なら設定へ誘導する */}
@@ -268,6 +295,10 @@ export default function RoutinePage() {
         steps={outbath}
         profile={profile}
         tips={tips}
+        editing={reordering === 'outbath'}
+        onEdit={() => setReordering(reordering === 'outbath' ? null : 'outbath')}
+        onMove={(from, to) => onMove(outbath, from, to)}
+        onReset={() => onResetOrder('outbath')}
       />
 
       {/* 成分バッティング警告 */}
@@ -392,6 +423,10 @@ function RoutineSection({
   steps,
   profile,
   tips,
+  editing,
+  onEdit,
+  onMove,
+  onReset,
 }: {
   title: string;
   caption: string;
@@ -399,12 +434,47 @@ function RoutineSection({
   profile: Profile;
   /** AIが書いたステップごとの一言。item id で引く */
   tips: Map<string, string>;
+  editing: boolean;
+  onEdit: () => void;
+  onMove: (from: number, to: number) => void;
+  onReset: () => void;
 }) {
   if (steps.length === 0) return null;
 
+  const custom = isReordered(steps);
+
   return (
     <section className="mt-9">
-      <SectionHeader title={title} caption={caption} />
+      <SectionHeader
+        title={title}
+        caption={
+          custom
+            ? '自分で並べた順です。各ステップの説明は剤形にもとづく一般的な目安です'
+            : caption
+        }
+        right={
+          steps.length > 1 && (
+            <button
+              onClick={onEdit}
+              className={`rounded-full px-3 py-1.5 text-[12px] font-semibold transition-colors ${
+                editing ? 'bg-brand text-white' : 'border border-line bg-surface text-muted'
+              }`}
+            >
+              {editing ? '完了' : '並べ替え'}
+            </button>
+          )
+        }
+      />
+
+      {editing && custom && (
+        <button
+          onClick={onReset}
+          className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-line-strong py-2.5 text-[12.5px] font-medium text-muted transition-transform active:scale-[0.99]"
+        >
+          <RotateCcw size={13} strokeWidth={2.2} />
+          剤形どおりの順に戻す
+        </button>
+      )}
 
       <ol className="stagger mt-3.5">
         {steps.map((s, idx) => {
@@ -450,6 +520,26 @@ function RoutineSection({
                 <p className="mt-1 pl-9 text-[12px] text-faint">{s.item.form}</p>
                 {s.note && (
                   <p className="mt-1.5 pl-9 text-[13px] leading-relaxed text-muted">{s.note}</p>
+                )}
+                {editing && (
+                  <div className="mt-2 flex gap-1.5 pl-9">
+                    <button
+                      onClick={() => onMove(idx, idx - 1)}
+                      disabled={idx === 0}
+                      aria-label={`${s.item.name} を上へ`}
+                      className="flex h-8 w-10 items-center justify-center rounded-lg border border-line bg-surface text-muted transition-transform active:scale-95 disabled:opacity-30"
+                    >
+                      <ArrowUp size={15} strokeWidth={2.2} />
+                    </button>
+                    <button
+                      onClick={() => onMove(idx, idx + 1)}
+                      disabled={last}
+                      aria-label={`${s.item.name} を下へ`}
+                      className="flex h-8 w-10 items-center justify-center rounded-lg border border-line bg-surface text-muted transition-transform active:scale-95 disabled:opacity-30"
+                    >
+                      <ArrowDown size={15} strokeWidth={2.2} />
+                    </button>
+                  </div>
                 )}
                 {tip && (
                   <p className="mt-1.5 flex gap-1.5 pl-9 text-[13px] leading-relaxed text-ink/80">

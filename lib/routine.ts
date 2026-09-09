@@ -53,18 +53,36 @@ const INBATH_NOTE: Partial<Record<ItemForm, string>> = {
   ボディソープ: '最後に体を洗い、トリートメントの残りを流します',
 };
 
+/**
+ * 並べ替えのキー。
+ *
+ * ユーザーが手で動かしたものが先に来て、まだ動かしていないものは
+ * 剤形の重み順で後ろに続く。あとから追加したアイテムが、手で決めた並びの
+ * 途中に割り込まないようにするための構造。
+ */
+function sortKey(item: StockItem, table: Partial<Record<ItemForm, number>>): number {
+  return item.routineOrder ?? 1000 + (table[item.form] ?? 999);
+}
+
 export function buildRoutine(stock: StockItem[], kind: 'inbath' | 'outbath'): RoutineStep[] {
   const table = kind === 'inbath' ? INBATH_ORDER : OUTBATH_ORDER;
   const notes = kind === 'inbath' ? INBATH_NOTE : OUTBATH_NOTE;
 
   return stock
     .filter((i) => i.routine === kind && table[i.form] !== undefined)
-    .sort((a, b) => (table[a.form] ?? 999) - (table[b.form] ?? 999))
+    .sort((a, b) => sortKey(a, table) - sortKey(b, table))
     .map((item, idx) => ({
       order: idx + 1,
       item,
       note: notes[item.form] ?? '',
+      // 剤形どおりでない位置に動かされていれば、説明は「一般的な目安」に留める
+      reordered: item.routineOrder !== undefined,
     }));
+}
+
+/** その区分に手で決めた並びがあるか */
+export function isReordered(steps: RoutineStep[]): boolean {
+  return steps.some((s) => s.reordered);
 }
 
 /**

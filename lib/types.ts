@@ -71,6 +71,11 @@ export interface StockItem {
   expiresAt?: string;
   /** 洗う／塗るルーティンの対象か */
   routine?: RoutineKind;
+  /**
+   * ユーザーが手で決めた並び順。未設定なら剤形の重み（lib/routine.ts）で並ぶ。
+   * 手で動かしたときだけ書き込み、「もとに戻す」で消える。
+   */
+  routineOrder?: number;
 }
 
 export type ProductCategory = '市販薬' | 'サプリ' | 'スキンケア' | 'ヘアケア' | '不明';
@@ -158,6 +163,8 @@ export interface RoutineStep {
   item: StockItem;
   /** なぜこの順序なのかの説明 */
   note: string;
+  /** ユーザーが手で位置を決めたか。説明の見せ方が変わる */
+  reordered: boolean;
 }
 
 /**

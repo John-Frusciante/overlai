@@ -1,4 +1,4 @@
-import type { DoseLog, DoseTime, Profile, RoutineAdvice, StockItem } from './types';
+import type { DoseLog, DoseTime, Profile, RoutineAdvice, RoutineKind, StockItem } from './types';
 import { SEED_STOCK } from './seed';
 
 /**
@@ -210,7 +210,10 @@ interface CachedAdvice {
 export function routineSignature(stock: StockItem[], profile: Profile): string {
   const items = stock
     .filter((i) => i.routine || (i.dose && i.dose.times.length > 0))
-    .map((i) => `${i.id}:${i.name}:${i.form}:${i.routine ?? ''}:${i.ingredients.join(',')}`)
+    .map(
+      (i) =>
+        `${i.id}:${i.name}:${i.form}:${i.routine ?? ''}:${i.routineOrder ?? ''}:${i.ingredients.join(',')}`,
+    )
     .sort()
     .join('|');
   return `${profile.skin ?? ''}/${profile.scalp ?? ''}#${items}`;
@@ -223,4 +226,30 @@ export function loadRoutineAdvice(signature: string): RoutineAdvice | null {
 
 export function saveRoutineAdvice(signature: string, advice: RoutineAdvice): void {
   write(ADVICE_KEY, { signature, advice });
+}
+
+// ── ルーティンの並べ替え ───────────────────────────────────────────────
+
+/**
+ * その区分の並びを `ids` の順に確定させる。
+ *
+ * 動かした1件だけでなく、その区分の全件に順番を書き込む。
+ * 一部だけ手動にすると、剤形の重みと混ざって直感に反する並びになるため。
+ */
+export function reorderRoutine(ids: string[]): StockItem[] {
+  const next = loadStock().map((item) => {
+    const index = ids.indexOf(item.id);
+    return index === -1 ? item : { ...item, routineOrder: index };
+  });
+  saveStock(next);
+  return next;
+}
+
+/** 手で決めた並びを捨てて、剤形の順に戻す */
+export function resetRoutineOrder(kind: RoutineKind): StockItem[] {
+  const next = loadStock().map((item) =>
+    item.routine === kind ? { ...item, routineOrder: undefined } : item,
+  );
+  saveStock(next);
+  return next;
 }
