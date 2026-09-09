@@ -93,7 +93,27 @@ export default function RoutinePage() {
         <ChevronRight size={17} className="shrink-0 text-faint" />
       </Link>
 
-      {/* 服薬 */}
+      {/* 服薬。1件も設定がないと何の画面か分からないため、空でも見出しと導線は出す */}
+      {meds.length === 0 && (
+        <section className="mt-9">
+          <SectionHeader title="今日のお薬" />
+          <Link
+            href="/stock/new"
+            className="mt-2.5 flex items-center gap-3 rounded-2xl border border-dashed border-line-strong bg-surface px-4 py-4 transition-transform active:scale-[0.99]"
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block text-[14px] font-semibold text-ink">
+                飲むタイミングを設定する
+              </span>
+              <span className="mt-0.5 block text-[12.5px] leading-relaxed text-faint">
+                ストックに朝・昼・夜を設定すると、ここに並んで記録を付けられます
+              </span>
+            </span>
+            <ChevronRight size={17} className="shrink-0 text-faint" />
+          </Link>
+        </section>
+      )}
+
       {meds.length > 0 && (
         <section className="mt-9">
           <SectionHeader
@@ -119,7 +139,8 @@ export default function RoutinePage() {
                   )}
                 </div>
                 <p className="mt-1 text-[12.5px] tabular-nums text-faint">
-                  1回{item.dose!.perTime}錠
+                  1回{item.dose!.perTime}
+                  {item.remaining?.unit ?? '錠'}
                   {item.remaining && ` ／ 残${item.remaining.count}${item.remaining.unit}`}
                 </p>
 

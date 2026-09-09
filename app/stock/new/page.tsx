@@ -13,7 +13,14 @@ import {
 } from '@/lib/storage';
 import { toItemForm, toStockCategory } from '@/lib/mapping';
 import { BUILTIN_CATEGORIES, MAX_CATEGORY_LENGTH, validateCategoryName } from '@/lib/categories';
-import type { ApiErrorBody, ExtractionResult, ItemForm, RoutineKind, StockCategory } from '@/lib/types';
+import type {
+  ApiErrorBody,
+  DoseTime,
+  ExtractionResult,
+  ItemForm,
+  RoutineKind,
+  StockCategory,
+} from '@/lib/types';
 
 /**
  * 在庫の追加・編集 — 企画書 §4 ①「登録は3経路」のうちカメラ読み取りと手入力
@@ -29,6 +36,19 @@ const FORMS: ItemForm[] = [
   'クリーム', '軟膏', 'オイル', 'シャンプー', 'トリートメント', '洗顔', 'ボディソープ', 'その他',
 ];
 
+const DOSE_TIMES: DoseTime[] = ['朝', '昼', '夜'];
+
+/**
+ * 服薬の設定欄を出すかどうか。
+ *
+ * 剤形だけで判断すると、粉薬やシロップを「その他」で登録した人に欄が出ない。
+ * 逆にカテゴリだけで見ると外用の処方薬にも出てしまうため、両方を見る。
+ */
+function takesDose(form: ItemForm, category: StockCategory): boolean {
+  if (form === '錠剤' || form === 'カプセル') return true;
+  return category === '処方薬' || category === '市販薬・サプリ';
+}
+
 export default function NewStockPage() {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -40,6 +60,12 @@ export default function NewStockPage() {
   const [status, setStatus] = useState('');
   const [openedAt, setOpenedAt] = useState('');
   const [routine, setRoutine] = useState<RoutineKind | ''>('');
+
+  /** 服薬設定。空のタイミングは「今日のお薬に出さない」を意味する */
+  const [doseTimes, setDoseTimes] = useState<DoseTime[]>([]);
+  const [perTime, setPerTime] = useState('1');
+  const [remainingCount, setRemainingCount] = useState('');
+  const [remainingUnit, setRemainingUnit] = useState('錠');
 
   /** ユーザーが追加したカテゴリ。この画面から新規作成もできる */
   const [customCategories, setCustomCategories] = useState<string[]>([]);
@@ -84,6 +110,10 @@ export default function NewStockPage() {
     setStatus(item.status);
     setOpenedAt(item.openedAt ?? '');
     setRoutine(item.routine ?? '');
+    setDoseTimes(item.dose?.times ?? []);
+    setPerTime(String(item.dose?.perTime ?? 1));
+    setRemainingCount(item.remaining ? String(item.remaining.count) : '');
+    setRemainingUnit(item.remaining?.unit ?? '錠');
   }, []);
 
   const readFromImage = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,6 +148,12 @@ export default function NewStockPage() {
 
   const save = useCallback(() => {
     if (!name.trim()) return;
+
+    // 内服として扱わない剤形・カテゴリに変えたときは、残っていた服薬設定を落とす。
+    // undefined を渡すと updateStock のマージで消える（lib/storage.ts）
+    const oral = takesDose(form, category);
+    const count = Number(remainingCount);
+
     const values = {
       name: name.trim(),
       category,
@@ -130,11 +166,37 @@ export default function NewStockPage() {
       isPrescription: category === '処方薬' || category === '処方薬(外用)',
       openedAt: openedAt || undefined,
       routine: routine || undefined,
+      dose:
+        oral && doseTimes.length > 0
+          ? {
+              // トグルした順ではなく朝→昼→夜で持つ
+              times: DOSE_TIMES.filter((t) => doseTimes.includes(t)),
+              perTime: Math.max(1, Math.round(Number(perTime) || 1)),
+            }
+          : undefined,
+      remaining:
+        oral && remainingCount.trim() !== '' && Number.isFinite(count) && count >= 0
+          ? { count: Math.round(count), unit: remainingUnit.trim() || '錠' }
+          : undefined,
     };
     if (editId) updateStock(editId, values);
     else addStock(values);
     router.push('/');
-  }, [editId, name, category, form, ingredients, status, openedAt, routine, router]);
+  }, [
+    editId,
+    name,
+    category,
+    form,
+    ingredients,
+    status,
+    openedAt,
+    routine,
+    doseTimes,
+    perTime,
+    remainingCount,
+    remainingUnit,
+    router,
+  ]);
 
   return (
     <main className="mx-auto min-h-dvh max-w-md px-4 pb-32 pt-safe">
@@ -313,6 +375,76 @@ export default function NewStockPage() {
             labels={{ '': '使わない', inbath: 'お風呂で洗う', outbath: 'お風呂上がりに塗る' }}
           />
         </Field>
+
+        {/* 服薬設定 — 飲むものにだけ出す */}
+        {takesDose(form, category) && (
+          <div className="space-y-5 rounded-2xl border border-line bg-surface-sunken/60 p-4">
+            <Field label="飲むタイミング（任意）">
+              <div className="flex flex-wrap gap-1.5">
+                {DOSE_TIMES.map((t) => {
+                  const on = doseTimes.includes(t);
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() =>
+                        setDoseTimes(
+                          on ? doseTimes.filter((x) => x !== t) : [...doseTimes, t],
+                        )
+                      }
+                      className={`rounded-full px-4 py-2 text-[13.5px] font-medium transition-colors ${
+                        on
+                          ? 'bg-brand text-white'
+                          : 'border border-line bg-surface text-muted active:bg-surface-sunken'
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-1.5 px-1 text-[12.5px] text-faint">
+                選ぶと「今日のルーティン」に並び、飲んだ記録を付けられます。
+              </p>
+            </Field>
+
+            {doseTimes.length > 0 && (
+              <Field label="1回に飲む量">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    value={perTime}
+                    onChange={(e) => setPerTime(e.target.value)}
+                    className="w-24 rounded-2xl border border-line bg-surface px-3.5 py-3 text-[15px] tabular-nums shadow-e1 outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(30,42,69,0.07)]"
+                  />
+                  <span className="text-[14px] text-muted">{remainingUnit.trim() || '錠'}</span>
+                </div>
+              </Field>
+            )}
+
+            <Field label="残量（任意・飲んだ記録に合わせて減ります）">
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  value={remainingCount}
+                  onChange={(e) => setRemainingCount(e.target.value)}
+                  placeholder="28"
+                  className="w-24 rounded-2xl border border-line bg-surface px-3.5 py-3 text-[15px] tabular-nums shadow-e1 outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(30,42,69,0.07)]"
+                />
+                <input
+                  value={remainingUnit}
+                  onChange={(e) => setRemainingUnit(e.target.value)}
+                  aria-label="残量の単位"
+                  className="w-20 rounded-2xl border border-line bg-surface px-3.5 py-3 text-[15px] shadow-e1 outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(30,42,69,0.07)]"
+                />
+              </div>
+            </Field>
+          </div>
+        )}
       </div>
 
       <div className="fixed inset-x-0 bottom-0 mx-auto max-w-md px-4 pb-safe">
