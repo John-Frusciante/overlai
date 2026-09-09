@@ -51,7 +51,7 @@ graph TB
         API -.キー未設定時.-> MOCK
     end
 
-    subgraph anthropic["Anthropic API"]
+    subgraph providers["AIプロバイダ（lib/llm.ts が優先順に試す）"]
         S1["ステップ1<br/>成分抽出 Vision"]
         S2["ステップ2<br/>在庫照合判定"]
     end
@@ -60,10 +60,10 @@ graph TB
     API -->|"キー設定時"| S1
     S1 --> S2
     S2 --> API
-    API -->|"extraction + judgement"| P3
+    API -->|"extraction + judgement<br/>+ provider"| P3
 
     style MOCK stroke-dasharray: 5 5
-    style anthropic stroke-dasharray: 5 5
+    style providers stroke-dasharray: 5 5
 ```
 
 **サーバーは状態を持たない。** 在庫はリクエストごとにクライアントから送られる。
@@ -224,7 +224,8 @@ lib/
 sequenceDiagram
     participant C as クライアント
     participant R as Route Handler
-    participant A as Anthropic API
+    participant A as Azure プロキシ（第一候補）
+    participant G as Gemini（保険）
 
     C->>R: POST /api/analyze<br/>{image, stock}
     Note over R: parseDataUrl / sanitizeStock<br/>で入力を検証
@@ -232,9 +233,12 @@ sequenceDiagram
     A-->>R: ExtractionResult
     Note over R: ingredients が空なら<br/>422 で打ち切り
     R->>A: ステップ2: 抽出結果 + 在庫全件
-    A-->>R: Judgement
+    A--xR: 失敗（キー失効・レート制限・5xx）
+    Note over R,G: 第一候補が成功すれば<br/>ここから下は呼ばれない
+    R->>G: 同じ処理をやり直す
+    G-->>R: Judgement
     Note over R: consult_recommended を<br/>サーバー側で強制上書き
-    R-->>C: {extraction, judgement, elapsed_ms}
+    R-->>C: {extraction, judgement, elapsed_ms,<br/>provider, fell_back}
 ```
 
 ### 4.3 プロバイダ抽象（`lib/llm.ts`）

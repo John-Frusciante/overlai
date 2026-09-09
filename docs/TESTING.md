@@ -110,9 +110,44 @@
 
 ---
 
-## D. 障害時のフォールバック確認（5分）
+## D. 障害時のフォールバック確認（10分）
 
-デモ当日にAPIが落ちた場合の逃げ道が動くか。
+逃げ道は2段ある。**AI経路の切り替え**（自動）と、**デモ用の固定応答**（手動）。
+
+### D-1. プロバイダのフォールバック
+
+学校配布のプロキシが止まったとき、Gemini に落ちて処理が続くか。本番では Azure が生きている限り Gemini は呼ばれないので、**ローカルでキーを壊して確認する**。
+
+```bash
+# Azure を無効にして Gemini だけで起動する
+AZURE_PROXY_KEY= npm run dev
+
+# 成分表示の画像を送る（実物の写真を base64 にして payload.json に入れておく）
+curl -s -X POST http://localhost:3000/api/analyze \
+  -H 'Content-Type: application/json' --data-binary @payload.json
+```
+
+`provider` が `gemini` になり、抽出と判定が両方返れば成功（実測 13.9〜30秒）。
+
+チェーンが順に落ちること自体を見るなら、**両方を無効なキーにして**ログを読む。
+
+```bash
+AZURE_PROXY_KEY=invalid GEMINI_API_KEY=invalid npm run dev
+```
+
+```
+[extract] azure 失敗 (auth) Error: 403 ...
+[extract] gemini 失敗 (auth) Error [ApiError]: {"error":{"code":400,...
+[analyze] 認証エラー: APIキーを確認してください
+```
+
+この順に出れば、チェーンは意図どおり回っている。
+
+> **注意**: Gemini の無料枠は 5 RPM。`curl --retry` を付けるとHTTPエラーにもリトライがかかり、数回で枠を使い切る。**リトライは付けずに1回ずつ叩くこと。**
+
+### D-2. デモ用の固定応答
+
+デモ当日にどのAIも使えない場合の最後の逃げ道。
 
 1. `https://overlai-delta.vercel.app/?demo=red` を開く
 2. スキャン → 何を撮っても🔴が出る（AIを呼ばず固定応答が返る）
@@ -178,6 +213,9 @@
 | 在庫を追加してから判定 | ✅ 実機で確認（🔵→🟡） |
 | プロキシの利用条件 | ✅ 先生より無条件で利用可の回答 |
 | Anthropic Claude 経路 | キー入手時に確認（[#20](https://github.com/John-Frusciante/overlai/issues/20)） |
+| Google Gemini 経路 | ✅ ローカルで確認（抽出→判定が13.9秒で完走。成分名の誤読なし） |
+| プロバイダのフォールバック | ✅ ローカルで確認（azure → gemini → 例外の順に落ちる） |
+| 本番での Gemini 発火 | **確認不可** — Azure が動く限り呼ばれない作りのため |
 
 ### 本選に進んだ場合に足すテスト
 

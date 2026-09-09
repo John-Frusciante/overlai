@@ -30,14 +30,17 @@ APIキーは**なくても動く**。未設定ならモックモードで起動�
 
 ## 3. どのAIで動くか
 
-`lib/llm.ts` の `activeProvider()` が環境変数から決める。**切り替えにコード変更は不要。**
+`lib/llm.ts` の `providerChain()` が環境変数から**優先順のリスト**を作る。**切り替えにコード変更は不要。**
 
 ```
-OVERLAI_MOCK=1     → モック（AIを呼ばない）
+OVERLAI_MOCK=1     → モック（AIを呼ばない。以降は評価しない）
 ANTHROPIC_API_KEY  → Anthropic Claude (claude-opus-5)
-AZURE_PROXY_KEY    → Azure OpenAI 互換プロキシ (gpt-5.1)  ← 現在これ
+AZURE_PROXY_KEY    → Azure OpenAI 互換プロキシ (gpt-5.1)  ← 本番はこれが先頭
+GEMINI_API_KEY     → Google Gemini (gemini-3.5-flash / gemini-3.6-flash)
 いずれも無し        → モック
 ```
+
+キーがあるものを上から順に使い、**失敗したら次に落ちる**。本番は学校配布のプロキシ1本に依存していて、クォータ超過やキー失効が起きた瞬間にAI機能が全部止まる。Gemini はその保険で、狙いは品質ではなく独立した事業者のクォータに乗ること。
 
 `.env.local` の例：
 
@@ -45,9 +48,23 @@ AZURE_PROXY_KEY    → Azure OpenAI 互換プロキシ (gpt-5.1)  ← 現在こ�
 AZURE_PROXY_KEY=...
 AZURE_PROXY_ENDPOINT=https://.../
 AZURE_PROXY_API_VERSION=2025-04-01-preview
+
+# 保険。Azure が落ちたときだけ使われる
+GEMINI_API_KEY=...
 ```
 
-レスポンスの `provider` フィールドで、いまどれで動いたかが分かる。
+レスポンスの `provider` フィールドで**実際にどれが答えたか**が分かる。`fell_back` が `true` なら第一候補が失敗している。
+
+### 時間の区切り
+
+`maxDuration` は60秒で、超えると Vercel が関数ごと打ち切る。打ち切られるとユーザーには何も返らないので、フォールバックはその内側で完結させる。
+
+| 定数 | 値 | 意味 |
+| :--- | :--- | :--- |
+| `PROVIDER_TIMEOUT_MS` | 20秒 | 1プロバイダあたりの待ち時間 |
+| `CHAIN_BUDGET_MS` | 24秒 | 1ステップ（抽出／判定）でチェーン全体に使える時間 |
+
+**SDK 既定の60秒のままにしないこと。** 先頭のプロバイダが「エラーを返す」のではなく「応答しない」障害のとき、`maxDuration` と同時に尽きて次を試せなくなる（詳細は [ARCHITECTURE.md §7](ARCHITECTURE.md)）。
 
 モック時の判定シナリオは `?demo=yellow|red|blue` で選ぶ。マイストックからスキャン画面へ引き継がれるため、撮影の流れを止めずにシナリオを固定できる。
 
@@ -99,7 +116,7 @@ reasons: raw.reasons.filter((r) => r.ingredient.trim().length > 0),
 
 ### 5.3 判定側の設定を弱めない
 
-判定（ステップ2）の品質がそのまま評価対象になる。Anthropic 経路は `effort: 'high'`、Azure 経路は `gpt-5.1`。レイテンシを削るなら**抽出側だけ**を下げる。
+判定（ステップ2）の品質がそのまま評価対象になる。Anthropic 経路は `effort: 'high'`、Azure 経路は `gpt-5.1`、Gemini 経路は `gemini-3.6-flash`。レイテンシを削るなら**抽出側だけ**を下げる。フォールバック中でも同じで、保険だからといって判定を落とさない。
 
 **抽出側も安いモデルに落とさない。** gpt-4o-mini は「イブプロフェン」を「いブプロフェン」と誤読することがあり、成分名がズレると在庫と照合できない。
 
@@ -107,8 +124,9 @@ reasons: raw.reasons.filter((r) => r.ingredient.trim().length > 0),
 
 - Anthropic: `max_tokens: 16000`。**thinking トークンもここから消費される**
 - Azure の gpt-5 系: **`max_tokens` は使えない。`max_completion_tokens` を指定する**
+- Gemini: `maxOutputTokens` を**指定しない**（モデル既定の上限に任せる）
 
-Anthropic 経路で `thinking` を明示的に無効化しないこと（ツール呼び出しや内部タグが本文に混入する既知の失敗モードがある）。
+Anthropic 経路で `thinking` を明示的に無効化しないこと（ツール呼び出しや内部タグが本文に混入する既知の失敗モードがある）。Gemini 経路も同じ理由で思考を止めにいかない。
 
 ### 5.5 `localStorage` をコンポーネントから直接呼ばない
 
@@ -116,11 +134,31 @@ Anthropic 経路で `thinking` を明示的に無効化しないこと（ツー�
 
 ### 5.6 APIキーをクライアントに出さない
 
-`ANTHROPIC_API_KEY` は Route Handler でのみ読む。`NEXT_PUBLIC_` を付けない。
+`ANTHROPIC_API_KEY` も `AZURE_PROXY_KEY` も `GEMINI_API_KEY` も Route Handler でのみ読む。`NEXT_PUBLIC_` を付けない。
 
 ### 5.7 断定表現を使わない
 
 医療に隣接するため、判定文言は「〜の可能性があります」で統一する。診断・治療方針・用法用量の指示を行わない。相談導線は**全判定色で**常設する（🔴だけではない）。
+
+### 5.8 プロバイダのフォールバックを単一経路に戻さない
+
+本番は学校配布のプロキシ1本で動いており、その停止・失効がそのまま機能停止になる。残量を確認する手段も無く、止まる瞬間は予告なく来る。`providerChain()` が複数を並べているのは、**相関しない障害要因を増やす**ためであって、冗長化のための冗長化ではない。
+
+同じ理由で、フォールバック先を同じ事業者の別モデルにしても意味がない。片方が止まったときにもう片方も止まるなら保険にならない。
+
+### 5.9 Gemini 経路で `finishReason` のチェックを外さない
+
+```ts
+// lib/llm.ts
+const finishReason = String(res.candidates?.[0]?.finishReason ?? 'STOP');
+if (finishReason !== 'STOP') {
+  throw new Error(`Gemini が応答を完了しませんでした (finishReason: ${finishReason})`);
+}
+```
+
+安全フィルタや出力上限で切れた応答は、途中まで正しく見える JSON を返してくる。**医薬品の話題は安全フィルタに触れうる**ので、これを成功として扱うと壊れた判定が黙って表示される。失敗として次のプロバイダに落とすほうが安全。
+
+Gemini 経路にはもう一つ、他の2経路に無い事情がある。`zodOutputFormat` / `zodResponseFormat` にあたるヘルパーが SDK に無いため、`geminiJsonSchema()` が zod を JSON Schema に落として、Gemini が受け付けない語彙（`$schema`、`type: [A, null]` の配列形式）を削っている。**スキーマを変えたらここが通るか確認する。**
 
 ---
 
