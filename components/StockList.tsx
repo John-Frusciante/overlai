@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronDown, ChevronRight, PencilLine, Trash2 } from 'lucide-react';
+import { ChevronDown, MoreHorizontal, PencilLine, Trash2 } from 'lucide-react';
 import { CATEGORY_STYLE, FALLBACK_ICON } from '@/lib/ui';
 import { CATEGORY_ORDER } from '@/lib/seed';
 import type { ExpiryAlert, StockItem } from '@/lib/types';
@@ -145,11 +145,13 @@ export function StockList({
                           </p>
                         </div>
 
+                        {/* タップで操作できることを示す。カテゴリ見出しの「開く」矢印と
+                            同じ形にすると意味が混ざるため、こちらは「…」にする */}
                         {!editing && (
-                          <ChevronRight
-                            size={16}
+                          <MoreHorizontal
+                            size={17}
                             strokeWidth={2.2}
-                            className="mt-1 shrink-0 text-faint/60"
+                            className="shrink-0 self-center text-faint/70"
                             aria-hidden
                           />
                         )}
