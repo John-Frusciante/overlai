@@ -1,4 +1,4 @@
-import type { AnalyzeResponse, ExtractionResult, Signal } from './types';
+import type { AnalyzeResponse, ExtractionResult, RoutineAdvice, Signal } from './types';
 
 /**
  * モック判定 — APIキーなしでデモを成立させるための固定応答
@@ -105,4 +105,25 @@ export const MOCK_EXTRACTION: ExtractionResult = {
   form: '化粧水',
   ingredients: ['水', 'BG', 'アスコルビルグルコシド', 'グリセリン', 'クエン酸'],
   confidence: 'high',
+};
+
+/**
+ * ルーティン解説のモック — シードデータ（lib/seed.ts）に対応する固定文言
+ *
+ * ⚠ これはAIを呼んでいない。APIキーが無いときと OVERLAI_MOCK=1 のときだけ使う。
+ * 肌質・頭皮の設定は反映されない（本物のAIは反映する）。
+ */
+export const MOCK_ROUTINE_ADVICE: RoutineAdvice = {
+  overall:
+    '処方のローションと軟膏が入っているため、塗る順番や間隔について指示を受けている場合は、医師・薬剤師の指示が優先されます。洗浄料はどちらもおだやかな系統で揃っているので、洗いすぎになりにくい組み合わせです。',
+  steps: [
+    { item_id: 'stk-007', tip: 'ココイルグルタミン酸TEAが主剤で、頭皮への負担を抑えやすい系統です。' },
+    { item_id: 'stk-008', tip: '髪に残ると背中に付きやすいため、この後の洗顔・ボディソープで流れます。' },
+    { item_id: 'stk-009', tip: '髪をすすいだ後なので、顔に残った整髪料や皮脂も一緒に落としやすくなります。' },
+    { item_id: 'stk-010', tip: 'トリートメントの流し残しを最後に洗い流せる位置です。' },
+    { item_id: 'stk-006', tip: 'グリセリンで水分を入れてから、この後の美容液がなじみやすくなります。' },
+    { item_id: 'stk-005', tip: 'ナイアシンアミドは化粧水の後に置くと、油分にさえぎられにくくなります。' },
+    { item_id: 'stk-003', tip: 'ヘパリン類似物質のローションです。薬を塗る前の土台になります。' },
+    { item_id: 'stk-004', tip: '油分が最も多いため最後です。この上に他のものを重ねない使い方が一般的です。' },
+  ],
 };

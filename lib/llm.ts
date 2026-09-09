@@ -4,14 +4,16 @@ import OpenAI from 'openai';
 import { zodResponseFormat } from 'openai/helpers/zod';
 import { ApiError, GoogleGenAI, type Part } from '@google/genai';
 import { z } from 'zod';
-import { ExtractionSchema, JudgementSchema } from './schemas';
+import { ExtractionSchema, JudgementSchema, RoutineAdviceSchema } from './schemas';
 import {
   EXTRACTION_SYSTEM_PROMPT,
   EXTRACTION_USER_TEXT,
   JUDGEMENT_SYSTEM_PROMPT,
+  ROUTINE_ADVICE_SYSTEM_PROMPT,
   buildJudgementUserMessage,
+  buildRoutineAdviceUserMessage,
 } from './prompts';
-import type { ExtractionResult, Judgement, Provider, StockItem } from './types';
+import type { ExtractionResult, Judgement, Provider, RoutineAdvice, StockItem } from './types';
 
 /**
  * AIプロバイダの抽象 — 設計仕様書 §7
@@ -399,6 +401,62 @@ async function judgeWith(
     ],
   });
   return (res.choices[0]?.message.parsed as Judgement | null) ?? null;
+}
+
+// ── ルーティンの解説 ──────────────────────────────────────────────────
+
+export type RoutineAdviceInput = Parameters<typeof buildRoutineAdviceUserMessage>[0];
+
+/**
+ * 毎日のルーティンに、その人向けの一言を足す。
+ *
+ * 並び順そのものは lib/routine.ts がルールで決めており、ここでは扱わない。
+ * 判定（ステップ2）と違って安全上の分岐に使われる出力ではないため、
+ * 抽出側と同じ軽いモデルを使う。これは「速度のために下げてよいのは抽出側だけ」
+ * という制約（§7.5）に反しない — 判定の設定は据え置いている。
+ */
+export async function adviseRoutine(
+  input: RoutineAdviceInput,
+): Promise<LlmResult<RoutineAdvice>> {
+  return withFallback('routine', (provider) => adviseWith(provider, input));
+}
+
+async function adviseWith(
+  provider: Provider,
+  input: RoutineAdviceInput,
+): Promise<RoutineAdvice | null> {
+  const userMessage = buildRoutineAdviceUserMessage(input);
+
+  if (provider === 'gemini') {
+    return callGemini(
+      GEMINI_MODEL_EXTRACT,
+      ROUTINE_ADVICE_SYSTEM_PROMPT,
+      [{ text: userMessage }],
+      RoutineAdviceSchema,
+    );
+  }
+
+  if (provider === 'anthropic') {
+    const res = await anthropic().messages.parse({
+      model: ANTHROPIC_MODEL,
+      max_tokens: 16000,
+      output_config: { format: zodOutputFormat(RoutineAdviceSchema), effort: 'medium' },
+      system: ROUTINE_ADVICE_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: userMessage }],
+    });
+    return (res.parsed_output as RoutineAdvice | null) ?? null;
+  }
+
+  const res = await azure().chat.completions.parse({
+    model: AZURE_MODEL_EXTRACT,
+    max_completion_tokens: 4000,
+    response_format: zodResponseFormat(RoutineAdviceSchema, 'routine_advice'),
+    messages: [
+      { role: 'system', content: ROUTINE_ADVICE_SYSTEM_PROMPT },
+      { role: 'user', content: userMessage },
+    ],
+  });
+  return (res.choices[0]?.message.parsed as RoutineAdvice | null) ?? null;
 }
 
 // ── エラー分類（プロバイダごとの例外を共通の形に落とす） ───────────────────

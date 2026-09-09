@@ -1,4 +1,4 @@
-import type { StockItem } from './types';
+import type { DoseTime, Profile, ScalpType, SkinType, StockItem } from './types';
 
 /** リクエスト入力の検証 — 設計仕様書 §8.3（クライアント由来の入力として扱う） */
 
@@ -39,6 +39,37 @@ export function sanitizeStock(input: unknown): StockItem[] | null {
       status: clip(item.status),
       isPrescription: Boolean(item.isPrescription),
       bodyPart: item.bodyPart ? clip(item.bodyPart) : undefined,
+      // ルーティン助言では「洗う／塗る」と服薬の設定まで使う。
+      // 判定（/api/analyze）はプロンプトに渡す項目を明示しているため、
+      // ここで項目が増えても判定の入力は変わらない。
+      routine:
+        item.routine === 'inbath' || item.routine === 'outbath' ? item.routine : undefined,
+      dose: sanitizeDose(item.dose),
     };
   });
+}
+
+const DOSE_TIMES: DoseTime[] = ['朝', '昼', '夜'];
+
+function sanitizeDose(input: unknown): StockItem['dose'] {
+  if (!input || typeof input !== 'object') return undefined;
+  const dose = input as Partial<NonNullable<StockItem['dose']>>;
+  if (!Array.isArray(dose.times)) return undefined;
+  const times = DOSE_TIMES.filter((t) => dose.times!.includes(t));
+  if (times.length === 0) return undefined;
+  const perTime = Number(dose.perTime);
+  return { times, perTime: Number.isFinite(perTime) ? Math.max(1, Math.round(perTime)) : 1 };
+}
+
+const SKINS: SkinType[] = ['乾燥', '脂性', '混合', '敏感', '普通'];
+const SCALPS: ScalpType[] = ['乾燥', '脂性', 'ふけ・かゆみ', '普通'];
+
+/** 肌質・頭皮の自己申告。想定外の値はプロンプトに混ぜず落とす */
+export function sanitizeProfile(input: unknown): Profile {
+  if (!input || typeof input !== 'object') return {};
+  const p = input as Partial<Profile>;
+  return {
+    skin: SKINS.find((s) => s === p.skin),
+    scalp: SCALPS.find((s) => s === p.scalp),
+  };
 }

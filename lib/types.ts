@@ -160,6 +160,26 @@ export interface RoutineStep {
   note: string;
 }
 
+/**
+ * ルーティンの解説（AI生成）— lib/llm.ts `adviseRoutine`
+ *
+ * 並び順は含まない。順序はルール（lib/routine.ts）が決め、
+ * AIは「その人にとってどう使うか」の言葉だけを足す。
+ */
+export interface RoutineAdvice {
+  /** 全体への一言 */
+  overall: string;
+  /** ステップごとの一言。item_id は StockItem.id に対応する */
+  steps: Array<{ item_id: string; tip: string }>;
+}
+
+export interface RoutineAdviceResponse {
+  advice: RoutineAdvice;
+  provider?: Provider;
+  fell_back?: boolean;
+  mocked?: boolean;
+}
+
 /** 成分バッティング警告 — lib/routine.ts */
 export interface ConflictWarning {
   items: [string, string];

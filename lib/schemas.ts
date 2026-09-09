@@ -30,3 +30,20 @@ export const JudgementSchema = z.object({
   ),
   consult_recommended: z.boolean(),
 });
+
+/**
+ * ルーティンの解説（AI生成）— 順序そのものは含めない。
+ *
+ * 並び順は剤形から一意に決まるためルール側（lib/routine.ts）が持つ。
+ * AIに任せるのは「その人にとってどう使うか」の言葉だけであり、
+ * item_id で既存のステップに紐づける。知らない id が返っても表示側で捨てる。
+ */
+export const RoutineAdviceSchema = z.object({
+  overall: z.string(),
+  steps: z.array(
+    z.object({
+      item_id: z.string(),
+      tip: z.string(),
+    }),
+  ),
+});

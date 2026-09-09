@@ -1,4 +1,4 @@
-import type { DoseLog, DoseTime, Profile, StockItem } from './types';
+import type { DoseLog, DoseTime, Profile, RoutineAdvice, StockItem } from './types';
 import { SEED_STOCK } from './seed';
 
 /**
@@ -190,4 +190,37 @@ export function toggleDose(
   }
 
   return { log: nextLog, stock };
+}
+
+// ── ルーティンの解説（AI生成）のキャッシュ ──────────────────────────────
+
+const ADVICE_KEY = 'overlai.advice.v1';
+
+interface CachedAdvice {
+  signature: string;
+  advice: RoutineAdvice;
+}
+
+/**
+ * 解説を作り直すべきかを判断するための署名。
+ *
+ * 服薬記録で残量が減るたびに作り直すと、画面を開くたびAIを呼ぶのと変わらない。
+ * 解説の内容に効くもの（顔ぶれ・剤形・成分・肌質）だけを署名に含める。
+ */
+export function routineSignature(stock: StockItem[], profile: Profile): string {
+  const items = stock
+    .filter((i) => i.routine || (i.dose && i.dose.times.length > 0))
+    .map((i) => `${i.id}:${i.name}:${i.form}:${i.routine ?? ''}:${i.ingredients.join(',')}`)
+    .sort()
+    .join('|');
+  return `${profile.skin ?? ''}/${profile.scalp ?? ''}#${items}`;
+}
+
+export function loadRoutineAdvice(signature: string): RoutineAdvice | null {
+  const cached = read<CachedAdvice | null>(ADVICE_KEY, null);
+  return cached && cached.signature === signature ? cached.advice : null;
+}
+
+export function saveRoutineAdvice(signature: string, advice: RoutineAdvice): void {
+  write(ADVICE_KEY, { signature, advice });
 }

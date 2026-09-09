@@ -163,6 +163,91 @@ red にしてよいのは、**在庫の中に処方薬があり、それとの�
   「他の薬と重なる可能性があります」のような一般論を書いてはいけません。在庫アイテムの名前を必ず含めてください。
 - 該当する在庫がない場合（blue）は matched_item_ids と reasons を空配列にして構いません。`;
 
+/**
+ * ルーティンの解説 — 順序はルール（lib/routine.ts）が決め、言葉だけをAIが書く
+ *
+ * 並び順をAIに委ねない理由は、剤形から順序が一意に決まり推論の余地がないこと、
+ * および同じ在庫で結果が揺れると毎日の案内として信頼できなくなることによる。
+ * ここで足すのは「その人の場合はどうか」であって、順序の再設計ではない。
+ */
+export const ROUTINE_ADVICE_SYSTEM_PROMPT = `あなたは、ユーザーが家に持っているスキンケア・ヘアケア用品の使い方を案内するアシスタントです。
+
+使う順番はすでに決まっています。あなたの仕事は、その順番を前提に、**このユーザーの肌質・頭皮の状態と、実際に持っているものの組み合わせ**を踏まえた一言を書くことです。
+
+# 出力するもの
+
+- overall … ルーティン全体への一言。2〜3文、150字以内。
+- steps … 与えられたアイテムごとの一言。1つにつき60字以内。
+
+# 厳守事項
+
+- **順番を変更する提案をしてはいけません。**「先に〜するとよい」「順番を入れ替えて」といった記述は禁止です。
+- 断定表現を使わず、「〜の可能性があります」「〜しやすい傾向があります」で統一してください。
+- 疾患の診断、治療方針の提示、用法用量の指示を行ってはいけません。
+- **与えられた成分リストに載っていない成分名を書いてはいけません。** 推測で成分を補ってはいけません。
+- 医薬品（処方薬・市販薬）の効能を断定しないでください。処方薬が含まれる場合は、
+  overall に「医師・薬剤師の指示が優先されます」という趣旨を必ず含めてください。
+- 肌質・頭皮は本人の自己申告です。診断として扱わないでください。
+
+# 書き方
+
+- 一般論だけの当たり障りのない文を書かないでください。
+  「保湿が大切です」のような、誰にでも当てはまる文には価値がありません。
+- **そのアイテムを、この順番のその位置で使うことに意味がある理由**を書いてください。
+  肌質・頭皮の設定、前後のアイテム、そのアイテムの成分のいずれかに触れてください。
+- 書くことが見つからないアイテムは、tip を空文字にして構いません。無理に埋めないでください。
+- item_id には与えられた id をそのまま使ってください。id を作り出してはいけません。
+- 敬体（です・ます）で、やわらかく短く書いてください。`;
+
+/** ルーティン解説のユーザーメッセージを組み立てる */
+export function buildRoutineAdviceUserMessage(input: {
+  profile: { skin?: string; scalp?: string };
+  inbath: Array<{ id: string; name: string; form: string; ingredients: string[]; isPrescription: boolean }>;
+  outbath: Array<{ id: string; name: string; form: string; ingredients: string[]; isPrescription: boolean }>;
+  meds: Array<{ name: string; times: string[]; isPrescription: boolean }>;
+}): string {
+  const list = (
+    items: Array<{ id: string; name: string; form: string; ingredients: string[]; isPrescription: boolean }>,
+  ) =>
+    items.length === 0
+      ? '（なし）'
+      : items
+          .map(
+            (s, i) =>
+              `${i + 1}. id: ${s.id} / ${s.name}（${s.form}${s.isPrescription ? '・処方薬' : ''}）\n   成分: ${s.ingredients.join('、') || '（登録なし）'}`,
+          )
+          .join('\n');
+
+  const profile =
+    [input.profile.skin && `肌の状態: ${input.profile.skin}`, input.profile.scalp && `頭皮の状態: ${input.profile.scalp}`]
+      .filter(Boolean)
+      .join('\n') || '（未設定。肌質・頭皮に踏み込んだ記述は避けてください）';
+
+  return `# このユーザーの申告
+
+${profile}
+
+# お風呂で洗う順番（決定済み・変更しないでください）
+
+${list(input.inbath)}
+
+# お風呂上がりに塗る順番（決定済み・変更しないでください）
+
+${list(input.outbath)}
+
+# 服用中の薬（参考情報。順番の対象ではないので steps に含めないでください）
+
+${
+  input.meds.length === 0
+    ? '（なし）'
+    : input.meds
+        .map((m) => `- ${m.name}${m.isPrescription ? '（処方薬）' : ''} / ${m.times.join('・')}`)
+        .join('\n')
+}
+
+上の2つのリストに出てくるアイテムについて、それぞれの一言と、全体への一言を書いてください。`;
+}
+
 /** ステップ2のユーザーメッセージを組み立てる */
 export function buildJudgementUserMessage(
   extraction: { product_name: string | null; category: string; form: string; ingredients: string[] },

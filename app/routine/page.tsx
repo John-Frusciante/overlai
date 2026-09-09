@@ -13,13 +13,24 @@ import {
   loadDoseLog,
   loadProfile,
   loadRecentDoseLogs,
+  loadRoutineAdvice,
   loadStock,
+  routineSignature,
+  saveRoutineAdvice,
   toggleDose,
   todayKey,
 } from '@/lib/storage';
 import { SEED_STOCK } from '@/lib/seed';
 import { categoryStyle } from '@/lib/ui';
-import type { DoseLog, DoseTime, Profile, RoutineStep, StockItem } from '@/lib/types';
+import type {
+  DoseLog,
+  DoseTime,
+  Profile,
+  RoutineAdvice,
+  RoutineAdviceResponse,
+  RoutineStep,
+  StockItem,
+} from '@/lib/types';
 
 /**
  * 今日のルーティン — 企画書「画面は3つ」の3画面目
@@ -35,12 +46,18 @@ export default function RoutinePage() {
   const [log, setLog] = useState<DoseLog>({ date: todayKey(), taken: [] });
   const [profile, setProfile] = useState<Profile>({});
   const [history, setHistory] = useState<DoseLog[]>([]);
+  /** localStorage を読み終えたか。読む前にAIを呼ぶとシードの内容で生成してしまう */
+  const [loaded, setLoaded] = useState(false);
+
+  const [advice, setAdvice] = useState<RoutineAdvice | null>(null);
+  const [advising, setAdvising] = useState(false);
 
   useEffect(() => {
     setStock(loadStock());
     setLog(loadDoseLog());
     setProfile(loadProfile());
     setHistory(loadRecentDoseLogs(7));
+    setLoaded(true);
   }, []);
 
   const onToggle = useCallback((item: StockItem, time: DoseTime) => {
@@ -54,6 +71,51 @@ export default function RoutinePage() {
   const inbath = buildRoutine(stock, 'inbath');
   const outbath = buildRoutine(stock, 'outbath');
   const conflicts = findConflicts(outbath);
+  const hasRoutine = inbath.length + outbath.length > 0;
+
+  /**
+   * ステップごとの一言をAIに書いてもらう（順番はルールが決めている）。
+   *
+   * 生成結果は在庫と肌質設定の署名つきでキャッシュし、顔ぶれが変わるまで使い回す。
+   * 服薬記録で残量が減っても署名は変わらないので、開くたびに呼ぶことにはならない。
+   * 失敗しても画面はルールの説明だけで成立するため、エラーは出さずに黙って諦める。
+   */
+  useEffect(() => {
+    if (!loaded || !hasRoutine) return;
+
+    const signature = routineSignature(stock, profile);
+    const cached = loadRoutineAdvice(signature);
+    if (cached) {
+      setAdvice(cached);
+      return;
+    }
+
+    let aborted = false;
+    setAdvising(true);
+    fetch('/api/routine', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stock, profile }),
+    })
+      .then((res) => (res.ok ? (res.json() as Promise<RoutineAdviceResponse>) : null))
+      .then((body) => {
+        if (aborted || !body?.advice) return;
+        setAdvice(body.advice);
+        saveRoutineAdvice(signature, body.advice);
+      })
+      .catch(() => {
+        /* 解説が無くてもルーティンは読める */
+      })
+      .finally(() => {
+        if (!aborted) setAdvising(false);
+      });
+
+    return () => {
+      aborted = true;
+    };
+  }, [loaded, hasRoutine, stock, profile]);
+
+  const tips = new Map((advice?.steps ?? []).map((s) => [s.item_id, s.tip]));
 
   const doneCount = meds.reduce(
     (n, m) => n + m.dose!.times.filter((t) => log.taken.includes(doseKey(m.id, t))).length,
@@ -92,6 +154,24 @@ export default function RoutinePage() {
         </span>
         <ChevronRight size={17} className="shrink-0 text-faint" />
       </Link>
+
+      {/* AIによる全体への一言。順番はルールが決めており、ここは言葉だけ */}
+      {hasRoutine && (advising || advice?.overall) && (
+        <section className="mt-6 rounded-2xl border border-line bg-surface p-4 shadow-e1">
+          <p className="flex items-center gap-1.5 text-[11.5px] font-semibold tracking-[0.08em] text-faint">
+            <Sparkles size={13} strokeWidth={2.2} />
+            今日の組み合わせについて
+          </p>
+          {advising ? (
+            <div className="mt-3 space-y-2" aria-label="読み込み中">
+              <span className="block h-3 w-full animate-pulse rounded bg-surface-sunken" />
+              <span className="block h-3 w-4/5 animate-pulse rounded bg-surface-sunken" />
+            </div>
+          ) : (
+            <p className="mt-2 text-[13.5px] leading-relaxed text-muted">{advice?.overall}</p>
+          )}
+        </section>
+      )}
 
       {/* 服薬。1件も設定がないと何の画面か分からないため、空でも見出しと導線は出す */}
       {meds.length === 0 && (
@@ -176,6 +256,7 @@ export default function RoutinePage() {
         caption="トリートメントの流し残しが体に付かない順に並べています"
         steps={inbath}
         profile={profile}
+        tips={tips}
       />
 
       {/* 洗浄基剤 × 肌質（企画書 §6-13）。未設定なら設定へ誘導する */}
@@ -186,6 +267,7 @@ export default function RoutinePage() {
         caption="水分の多いものから、油分で蓋をするものへ並べています"
         steps={outbath}
         profile={profile}
+        tips={tips}
       />
 
       {/* 成分バッティング警告 */}
@@ -309,11 +391,14 @@ function RoutineSection({
   caption,
   steps,
   profile,
+  tips,
 }: {
   title: string;
   caption: string;
   steps: RoutineStep[];
   profile: Profile;
+  /** AIが書いたステップごとの一言。item id で引く */
+  tips: Map<string, string>;
 }) {
   if (steps.length === 0) return null;
 
@@ -326,6 +411,7 @@ function RoutineSection({
           const cat = categoryStyle(s.item.category);
           const Icon = cat.icon;
           const match = matchCleanser(s.item, profile);
+          const tip = tips.get(s.item.id)?.trim();
           const last = idx === steps.length - 1;
 
           return (
@@ -364,6 +450,12 @@ function RoutineSection({
                 <p className="mt-1 pl-9 text-[12px] text-faint">{s.item.form}</p>
                 {s.note && (
                   <p className="mt-1.5 pl-9 text-[13px] leading-relaxed text-muted">{s.note}</p>
+                )}
+                {tip && (
+                  <p className="mt-1.5 flex gap-1.5 pl-9 text-[13px] leading-relaxed text-ink/80">
+                    <Sparkles size={13} strokeWidth={2.2} className="mt-[3px] shrink-0 text-[#be185d]" />
+                    <span>{tip}</span>
+                  </p>
                 )}
                 {match && (
                   <div className="mt-2.5 pl-9">
