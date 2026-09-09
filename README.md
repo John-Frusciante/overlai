@@ -36,10 +36,10 @@
 | 画面 | パス | 内容 |
 | :--- | :--- | :--- |
 | マイストック | `/` | 在庫一覧（カテゴリの折りたたみ・追加）・期限アラート・項目タップで編集／削除 |
-| 今日のルーティン | `/routine` | 服薬チェック・洗う順序・塗る順序 |
+| 今日のルーティン | `/routine` | 服薬チェック・洗う順序・塗る順序（順序はルール、一言はAI） |
 | スキャン | `/scan` | カメラ／画像選択 → 3色判定 |
 | ストックを追加・編集 | `/stock/new` | 成分表の撮影読み取り＋手入力（`?id=` で編集） |
-| 肌質の設定 | `/profile` | 肌質・頭皮の自己申告（洗浄基剤の相性判定に使う） |
+| 肌質の設定 | `/profile` | 肌質・頭皮の自己申告（洗浄基剤の相性判定と、ルーティンの一言に使う） |
 | プレビュー（開発用） | `/preview` | 判定カードの3色を切り替えて確認 |
 
 **まず `/preview` を見ると、このアプリの中核が分かる。**
@@ -101,6 +101,7 @@ app/
   profile/page.tsx      肌質の設定
   api/analyze/route.ts  判定API（抽出 → 照合）
   api/extract/route.ts  成分抽出のみ（在庫登録用）
+  api/routine/route.ts  ルーティンの解説（順序はルール、言葉だけAI）
 lib/llm.ts              AIプロバイダの抽象とフォールバック（Anthropic / Azure / Gemini / モック）
 components/             BottomNav / StockList / StockActionSheet / JudgementCard / CleanserMatchCard
 components/ui/          Card / Chip / Button / SectionHeader

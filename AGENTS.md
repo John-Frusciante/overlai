@@ -36,6 +36,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
     その停止・失効がそのまま機能停止になる。`providerChain()` は独立した事業者を並べるためのもの
 11. **Gemini 経路で `finishReason` のチェックを外さない** — 安全フィルタや出力上限で切れた応答を
     成功として扱うと、壊れた判定が黙って返る
+12. **ルーティンの順序をAIに委ねない** — 洗う順・塗る順は `lib/routine.ts` が剤形で決める。
+    AIが書くのは言葉だけで、`RoutineAdviceSchema` の出力に並び順は含まれない。
+    `routineSignature()` に残量を含めないこと（開くたびAIを呼ぶことになる）
 
 ## 書く場所
 
@@ -46,6 +49,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 | データ構造 | `lib/types.ts` |
 | localStorage | `lib/storage.ts` |
 | ルールベースの判定 | `lib/routine.ts` `lib/expiry.ts` `lib/cleanser.ts` `lib/categories.ts` |
+| リクエストの検証 | `lib/request.ts`（3つのAPIで共有） |
 | AIの呼び出し | `lib/llm.ts`（プロバイダ抽象。route から直接SDKを呼ばない） |
 
 ## 作業後にやること

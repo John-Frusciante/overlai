@@ -77,9 +77,11 @@
 | **`max_completion_tokens`** | 出力トークンの上限。**gpt-5 系は `max_tokens` を受け付けず、これを使う**。Anthropic は `max_tokens` |
 | **json_schema (strict)** | OpenAI の構造化出力。zod スキーマから生成し、出力形式を強制する。プロキシでも通ることを実測で確認済み |
 | **`responseJsonSchema`** | Gemini の構造化出力。**zod から変換するヘルパーが SDK に無い**ので `geminiJsonSchema()` が自前で変換し、Gemini が受け付けない語彙（`$schema`、`type: [A, null]`）を削っている |
-| **`finishReason`** | Gemini が生成を終えた理由。`STOP` 以外（安全フィルタ・出力上限など）は途中で切れた応答なので、成功として扱わない（DEVELOPMENT.md §5.9） |
+| **`finishReason`** | Gemini が生成を終えた理由。`STOP` 以外（安全フィルタ・出力上限など）は途中で切れた応答なので、成功として扱わない（DEVELOPMENT.md §5.10） |
 | **RPM** | 1分あたりのリクエスト数の上限。Gemini の無料枠は**モデルごとに 5 RPM**。抽出と判定でモデルを分けているのはクォータを分けるためでもある |
 | **`maxDuration`** | Vercel が関数を打ち切るまでの秒数（60秒）。フォールバックはこの内側で完結させる必要があり、各プロバイダの timeout を20秒に切り詰めている |
+| **ルーティンの解説** | 洗う順・塗る順に添えるAIの一言（`POST /api/routine`）。**順序はルールが決め、AIは言葉だけを書く**。在庫の顔ぶれと肌質設定の署名でキャッシュする（ARCHITECTURE.md §4.6） |
+| **署名（`routineSignature`）** | 解説を作り直すべきかを判断する文字列。在庫の id・商品名・剤形・成分と肌質・頭皮から作る。**残量は含めない**（服薬記録のたびに作り直さないため） |
 
 ---
 
