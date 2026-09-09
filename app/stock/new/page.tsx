@@ -7,10 +7,18 @@ import { toResizedDataUrl } from '@/lib/image';
 import {
   addStock,
   loadCustomCategories,
+  loadCustomRoutines,
   loadStock,
   saveCustomCategories,
+  saveCustomRoutines,
   updateStock,
 } from '@/lib/storage';
+import {
+  BUILTIN_ROUTINES,
+  MAX_ROUTINE_LENGTH,
+  routineChipLabel,
+  validateRoutineName,
+} from '@/lib/routine';
 import { toItemForm, toStockCategory } from '@/lib/mapping';
 import { BUILTIN_CATEGORIES, MAX_CATEGORY_LENGTH, validateCategoryName } from '@/lib/categories';
 import type {
@@ -72,6 +80,11 @@ export default function NewStockPage() {
   const [newCategory, setNewCategory] = useState<string | null>(null);
   const [categoryError, setCategoryError] = useState('');
 
+  /** ユーザーが作ったルーティンの区分。カテゴリと同じ扱い */
+  const [customRoutines, setCustomRoutines] = useState<string[]>([]);
+  const [newRoutine, setNewRoutine] = useState<string | null>(null);
+  const [routineError, setRoutineError] = useState('');
+
   const [reading, setReading] = useState(false);
   const [readError, setReadError] = useState('');
   /** 編集対象のid。null なら新規追加 */
@@ -79,6 +92,7 @@ export default function NewStockPage() {
 
   useEffect(() => {
     setCustomCategories(loadCustomCategories());
+    setCustomRoutines(loadCustomRoutines());
   }, []);
 
   /** その場でカテゴリを作って、そのまま選択状態にする */
@@ -95,6 +109,21 @@ export default function NewStockPage() {
     setNewCategory(null);
     setCategoryError('');
   }, [newCategory, customCategories]);
+
+  /** その場でルーティンを作って、そのまま選択状態にする */
+  const commitNewRoutine = useCallback(() => {
+    const result = validateRoutineName(newRoutine ?? '', [...customRoutines]);
+    if (!result.ok) {
+      setRoutineError(result.reason);
+      return;
+    }
+    const next = [...customRoutines, result.name];
+    saveCustomRoutines(next);
+    setCustomRoutines(next);
+    setRoutine(result.name);
+    setNewRoutine(null);
+    setRoutineError('');
+  }, [newRoutine, customRoutines]);
 
   // 既存アイテムの編集として開かれた場合は値を読み込む
   useEffect(() => {
@@ -372,12 +401,83 @@ export default function NewStockPage() {
         </Field>
 
         <Field label="毎日のルーティン（任意）">
-          <Chips
-            options={['', 'inbath', 'outbath'] as const}
-            value={routine}
-            onChange={setRoutine}
-            labels={{ '': '使わない', inbath: 'お風呂で洗う', outbath: 'お風呂上がりに塗る' }}
-          />
+          <div className="flex flex-wrap gap-1.5">
+            {['', ...BUILTIN_ROUTINES, ...customRoutines].map((o) => (
+              <button
+                key={o || 'none'}
+                type="button"
+                onClick={() => setRoutine(o)}
+                className={`rounded-full px-3.5 py-2 text-[13.5px] font-medium transition-colors ${
+                  routine === o
+                    ? 'bg-brand text-white'
+                    : 'border border-line bg-surface text-muted active:bg-surface-sunken'
+                }`}
+              >
+                {o === '' ? '使わない' : routineChipLabel(o)}
+              </button>
+            ))}
+            {newRoutine === null && (
+              <button
+                type="button"
+                onClick={() => {
+                  setNewRoutine('');
+                  setRoutineError('');
+                }}
+                className="flex items-center gap-1 rounded-full border border-dashed border-line-strong px-3.5 py-2 text-[13.5px] font-medium text-muted transition-colors active:bg-surface-sunken"
+              >
+                <Plus size={14} strokeWidth={2.6} />
+                ルーティンを追加
+              </button>
+            )}
+          </div>
+
+          {newRoutine !== null && (
+            <div className="mt-2">
+              <div className="flex gap-1.5">
+                <input
+                  autoFocus
+                  value={newRoutine}
+                  onChange={(e) => {
+                    setNewRoutine(e.target.value);
+                    setRoutineError('');
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      commitNewRoutine();
+                    }
+                    if (e.key === 'Escape') setNewRoutine(null);
+                  }}
+                  maxLength={MAX_ROUTINE_LENGTH}
+                  placeholder="例：朝のスキンケア"
+                  className="flex-1 rounded-2xl border border-line bg-surface px-3.5 py-2.5 text-[15px] shadow-e1 outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(30,42,69,0.07)]"
+                />
+                <button
+                  type="button"
+                  onClick={commitNewRoutine}
+                  aria-label="ルーティンを作る"
+                  className="flex w-11 shrink-0 items-center justify-center rounded-2xl bg-brand text-white transition-transform active:scale-95"
+                >
+                  <Check size={17} strokeWidth={2.6} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNewRoutine(null)}
+                  aria-label="やめる"
+                  className="flex w-11 shrink-0 items-center justify-center rounded-2xl border border-line bg-surface text-muted transition-transform active:scale-95"
+                >
+                  <X size={17} strokeWidth={2.2} />
+                </button>
+              </div>
+              {routineError ? (
+                <p className="mt-1.5 px-1 text-[12.5px] text-red-600">{routineError}</p>
+              ) : (
+                <p className="mt-1.5 px-1 text-[12.5px] text-faint">
+                  「朝のスキンケア」「寝る前」など、自分の生活に合わせて作れます。
+                </p>
+              )}
+            </div>
+          )}
         </Field>
 
         {/* 服薬設定 — 飲むものにだけ出す */}
@@ -472,36 +572,5 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       </span>
       {children}
     </label>
-  );
-}
-
-function Chips<T extends string>({
-  options,
-  value,
-  onChange,
-  labels,
-}: {
-  options: readonly T[];
-  value: T;
-  onChange: (v: T) => void;
-  labels?: Record<string, string>;
-}) {
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {options.map((o) => (
-        <button
-          key={o}
-          type="button"
-          onClick={() => onChange(o)}
-          className={`rounded-full px-3.5 py-2 text-[13.5px] font-medium transition-colors ${
-            value === o
-              ? 'bg-brand text-white'
-              : 'border border-line bg-surface text-muted active:bg-surface-sunken'
-          }`}
-        >
-          {labels?.[o] ?? o}
-        </button>
-      ))}
-    </div>
   );
 }

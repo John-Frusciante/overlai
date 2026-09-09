@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { activeProvider, adviseRoutine, classifyError } from '@/lib/llm';
 import { MOCK_ROUTINE_ADVICE } from '@/lib/mock';
 import { sanitizeProfile, sanitizeStock } from '@/lib/request';
-import { buildRoutine } from '@/lib/routine';
+import { buildRoutine, orderedRoutines, routineTitle } from '@/lib/routine';
 import type { RoutineAdvice } from '@/lib/types';
 
 /**
@@ -40,14 +40,8 @@ export async function POST(req: Request) {
   }
 
   const profile = sanitizeProfile(body.profile);
-  const inbath = buildRoutine(stock, 'inbath');
-  const outbath = buildRoutine(stock, 'outbath');
 
-  // 洗う・塗るものが1つも無いなら解説することがない。AIを呼ばずに返す
-  if (inbath.length === 0 && outbath.length === 0) {
-    return NextResponse.json({ advice: EMPTY });
-  }
-
+  // 区分はユーザーが増やせる。在庫に現れる名前をそのまま拾う（lib/routine.ts）
   const toEntry = (s: { item: (typeof stock)[number] }) => ({
     id: s.item.id,
     name: s.item.name,
@@ -56,10 +50,18 @@ export async function POST(req: Request) {
     isPrescription: s.item.isPrescription,
   });
 
+  const groups = orderedRoutines([], stock)
+    .map((kind) => ({ title: routineTitle(kind), items: buildRoutine(stock, kind).map(toEntry) }))
+    .filter((g) => g.items.length > 0);
+
+  // 洗う・塗るものが1つも無いなら解説することがない。AIを呼ばずに返す
+  if (groups.length === 0) {
+    return NextResponse.json({ advice: EMPTY });
+  }
+
   const input = {
     profile,
-    inbath: inbath.map(toEntry),
-    outbath: outbath.map(toEntry),
+    groups,
     meds: stock
       .filter((i) => i.dose && i.dose.times.length > 0)
       .map((i) => ({ name: i.name, times: i.dose!.times as string[], isPrescription: i.isPrescription })),

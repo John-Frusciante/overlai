@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { loadProfile, saveProfile } from '@/lib/storage';
+import { MAX_PROFILE_NOTE } from '@/lib/request';
 import type { Profile, ScalpType, SkinType } from '@/lib/types';
 
 /**
@@ -63,6 +64,28 @@ export default function ProfilePage() {
           value={profile.scalp}
           onChange={(v) => update({ scalp: v })}
         />
+      </section>
+
+      <section className="mt-8">
+        <h2 className="px-1 text-xs font-semibold tracking-wide text-muted">気になっていること</h2>
+        <p className="mt-1 px-1 text-[12.5px] leading-relaxed text-faint">
+          選択肢に当てはまらないことを、自分の言葉で書けます。
+          今日のルーティンに出る一言に反映されます。
+        </p>
+        <textarea
+          value={profile.note ?? ''}
+          onChange={(e) => update({ note: e.target.value })}
+          rows={4}
+          maxLength={MAX_PROFILE_NOTE}
+          placeholder="例：冬だけ頬がかさつきます。夜は時間がないので手早く済ませたいです。"
+          className="mt-3 w-full resize-none rounded-2xl border border-line bg-surface px-3.5 py-3 text-[15px] leading-relaxed shadow-e1 outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(30,42,69,0.07)]"
+        />
+        <p className="mt-1.5 px-1 text-right text-[11.5px] tabular-nums text-faint">
+          {(profile.note ?? '').length} / {MAX_PROFILE_NOTE}
+        </p>
+        <p className="mt-1 px-1 text-[11.5px] leading-relaxed text-faint">
+          洗浄力の判定に使うのは上で選んだ肌質・頭皮です。ここに書いた内容は判定の色を変えません。
+        </p>
       </section>
 
       <p className="mt-10 px-1 text-[12px] leading-relaxed text-faint">

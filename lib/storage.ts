@@ -216,7 +216,7 @@ export function routineSignature(stock: StockItem[], profile: Profile): string {
     )
     .sort()
     .join('|');
-  return `${profile.skin ?? ''}/${profile.scalp ?? ''}#${items}`;
+  return `${profile.skin ?? ''}/${profile.scalp ?? ''}/${profile.note ?? ''}#${items}`;
 }
 
 export function loadRoutineAdvice(signature: string): RoutineAdvice | null {
@@ -249,6 +249,33 @@ export function reorderRoutine(ids: string[]): StockItem[] {
 export function resetRoutineOrder(kind: RoutineKind): StockItem[] {
   const next = loadStock().map((item) =>
     item.routine === kind ? { ...item, routineOrder: undefined } : item,
+  );
+  saveStock(next);
+  return next;
+}
+
+// ── ルーティンの区分（ユーザーが作ったもの） ───────────────────────────
+
+const ROUTINE_KEY = 'overlai.routines.v1';
+
+export function loadCustomRoutines(): string[] {
+  const names = read<string[]>(ROUTINE_KEY, []);
+  return Array.isArray(names) ? names.filter((n) => typeof n === 'string') : [];
+}
+
+export function saveCustomRoutines(names: string[]): void {
+  write(ROUTINE_KEY, names);
+}
+
+/**
+ * 区分を付け替える。区分を消すとき、その中身を別の区分へ移すために使う。
+ *
+ * `to` を省くとルーティンから外れる（在庫そのものは消さない）。
+ * 手で決めた並びは移した先で割り込むので捨てる。
+ */
+export function moveRoutine(from: RoutineKind, to?: RoutineKind): StockItem[] {
+  const next = loadStock().map((item) =>
+    item.routine === from ? { ...item, routine: to, routineOrder: undefined } : item,
   );
   saveStock(next);
   return next;

@@ -5,6 +5,7 @@ import type { DoseTime, Profile, ScalpType, SkinType, StockItem } from './types'
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 export const MAX_STOCK_ITEMS = 50;
 export const MAX_FIELD_LEN = 200;
+export const MAX_PROFILE_NOTE = 300;
 
 export type MediaType = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
 
@@ -42,8 +43,8 @@ export function sanitizeStock(input: unknown): StockItem[] | null {
       // ルーティン助言では「洗う／塗る」と服薬の設定まで使う。
       // 判定（/api/analyze）はプロンプトに渡す項目を明示しているため、
       // ここで項目が増えても判定の入力は変わらない。
-      routine:
-        item.routine === 'inbath' || item.routine === 'outbath' ? item.routine : undefined,
+      // ユーザーが作った区分名も入る（「朝のスキンケア」など）
+      routine: typeof item.routine === 'string' && item.routine.trim() ? clip(item.routine) : undefined,
       dose: sanitizeDose(item.dose),
       // 順序はサーバー側で組み直すので、手で決めた並びもここを通す必要がある
       routineOrder:
@@ -76,5 +77,9 @@ export function sanitizeProfile(input: unknown): Profile {
   return {
     skin: SKINS.find((s) => s === p.skin),
     scalp: SCALPS.find((s) => s === p.scalp),
+    // 自由記述はそのままプロンプトへ結合される。長さだけは必ず切る
+    note: typeof p.note === 'string' && p.note.trim()
+      ? p.note.trim().slice(0, MAX_PROFILE_NOTE)
+      : undefined,
   };
 }

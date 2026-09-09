@@ -47,8 +47,14 @@ export type ItemForm =
 /** 服用タイミング */
 export type DoseTime = '朝' | '昼' | '夜';
 
-/** ルーティンの区分 */
-export type RoutineKind = 'inbath' | 'outbath';
+/**
+ * ルーティンの区分。ユーザーが作った名前（「朝のスキンケア」など）も入る。
+ *
+ * 組み込みの2つだけ内部キー（`inbath` / `outbath`）を使い、表示名は
+ * `routineTitle()` が返す。ユーザーが作った区分は名前そのものがキーになる。
+ */
+export type BuiltinRoutine = 'inbath' | 'outbath';
+export type RoutineKind = BuiltinRoutine | (string & {});
 
 export interface StockItem {
   id: string;
@@ -206,6 +212,14 @@ export type ScalpType = '乾燥' | '脂性' | 'ふけ・かゆみ' | '普通';
 export interface Profile {
   skin?: SkinType;
   scalp?: ScalpType;
+  /**
+   * 自由記述。選択肢に収まらない事情をユーザー自身の言葉で書く欄。
+   *
+   * 洗浄基剤の相性判定（lib/cleanser.ts）はここを読まない — 解釈が要る文章を
+   * ルールで扱うと、書いた内容によって結果が変わる理由を説明できなくなるため。
+   * 効くのはAIが書く一言（lib/prompts.ts）だけ。
+   */
+  note?: string;
 }
 
 /** 洗浄成分の系統 */
