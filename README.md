@@ -34,7 +34,7 @@
 
 | 画面 | パス | 内容 |
 | :--- | :--- | :--- |
-| マイストック | `/` | 在庫一覧（カテゴリ折りたたみ）・期限アラート・編集・削除 |
+| マイストック | `/` | 在庫一覧（カテゴリ折りたたみ）・期限アラート・項目タップで編集／削除 |
 | 今日のルーティン | `/routine` | 服薬チェック・洗う順序・塗る順序 |
 | スキャン | `/scan` | カメラ／画像選択 → 3色判定 |
 | ストックを追加・編集 | `/stock/new` | 成分表の撮影読み取り＋手入力（`?id=` で編集） |
@@ -98,7 +98,7 @@ app/
   api/analyze/route.ts  判定API（抽出 → 照合）
   api/extract/route.ts  成分抽出のみ（在庫登録用）
 lib/llm.ts              AIプロバイダの抽象（Anthropic / Azure / モック）
-components/             BottomNav / StockList / JudgementCard / CleanserMatchCard
+components/             BottomNav / StockList / StockActionSheet / JudgementCard / CleanserMatchCard
 components/ui/          Card / Chip / Button / SectionHeader
 lib/                    types・schemas・prompts・storage・routine・expiry・cleanser ほか
 docs/                   全ドキュメント

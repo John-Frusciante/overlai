@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronDown, PencilLine, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, PencilLine, Trash2 } from 'lucide-react';
 import { CATEGORY_STYLE, FALLBACK_ICON } from '@/lib/ui';
 import { CATEGORY_ORDER } from '@/lib/seed';
 import type { ExpiryAlert, StockItem } from '@/lib/types';
@@ -14,6 +14,7 @@ export function StockList({
   editing,
   collapsed,
   onToggleCategory,
+  onSelect,
   onRemove,
 }: {
   items: StockItem[];
@@ -21,6 +22,7 @@ export function StockList({
   editing: boolean;
   collapsed: string[];
   onToggleCategory: (category: string) => void;
+  onSelect: (item: StockItem) => void;
   onRemove: (id: string) => void;
 }) {
   /** 削除の確認待ちのid。誤タップで消えると復元できないため二段階にする */
@@ -89,8 +91,16 @@ export function StockList({
                   return (
                     <li
                       key={item.id}
-                      className="rounded-2xl border border-line bg-surface p-4 shadow-e1"
+                      className="relative rounded-2xl border border-line bg-surface p-4 shadow-e1"
                     >
+                      {/* カードのどこを押しても操作シートが開く。
+                          Link を内側に持つため、入れ子のボタンにせず透明な層を重ねる */}
+                      <button
+                        onClick={() => onSelect(item)}
+                        aria-label={`${item.name} の操作`}
+                        className="absolute inset-0 rounded-2xl"
+                      />
+
                       <div className="flex items-start gap-3">
                         <span
                           className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${cat?.bg} ${cat?.text}`}
@@ -134,8 +144,17 @@ export function StockList({
                           </p>
                         </div>
 
+                        {!editing && (
+                          <ChevronRight
+                            size={16}
+                            strokeWidth={2.2}
+                            className="mt-1 shrink-0 text-faint/60"
+                            aria-hidden
+                          />
+                        )}
+
                         {editing && (
-                          <div className="flex shrink-0 flex-col gap-1.5">
+                          <div className="relative z-10 flex shrink-0 flex-col gap-1.5">
                             <Link
                               href={`/stock/new?id=${item.id}`}
                               aria-label={`${item.name} を編集`}
@@ -159,7 +178,7 @@ export function StockList({
                       </div>
 
                       {editing && confirming && (
-                        <div className="mt-3 flex items-center gap-2 rounded-xl bg-red-50 p-2.5 pl-3.5">
+                        <div className="relative z-10 mt-3 flex items-center gap-2 rounded-xl bg-red-50 p-2.5 pl-3.5">
                           <p className="flex-1 text-[12.5px] font-medium text-red-700">
                             このストックを削除しますか？
                           </p>

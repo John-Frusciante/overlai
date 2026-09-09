@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
 import { StockList } from '@/components/StockList';
+import { StockActionSheet } from '@/components/StockActionSheet';
 import { ButtonLink } from '@/components/ui/Button';
 import { collectAlerts, lowStock } from '@/lib/expiry';
 import {
@@ -39,6 +40,8 @@ export default function MyStockPage() {
   const [low, setLow] = useState<StockItem[]>([]);
   /** 閉じているカテゴリ。件数が増えても一覧をたどれるようにする */
   const [collapsed, setCollapsed] = useState<string[]>([]);
+  /** タップで開いている操作シートの対象 */
+  const [selected, setSelected] = useState<StockItem | null>(null);
 
   const refresh = useCallback((items: StockItem[]) => {
     setStock(items);
@@ -135,7 +138,7 @@ export default function MyStockPage() {
         <p className="mt-6 rounded-2xl border border-line bg-surface px-4 py-3 text-[12.5px] leading-relaxed text-muted shadow-e1">
           各項目の <PencilLine size={12} className="inline align-[-1px]" strokeWidth={2.4} /> で内容を編集、
           <Trash2 size={12} className="inline align-[-1px] text-red-600" strokeWidth={2.4} /> で削除できます。
-          カテゴリ名をタップすると開閉します。
+          編集モードに入らなくても、<span className="font-semibold text-ink">項目をタップ</span>すれば同じ操作ができます。
         </p>
       )}
 
@@ -162,9 +165,16 @@ export default function MyStockPage() {
           editing={editing}
           collapsed={collapsed}
           onToggleCategory={onToggleCategory}
+          onSelect={setSelected}
           onRemove={onRemove}
         />
       </div>
+
+      <StockActionSheet
+        item={selected}
+        onClose={() => setSelected(null)}
+        onRemove={onRemove}
+      />
 
       <BottomNav scanHref={scanHref} />
     </main>
