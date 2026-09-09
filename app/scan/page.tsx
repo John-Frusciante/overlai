@@ -33,6 +33,7 @@ export default function ScanPage() {
   const [phase, setPhase] = useState<Phase>('idle');
   const [cameraReady, setCameraReady] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [emptyStock, setEmptyStock] = useState(false);
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
 
   useEffect(() => {
@@ -84,6 +85,7 @@ export default function ScanPage() {
         if (!res.ok) {
           const body = (await res.json().catch(() => null)) as ApiErrorBody | null;
           setErrorMsg(body?.error.message ?? '判定に失敗しました');
+          setEmptyStock(body?.error.code === 'EMPTY_STOCK');
           setPhase('error');
           return;
         }
@@ -188,12 +190,21 @@ export default function ScanPage() {
             >
               もう一度撮る
             </button>
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="rounded-2xl border border-white/25 py-3.5 text-[15px] font-medium text-white transition-transform active:scale-[0.98] active:bg-white/10"
-            >
-              画像を選ぶ
-            </button>
+            {emptyStock ? (
+              <button
+                onClick={() => router.push('/stock/new')}
+                className="rounded-2xl border border-white/25 py-3.5 text-[15px] font-medium text-white transition-transform active:scale-[0.98] active:bg-white/10"
+              >
+                ストックを追加する
+              </button>
+            ) : (
+              <button
+                onClick={() => fileRef.current?.click()}
+                className="rounded-2xl border border-white/25 py-3.5 text-[15px] font-medium text-white transition-transform active:scale-[0.98] active:bg-white/10"
+              >
+                画像を選ぶ
+              </button>
+            )}
           </div>
         </div>
       )}

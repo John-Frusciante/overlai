@@ -108,6 +108,7 @@ export interface AnalyzeResponse {
 
 export type ApiErrorCode =
   | 'INVALID_IMAGE'
+  | 'EMPTY_STOCK'
   | 'EXTRACTION_FAILED'
   | 'RATE_LIMITED'
   | 'UPSTREAM_ERROR';

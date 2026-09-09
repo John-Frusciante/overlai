@@ -40,6 +40,15 @@ export async function POST(req: Request) {
     return fail('INVALID_IMAGE', '画像を読み込めませんでした。選び直してください', 400);
   }
 
+  // 在庫が空のときは「不正」ではなく、登録を促す案内にする
+  if (!Array.isArray(body.stock) || body.stock.length === 0) {
+    return fail(
+      'EMPTY_STOCK',
+      'マイストックが空です。先にストックを追加してください',
+      400,
+    );
+  }
+
   const stock = sanitizeStock(body.stock);
   if (!stock) {
     return fail('INVALID_IMAGE', '在庫データが不正です', 400);
