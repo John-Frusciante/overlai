@@ -6,158 +6,155 @@
 <style>
   @page { size: A4; margin: 0; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
     --ink:#0F172A; --muted:#475569; --faint:#94A3B8;
     --line:rgba(15,23,42,.09); --line2:rgba(15,23,42,.16);
     --canvas:#F7F8FA; --brand:#1B2A4A;
-    --blue:#2563EB; --amber:#C2700A; --red:#DC2626;
+    --blue:#2563EB; --amber:#C2700A; --red:#DC2626; --green:#15803D;
   }
-
   html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body {
-    font-family: "Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
-    color: var(--ink);
-    font-size: 9.1pt;
-    line-height: 1.72;
-    letter-spacing: .01em;
-    background: #fff;
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+    color:var(--ink); font-size:9.1pt; line-height:1.7; letter-spacing:.01em; background:#fff;
   }
-
-  .page {
-    width: 210mm; height: 297mm;
-    padding: 14mm 15mm 12mm;
-    position: relative; overflow: hidden;
-    display: flex; flex-direction: column;
-  }
+  .page { width:210mm; height:297mm; padding:14mm 15mm 12mm; position:relative; overflow:hidden;
+          display:flex; flex-direction:column; }
   .page + .page { page-break-before: always; }
 
-  /* ── ヘッダー ───────────────────────────── */
-  .masthead { display:flex; align-items:flex-start; gap:11mm; padding-bottom:4.4mm; border-bottom:1.6pt solid var(--brand); }
+  /* ヘッダー */
+  .masthead { display:flex; align-items:flex-start; gap:10mm; padding-bottom:4.4mm; border-bottom:1.6pt solid var(--brand); }
   .brandblock { flex:1; }
-  .logoline { display:flex; align-items:center; gap:3.2mm; }
+  .logoline { display:flex; align-items:center; gap:3mm; }
   .logoline svg { width:7.4mm; height:7.4mm; }
   .wordmark { font-size:17.6pt; font-weight:800; letter-spacing:.11em; color:var(--brand); }
+  .romaji { font-size:7.4pt; color:var(--faint); letter-spacing:.02em; }
   .tagline { margin-top:2.2mm; font-size:11.8pt; font-weight:700; letter-spacing:.015em; }
-  .subline { margin-top:1.6mm; font-size:8.6pt; color:var(--muted); }
-
-  .meta { width:57mm; font-size:7.5pt; line-height:1.54; color:var(--muted); border-left:.7pt solid var(--line2); padding-left:5mm; }
+  .subline { margin-top:1.4mm; font-size:8.4pt; color:var(--muted); }
+  .meta { width:56mm; font-size:7.5pt; line-height:1.54; color:var(--muted); border-left:.7pt solid var(--line2); padding-left:4.6mm; }
   .meta dt { color:var(--faint); font-size:6.7pt; letter-spacing:.09em; text-transform:uppercase; }
   .meta dd { color:var(--ink); font-weight:600; margin-bottom:1.1mm; }
   .meta dd.url { font-weight:700; color:var(--brand); word-break:break-all; letter-spacing:0; }
 
-  /* ── リード ─────────────────────────────── */
-  .lead { margin-top:5mm; background:var(--canvas); border-radius:3mm; padding:4.4mm 5.4mm; }
-  .lead p { font-size:10.2pt; line-height:1.72; font-weight:600; }
-  .lead p em { font-style:normal; background:linear-gradient(transparent 62%, rgba(37,99,235,.20) 62%); }
-  .lead .sub { margin-top:2.4mm; font-size:8.5pt; font-weight:400; color:var(--muted); line-height:1.7; }
-
-  /* ── セクション ─────────────────────────── */
-  section { margin-top:4.4mm; }
-  h2 { display:flex; align-items:baseline; gap:2.8mm; font-size:10.4pt; font-weight:800; letter-spacing:.02em; padding-bottom:1.5mm; border-bottom:.7pt solid var(--line2); margin-bottom:2.8mm; }
+  /* セクション */
+  section { margin-top:4.6mm; }
+  h2 { display:flex; align-items:baseline; gap:2.8mm; font-size:10.4pt; font-weight:800; letter-spacing:.02em;
+       padding-bottom:1.5mm; border-bottom:.7pt solid var(--line2); margin-bottom:2.8mm; }
   h2 .n { font-size:7pt; font-weight:800; letter-spacing:.13em; color:var(--blue); }
   h2 .en { margin-left:auto; font-size:6.6pt; font-weight:600; letter-spacing:.15em; color:var(--faint); text-transform:uppercase; }
-
-  h3 { font-size:8.8pt; font-weight:700; margin:3.4mm 0 1.4mm; }
-  p + p { margin-top:1.9mm; }
-  strong { font-weight:700; }
+  h3 { font-size:8.8pt; font-weight:700; margin:3.2mm 0 1.4mm; }
+  p + p { margin-top:1.8mm; }
   .em { color:var(--brand); font-weight:700; }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:5mm; }
 
-  .two { display:grid; grid-template-columns:1fr 1fr; gap:6mm; }
-  .three { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5mm; }
+  /* 一言 */
+  .oneline { background:var(--canvas); border-radius:2.6mm; padding:4mm 5mm; }
+  .oneline p { font-size:10.2pt; line-height:1.7; font-weight:700; }
+  .oneline em { font-style:normal; background:linear-gradient(transparent 62%, rgba(37,99,235,.20) 62%); }
+  .oneline .sub { margin-top:1.6mm; font-size:8.3pt; font-weight:400; color:var(--muted); line-height:1.66; }
 
-  /* 2つの判断軸 */
-  .axes { display:grid; grid-template-columns:1fr 1fr; gap:4mm; margin-top:2.6mm; }
-  .axis { border:.7pt solid var(--line); border-radius:2.2mm; padding:2.4mm 3.2mm; background:#fff; }
-  .axis .hd { font-size:8.8pt; font-weight:800; }
-  .axis .dot { display:inline-block; width:2.4mm; height:2.4mm; border-radius:50%; vertical-align:-.2mm; margin-right:1.6mm; }
-  .axis p { margin-top:1mm; font-size:7.6pt; line-height:1.58; color:var(--muted); }
-  .axis p b { color:var(--ink); }
-  .axis.y { border-color:rgba(194,112,10,.28); background:rgba(194,112,10,.035); }
-  .axis.y .hd { color:var(--amber); } .axis.y .dot { background:var(--amber); }
-  .axis.r { border-color:rgba(220,38,38,.26); background:rgba(220,38,38,.032); }
-  .axis.r .hd { color:var(--red); } .axis.r .dot { background:var(--red); }
+  /* 3つの柱 */
+  .pillars { display:grid; grid-template-columns:1fr 1fr 1fr; gap:4mm; margin-top:3mm; }
+  .pillar { border:.7pt solid var(--line); border-radius:2.2mm; padding:2.4mm 3mm; background:#fff; }
+  .pillar .n { font-size:6.5pt; font-weight:800; letter-spacing:.12em; color:var(--faint); }
+  .pillar .t { margin-top:.6mm; font-size:9pt; font-weight:800; }
+  .pillar p { margin-top:1mm; font-size:7.5pt; line-height:1.56; color:var(--muted); }
+  .pillar p b { color:var(--ink); }
+  .pillar.a { border-color:rgba(21,128,61,.28); background:rgba(21,128,61,.035); } .pillar.a .t{color:var(--green)} .pillar.a .n{color:var(--green)}
+  .pillar.b { border-color:rgba(220,38,38,.26); background:rgba(220,38,38,.032); } .pillar.b .t{color:var(--red)} .pillar.b .n{color:var(--red)}
+  .pillar.c { border-color:rgba(37,99,235,.26); background:rgba(37,99,235,.035); } .pillar.c .t{color:var(--blue)} .pillar.c .n{color:var(--blue)}
 
-  /* 場面カード */
+  /* 場面 */
   .scene { background:#fff; border:.7pt solid var(--line); border-left:2.2pt solid var(--line2); border-radius:1.6mm; padding:2.7mm 3.4mm; }
-  .scene .h { font-size:7.2pt; font-weight:700; letter-spacing:.04em; color:var(--faint); margin-bottom:1.4mm; }
+  .scene .h { font-size:7.2pt; font-weight:700; letter-spacing:.04em; color:var(--faint); margin-bottom:1.2mm; }
+  .scene p { font-size:7.9pt; line-height:1.58; color:var(--muted); }
+  .scene b { color:var(--ink); }
   .scene.y { border-left-color:var(--amber); } .scene.y .h { color:var(--amber); }
   .scene.r { border-left-color:var(--red); } .scene.r .h { color:var(--red); }
-  .scene p { font-size:8.1pt; line-height:1.62; color:var(--muted); }
-  .scene b { color:var(--ink); }
+
+  /* 表 */
+  table { width:100%; border-collapse:collapse; font-size:7.9pt; }
+  th { text-align:left; font-weight:700; font-size:6.9pt; letter-spacing:.07em; color:var(--faint);
+       text-transform:uppercase; padding:0 2.4mm 1.4mm; border-bottom:.7pt solid var(--line2); }
+  td { padding:1.35mm 2.4mm; border-bottom:.5pt solid var(--line); vertical-align:top; line-height:1.58; }
+  tr:last-child td { border-bottom:none; }
+  td.k { font-weight:700; }
+  td.no { color:var(--faint); }
+  table.summary td { padding:1.9mm 2.4mm; }
+  table.summary td.k { width:28mm; color:var(--faint); font-weight:700; font-size:7.4pt; }
+  .mono { font-family:"SF Mono",Menlo,monospace; font-size:7.2pt; letter-spacing:-.01em; }
+
+  /* 主張バンド */
+  .claim { margin-top:3mm; background:var(--brand); color:#fff; border-radius:2.6mm; padding:3.6mm 4.6mm; }
+  .claim .t { font-size:10pt; font-weight:700; line-height:1.6; }
+  .claim .s { margin-top:1.5mm; font-size:7.9pt; line-height:1.64; color:rgba(255,255,255,.74); }
+  .claim .s b { color:#fff; }
+
+  /* 機能ブロック */
+  .feat { border:.7pt solid var(--line); border-radius:2.2mm; padding:2.6mm 3.2mm; background:#fff; }
+  .feat .hd { display:flex; align-items:baseline; gap:2.2mm; }
+  .feat .n { font-size:6.6pt; font-weight:800; letter-spacing:.1em; color:var(--blue); }
+  .feat .t { font-size:9pt; font-weight:800; }
+  .feat ul { margin-top:1.6mm; }
+  .feat li { font-size:7.6pt; line-height:1.55; }
+  ul { list-style:none; }
+  ul li { position:relative; padding-left:3.4mm; font-size:8.2pt; line-height:1.66; }
+  ul li + li { margin-top:.7mm; }
+  ul li::before { content:""; position:absolute; left:.5mm; top:1.8mm; width:1.2mm; height:1.2mm; border-radius:50%; background:var(--faint); }
+  ul li b { font-weight:700; }
 
   /* 3色 */
-  .signals { display:grid; grid-template-columns:1fr 1fr 1fr; gap:4mm; margin-top:1mm; }
+  .signals { display:grid; grid-template-columns:1fr 1fr 1fr; gap:4mm; }
   .sig { border:.7pt solid var(--line); border-radius:2.4mm; overflow:hidden; }
-  .sig .cap { padding:2.6mm 3.2mm 2.8mm; }
-  .sig .dot { display:inline-block; width:2.6mm; height:2.6mm; border-radius:50%; vertical-align:-.3mm; margin-right:1.6mm; }
-  .sig .t { font-size:8.6pt; font-weight:700; }
-  .sig .d { margin-top:1mm; font-size:7.5pt; line-height:1.6; color:var(--muted); }
-  .sig img { display:block; width:100%; height:50mm; object-fit:cover; object-position:top; border-top:.7pt solid var(--line); }
-
-  /* その他の画面 */
-  .shots { display:grid; grid-template-columns:repeat(3,1fr); gap:5mm; margin-top:1mm; }
-  .shot { border:.7pt solid var(--line); border-radius:2.4mm; overflow:hidden; background:#fff; }
-  .shot img { display:block; width:100%; height:33mm; object-fit:cover; object-position:top; }
-  .shot .c { padding:2.2mm 3mm 2.6mm; border-top:.7pt solid var(--line); }
-  .shot .t { font-size:8.2pt; font-weight:700; }
-  .shot .d { margin-top:.8mm; font-size:7.3pt; line-height:1.55; color:var(--muted); }
+  .sig .cap { padding:2.4mm 3mm 2.6mm; }
+  .sig .dot { display:inline-block; width:2.4mm; height:2.4mm; border-radius:50%; vertical-align:-.3mm; margin-right:1.5mm; }
+  .sig .t { font-size:8.4pt; font-weight:700; }
+  .sig .d { margin-top:.9mm; font-size:7.4pt; line-height:1.56; color:var(--muted); }
+  .sig img { display:block; width:100%; height:45mm; object-fit:cover; object-position:top; border-top:.7pt solid var(--line); }
   .sig.b .t{color:var(--blue)} .sig.b .dot{background:var(--blue)}
   .sig.y .t{color:var(--amber)} .sig.y .dot{background:var(--amber)}
   .sig.r .t{color:var(--red)} .sig.r .dot{background:var(--red)}
 
-  /* テーブル */
-  table { width:100%; border-collapse:collapse; font-size:7.9pt; }
-  th { text-align:left; font-weight:700; font-size:6.9pt; letter-spacing:.07em; color:var(--faint); text-transform:uppercase; padding:0 2.4mm 1.5mm; border-bottom:.7pt solid var(--line2); }
-  td { padding:1.5mm 2.4mm; border-bottom:.5pt solid var(--line); vertical-align:top; line-height:1.6; }
-  tr:last-child td { border-bottom:none; }
-  td.k { font-weight:700; white-space:nowrap; }
-  td.no { color:var(--faint); }
-.oneline { background:var(--canvas); border-radius:2.6mm; padding:4mm 5mm; margin-bottom:3mm; }
-  .oneline p { font-size:10.2pt; line-height:1.7; font-weight:700; }
-  .oneline em { font-style:normal; background:linear-gradient(transparent 62%, rgba(37,99,235,.20) 62%); }
-  .oneline .sub { margin-top:1.8mm; font-size:8.3pt; font-weight:400; color:var(--muted); line-height:1.68; }
-  table.summary td { padding:2mm 2.4mm; }
-  table.summary td.k { width:30mm; color:var(--faint); font-weight:700; font-size:7.4pt; letter-spacing:.04em; }
-  .mono { font-family:"SF Mono",Menlo,monospace; font-size:7.2pt; letter-spacing:-.01em; }
+  /* そのほかの画面 */
+  .shots { display:grid; grid-template-columns:repeat(3,1fr); gap:5mm; }
+  .shot { border:.7pt solid var(--line); border-radius:2.4mm; overflow:hidden; background:#fff; }
+  .shot img { display:block; width:100%; height:33mm; object-fit:cover; object-position:top; }
+  .shot .c { padding:2.2mm 3mm 2.4mm; border-top:.7pt solid var(--line); }
+  .shot .t { font-size:8.2pt; font-weight:700; }
+  .shot .d { margin-top:.7mm; font-size:7.3pt; line-height:1.55; color:var(--muted); }
 
-  /* 主張バンド */
-  .claim { margin-top:3mm; background:var(--brand); color:#fff; border-radius:2.6mm; padding:3.4mm 4.4mm; }
-  .claim .t { font-size:10pt; font-weight:700; line-height:1.6; }
-  .claim .s { margin-top:1.6mm; font-size:7.9pt; line-height:1.66; color:rgba(255,255,255,.72); }
+  /* 構成図 */
+  .diagram { background:#0F172A; border-radius:2.6mm; padding:4mm 5mm; color:#E2E8F0;
+             font-family:"SF Mono",Menlo,monospace; font-size:7pt; line-height:1.85; white-space:pre; letter-spacing:-.01em; }
+  .diagram b { color:#fff; font-weight:700; }
+  .diagram .c { color:#7C8DA6; }
 
   /* パイプライン */
-  .pipe { display:flex; align-items:stretch; gap:3mm; margin-top:1mm; }
-  .step { flex:1; border:.7pt solid var(--line); border-radius:2.2mm; padding:3mm 3.4mm; background:#fff; }
+  .pipe { display:flex; align-items:stretch; gap:3mm; }
+  .step { flex:1; border:.7pt solid var(--line); border-radius:2.2mm; padding:2.8mm 3.2mm; background:#fff; }
   .step .n { font-size:6.5pt; font-weight:800; letter-spacing:.12em; color:var(--blue); }
-  .step .t { margin-top:.8mm; font-size:8.5pt; font-weight:700; }
-  .step .d { margin-top:1.2mm; font-size:7.4pt; line-height:1.6; color:var(--muted); }
-  .step .m { margin-top:1.6mm; font-size:6.9pt; color:var(--faint); }
+  .step .t { margin-top:.7mm; font-size:8.4pt; font-weight:700; }
+  .step .d { margin-top:1.1mm; font-size:7.4pt; line-height:1.58; color:var(--muted); }
+  .step .m { margin-top:1.4mm; font-size:6.9pt; color:var(--faint); }
   .arrow { align-self:center; color:var(--faint); font-size:11pt; }
 
   /* 実証ハイライト */
-  .proof { border:1pt solid rgba(37,99,235,.28); background:rgba(37,99,235,.045); border-radius:2.6mm; padding:4mm 4.6mm; margin-top:3.4mm; }
+  .proof { border:1pt solid rgba(37,99,235,.28); background:rgba(37,99,235,.045); border-radius:2.6mm; padding:3.6mm 4.4mm; margin-top:3mm; }
   .proof .h { font-size:8.6pt; font-weight:700; color:var(--blue); }
-  .proof .flow { display:flex; align-items:center; gap:2.6mm; margin-top:2.4mm; font-size:7.9pt; }
-  .proof .box { border:.7pt solid var(--line2); background:#fff; border-radius:1.6mm; padding:1.8mm 2.6mm; font-weight:600; }
-  .proof .p { margin-top:2.4mm; font-size:7.9pt; line-height:1.66; color:var(--muted); }
+  .proof .flow { display:flex; align-items:center; gap:2.4mm; margin-top:2.2mm; font-size:7.9pt; }
+  .proof .box { border:.7pt solid var(--line2); background:#fff; border-radius:1.6mm; padding:1.6mm 2.4mm; font-weight:600; }
+  .proof .p { margin-top:2.2mm; font-size:7.9pt; line-height:1.64; color:var(--muted); }
+  .proof .p b { color:var(--ink); }
 
-  ul { list-style:none; }
-  ul li { position:relative; padding-left:3.6mm; font-size:8.2pt; line-height:1.68; }
-  ul li + li { margin-top:.7mm; }
-  ul li::before { content:""; position:absolute; left:.6mm; top:1.9mm; width:1.3mm; height:1.3mm; border-radius:50%; background:var(--faint); }
-
-  .note { font-size:7.3pt; color:var(--faint); line-height:1.6; }
-
-  footer { margin-top:auto; padding-top:4mm; border-top:.7pt solid var(--line); display:flex; justify-content:space-between; align-items:baseline; font-size:6.9pt; color:var(--faint); letter-spacing:.04em; }
+  .note { font-size:7.3pt; color:var(--faint); line-height:1.58; }
+  footer { margin-top:auto; padding-top:3.6mm; border-top:.7pt solid var(--line);
+           display:flex; justify-content:space-between; align-items:baseline; font-size:6.9pt; color:var(--faint); letter-spacing:.04em; }
   footer b { color:var(--muted); font-weight:600; }
 </style>
 </head>
 <body>
 
-<!-- ══════════ 1ページ目 ══════════ -->
+<!-- ══════════ 1 ══════════ -->
 <div class="page">
-
   <div class="masthead">
     <div class="brandblock">
       <div class="logoline">
@@ -165,7 +162,8 @@
           <path d="M14 14 h30 a10 10 0 0 1 10 10 v30 a10 10 0 0 1 -10 10 h-30 a10 10 0 0 1 -10 -10 v-30 a10 10 0 0 1 10 -10 z" fill="#1B2A4A" fill-opacity=".38"/>
           <path d="M36 36 h30 a10 10 0 0 1 10 10 v30 a10 10 0 0 1 -10 10 h-30 a10 10 0 0 1 -10 -10 v-30 a10 10 0 0 1 10 -10 z" fill="#1B2A4A" fill-opacity=".72"/>
         </svg>
-        <span class="wordmark">OVERLAI</span><span style="margin-left:3mm;font-size:7.4pt;color:var(--faint);letter-spacing:.02em">オーバーレイ ／ Overlay（重ねる）＋ AI</span>
+        <span class="wordmark">OVERLAI</span>
+        <span class="romaji">オーバーレイ ／ Overlay（重ねる）＋ AI</span>
       </div>
       <div class="tagline">買う前に、家の棚を重ねて見る。</div>
       <div class="subline">ユメカタリ 学生生成AIコンテスト 2026・開発部門 ／ 応募作品概要書</div>
@@ -173,31 +171,37 @@
     <dl class="meta">
       <dt>応募者</dt><dd>井上 高志・濱田 圭太郎・杉本 隼都<br><span style="font-weight:400;color:var(--muted)">鈴鹿工業高等専門学校／3名チーム</span></dd>
       <dt>公開URL（実機で動作）</dt><dd class="url">overlai-delta.vercel.app</dd>
-      <dt>使用した生成AI</dt><dd>Azure OpenAI gpt-5.1（学校提供）</dd>
     </dl>
   </div>
 
   <section>
     <h2><span class="n">00</span>作品サマリー<span class="en">Summary</span></h2>
     <div class="oneline">
-      <p>「その商品がいいかどうか」ではなく、<em>「あなたの家にあるものと、合うかどうか」</em>を判定する。</p>
-      <p class="sub">店頭で成分表示にカメラをかざすと、自宅の在庫と突合した判定が3色で返る。</p>
+      <p>自分がいま使っている薬と化粧品の<em>データベースを手元につくり</em>、それを基準に判断する。</p>
+      <p class="sub">買うときは重複と併用リスクを、毎日は使う順番とスケジュールを。<b>体に入れるもの全部を、ひとつのアプリで扱う。</b></p>
     </div>
 
-    <div class="axes">
-      <div class="axis y">
-        <div class="hd"><span class="dot"></span>もう持っていないか</div>
-        <p>同一成分・同効能のものが家にあるか。<b>重複購入と残薬を防ぐ。</b></p>
+    <div class="pillars">
+      <div class="pillar a">
+        <div class="n">つくる</div>
+        <div class="t">自分の在庫データベース</div>
+        <p>成分表示にカメラをかざすだけで、<b>いま使っている薬・化粧品の成分データベースが手元にできる。</b>これがすべての判断の基準になる。</p>
       </div>
-      <div class="axis r">
-        <div class="hd"><span class="dot"></span>いま使っている薬と合うか</div>
-        <p>手持ちの処方薬との併用リスク。<b>外用薬 × 化粧品の相互作用データベースは日本に存在しない。</b></p>
+      <div class="pillar b">
+        <div class="n">判断する</div>
+        <div class="t">重なりとリスクを判断</div>
+        <p>成分の重複、効能の重複、<b>飲み合わせ・塗り合わせのリスク</b>。処方薬を使っている前提で判定する。</p>
+      </div>
+      <div class="pillar c">
+        <div class="n">使いこなす</div>
+        <div class="t">順番・記録・期限まで</div>
+        <p>塗る順序、洗う順序、服薬スケジュール、残薬、使用期限。<b>買ったあと、毎日使うところまで面倒を見る。</b></p>
       </div>
     </div>
-    <table class="summary">
+
+    <table class="summary" style="margin-top:3mm">
       <tr><td class="k">対象ユーザー</td><td>処方薬を使いながら市販薬・化粧品も買う人／家族の薬箱を管理する人</td></tr>
-      <tr><td class="k">主な機能</td><td>3色判定スキャナー ／ マイストック ／ 塗る・洗う順序ナビ ／ 期限アラート ／ 服薬記録</td></tr>
-      <tr><td class="k">動作環境</td><td>Webアプリ（PWA）。スマートフォンのブラウザで動作し、ホーム画面から全画面起動できる</td></tr>
+      <tr><td class="k">使用した生成AI</td><td>Azure OpenAI <span class="mono">gpt-5.1</span>（Vision ＋ Structured Outputs）。学校提供のプロキシを利用</td></tr>
     </table>
   </section>
 
@@ -213,122 +217,178 @@
         <p>皮膚科でステロイドの塗り薬をもらっている。この化粧水は、その薬と一緒に使って大丈夫なのか。パッケージの「敏感肌の方にも」は、<b>薬を塗っている肌</b>を想定した言葉ではない。</p>
       </div>
     </div>
-    <p style="margin-top:3mm">どちらも、<span class="em">判断に必要な情報は全部「家」にある</span>のに、その情報を店頭に持ち出せないことが原因です。</p>
+    <p style="margin-top:2.6mm">どちらも、<span class="em">判断に必要な情報は全部「家」にある</span>のに、その情報を店頭に持ち出せないことが原因です。</p>
   </section>
 
   <section>
     <h2><span class="n">02</span>なぜ、これだけアプリがあるのに解決されないのか<span class="en">Why unsolved</span></h2>
     <table>
-      <tr><th style="width:31%">既存サービス</th><th style="width:26%">持っているデータ</th><th style="width:20%">答えられること</th><th>答えられないこと</th></tr>
+      <tr><th style="width:30%">既存サービス</th><th style="width:26%">持っているデータ</th><th style="width:21%">答えられること</th><th>答えられないこと</th></tr>
       <tr><td class="k">コスメ成分アプリ</td><td>化粧品の全成分</td><td>この商品は安全か</td><td class="no">もう持っているか</td></tr>
       <tr><td class="k">お薬手帳アプリ</td><td>調剤履歴</td><td>飲み合わせは大丈夫か</td><td class="no">棚の商品と被るか</td></tr>
       <tr><td class="k">小売アプリ</td><td>自社全商品・口コミ</td><td>この商品の評判は</td><td class="no">家の在庫と重複するか</td></tr>
     </table>
-    <p style="margin-top:2.8mm">全員が<span class="em">「商品側」のデータベース</span>で戦っている。商品DBをどれだけ大きくしても「あなたの家にもうある」だけは言えません。さらに産業が縦に割れています ── 飲む薬は製薬・調剤、塗る化粧品は化粧品メーカー。<span class="em">処方された塗り薬は、このどこにも居場所がない。</span></p>
+    <p style="margin-top:2.4mm">全員が<span class="em">「商品側」のデータベース</span>で戦っている。商品DBをどれだけ大きくしても「あなたの家にもうある」だけは言えません。さらに産業が縦に割れています ── 飲む薬は製薬・調剤、塗る化粧品は化粧品メーカー。<span class="em">処方された塗り薬は、このどこにも居場所がない。</span></p>
     <div class="claim">
       <div class="t">でも、それを全部使う体は、ひとつしかない。</div>
-      <div class="s">Overlai は判定の基準を、商品から「その人の家」へ移します。外用薬 × 化粧品は、成分の性質からの推論が必要な領域として空白のまま残されてきました。</div>
+      <div class="s">飲む薬も、塗る薬も、化粧品も、行き着く先は同じひとつの体です。<b>Overlai はそれらを産業の区切りで分けず、ひとつの棚として扱います。</b>判定の基準を商品から「その人の家」へ移す、とはそういう意味です。</div>
     </div>
   </section>
 
-  <footer><span><b>Overlai</b> ／ 作品概要書</span><span>ユメカタリ 学生生成AIコンテスト 2026・開発部門</span><span>1 / 3</span></footer>
+  <footer><span><b>Overlai</b> ／ 作品概要書</span><span>ユメカタリ 学生生成AIコンテスト 2026・開発部門</span><span>1 / 4</span></footer>
 </div>
 
-<!-- ══════════ 2ページ目 ══════════ -->
+<!-- ══════════ 2 ══════════ -->
 <div class="page">
-
   <section style="margin-top:0">
-    <h2><span class="n">03</span>解決 ── 家の在庫を基準にした3色判定<span class="en">Solution</span></h2>
-    <div class="signals">
-      <div class="sig b">
-        <div class="cap">
-          <div class="t"><span class="dot"></span>買っても問題なさそう</div>
-          <div class="d">手持ちにない、または目的別の買い分けとして妥当</div>
-        </div>
-        <img src="{{BLUE}}" alt="青判定の画面">
+    <h2><span class="n">03</span>機能 ── 買うときだけのアプリではない<span class="en">Features</span></h2>
+    <div class="two">
+      <div class="feat">
+        <div class="hd"><span class="n">01</span><span class="t">在庫をつくる</span></div>
+        <ul>
+          <li><b>成分表示をカメラで読み取って登録。</b>商品名・成分・剤形をAIが構造化する</li>
+          <li>手入力でも登録できる。<b>「まず全部登録してください」を要求しない</b></li>
+          <li>処方薬／処方薬（外用）／市販薬・サプリ／スキンケア／ヘアケア／ボディケアの6区分</li>
+          <li>処方薬バッジ・編集・削除・カテゴリごとの折りたたみ</li>
+        </ul>
       </div>
-      <div class="sig y">
-        <div class="cap">
-          <div class="t"><span class="dot"></span>買わなくて大丈夫です</div>
-          <div class="d">同一成分・同効能が自宅にある。重複購入を防ぐ</div>
-        </div>
-        <img src="{{YELLOW}}" alt="黄判定の画面">
+      <div class="feat">
+        <div class="hd"><span class="n">02</span><span class="t">買う前に判定する</span></div>
+        <ul>
+          <li><b>成分の重複</b>（同じ鎮痛成分が家にある）</li>
+          <li><b>効能の重複</b>（解熱鎮痛・抗ヒスタミン・鎮咳などの薬効が重なる）</li>
+          <li><b>飲み合わせ・塗り合わせ</b>（処方外用薬を使っている部位への刺激、吸収阻害）</li>
+          <li>判定理由には必ず成分名。該当する在庫アイテムも示す</li>
+        </ul>
       </div>
-      <div class="sig r">
-        <div class="cap">
-          <div class="t"><span class="dot"></span>注意が必要です</div>
-          <div class="d">手持ちの処方薬との併用でリスクや強い刺激の可能性</div>
-        </div>
-        <img src="{{RED}}" alt="赤判定の画面">
+      <div class="feat">
+        <div class="hd"><span class="n">03</span><span class="t">毎日つかう</span></div>
+        <ul>
+          <li><b>塗る順序ナビ。</b>導入液→化粧水→美容液→乳液→クリーム→軟膏→オイル。理由つきで並べる</li>
+          <li><b>洗う順序ナビ。</b>シャンプー→トリートメント→洗顔→ボディソープ</li>
+          <li>服用カレンダー（朝・昼・夕・寝る前）、残薬カウント、直近7日の服薬履歴</li>
+          <li><b>洗浄基剤 × 肌質・頭皮の相性。</b>アミノ酸系／ベタイン系／高級アルコール系／石鹸系を成分から判定する</li>
+        </ul>
+      </div>
+      <div class="feat">
+        <div class="hd"><span class="n">04</span><span class="t">切らさない・使い切る</span></div>
+        <ul>
+          <li>使用期限のアラート</li>
+          <li><b>開封後の酸化目安。</b>オイル・美容液・軟膏は3ヶ月、化粧水・乳液は6ヶ月、洗浄料は12ヶ月</li>
+          <li>残りわずかの通知（残薬カウントと連動）</li>
+        </ul>
       </div>
     </div>
-    <p style="margin-top:3mm" class="note">画面は実際に動作している本番環境（overlai-delta.vercel.app）から取得したもの。判定理由には必ず成分名が入り、全判定色で薬剤師・皮膚科への相談導線を常設しています。</p>
   </section>
 
   <section>
-    <h2><span class="n">04</span>技術構成 ── 2段階のAIパイプライン<span class="en">Architecture</span></h2>
-    <div class="pipe">
-      <div class="step">
-        <div class="n">STEP 1</div>
-        <div class="t">成分抽出（Vision）</div>
-        <div class="d">商品パッケージの画像から、商品名・成分・剤形を構造化JSONで取り出す。JANコードではなく<b>成分表示を直接読む</b>。</div>
-        <div class="m">gpt-5.1 ／ 実測 4.7秒</div>
+    <h2><span class="n">04</span>判定は3色で返る<span class="en">Judgement</span></h2>
+    <div class="signals">
+      <div class="sig b">
+        <div class="cap"><div class="t"><span class="dot"></span>買っても問題なさそう</div>
+        <div class="d">手持ちにない、または目的別の買い分けとして妥当</div></div>
+        <img src="{{BLUE}}" alt="青判定">
       </div>
-      <div class="arrow">→</div>
-      <div class="step">
-        <div class="n">STEP 2</div>
-        <div class="t">在庫照合判定</div>
-        <div class="d">抽出結果と自宅の在庫を突き合わせ、成分重複・効能重複・併用リスクから3色を決める。</div>
-        <div class="m">gpt-5.1 ／ 実測 4.1秒</div>
+      <div class="sig y">
+        <div class="cap"><div class="t"><span class="dot"></span>買わなくて大丈夫です</div>
+        <div class="d">同一成分・同効能が自宅にある。重複購入を防ぐ</div></div>
+        <img src="{{YELLOW}}" alt="黄判定">
       </div>
-      <div class="arrow">→</div>
-      <div class="step">
-        <div class="n">OUTPUT</div>
-        <div class="t">判定 ＋ 根拠</div>
-        <div class="d">シグナル・見出し・該当する在庫アイテム・成分名つきの理由を返す。</div>
-        <div class="m">Structured Outputs で型を強制</div>
+      <div class="sig r">
+        <div class="cap"><div class="t"><span class="dot"></span>注意が必要です</div>
+        <div class="d">手持ちの処方薬との併用でリスクや強い刺激の可能性</div></div>
+        <img src="{{RED}}" alt="赤判定">
       </div>
     </div>
-    <p style="margin-top:3.2mm"><b>単一プロンプトにしなかった理由。</b>「読む」と「判断する」を1回で行うと、読み間違いと判断の誤りが区別できません。分けることで<span class="em">抽出結果をユーザー自身が検証でき</span>、ローディングも「成分を読み取っています → 家の在庫と照合しています」の2段階になり、何が起きているかが伝わります。</p>
-    <h3>プロバイダ抽象</h3>
-    <p>AIの呼び出しは <span class="mono">lib/llm.ts</span> の1ファイルに集約し、環境変数だけで <b>Anthropic Claude ／ Azure OpenAI ／ モック</b>を切り替えます。コード変更は不要。モックはAPI障害時のデモの保険としても機能します。</p>
+    <p class="note" style="margin-top:2.6mm">画面はすべて本番環境（overlai-delta.vercel.app）から取得したもの。全判定色で薬剤師・皮膚科への相談導線を常設している。</p>
   </section>
 
   <section>
     <h2><span class="n">＋</span>そのほかの画面<span class="en">Screens</span></h2>
     <div class="shots">
-      <div class="shot">
-        <img src="{{STOCK}}" alt="マイストック画面">
-        <div class="c"><div class="t">マイストック</div><div class="d">判定の基準になる家の在庫。カテゴリごとに開閉でき、使用期限と残量を知らせる</div></div>
-      </div>
-      <div class="shot">
-        <img src="{{REASON}}" alt="判定の根拠" style="object-position:center 84%">
-        <div class="c"><div class="t">判定の根拠</div><div class="d">なぜその色になったかを成分名つきで示す。根拠のない警告は出さない</div></div>
-      </div>
-      <div class="shot">
-        <img src="{{ROUTINE}}" alt="今日のルーティン画面">
-        <div class="c"><div class="t">今日のルーティン</div><div class="d">塗る順序・洗う順序・服薬チェック。剤形と基剤からルールベースで決まる</div></div>
-      </div>
+      <div class="shot"><img src="{{STOCK}}" alt="マイストック">
+        <div class="c"><div class="t">マイストック</div><div class="d">判定の基準になる在庫。カテゴリごとに開閉でき、期限と残量を知らせる</div></div></div>
+      <div class="shot"><img src="{{REASON}}" alt="判定の根拠" style="object-position:center 84%">
+        <div class="c"><div class="t">判定の根拠</div><div class="d">なぜその色になったかを成分名つきで示す。根拠のない警告は出さない</div></div></div>
+      <div class="shot"><img src="{{ROUTINE}}" alt="今日のルーティン">
+        <div class="c"><div class="t">今日のルーティン</div><div class="d">塗る順序・洗う順序・服薬チェック。剤形と基剤から決まる</div></div></div>
     </div>
   </section>
 
-  <footer><span><b>Overlai</b> ／ 作品概要書</span><span>ユメカタリ 学生生成AIコンテスト 2026・開発部門</span><span>2 / 3</span></footer>
+  <footer><span><b>Overlai</b> ／ 作品概要書</span><span>ユメカタリ 学生生成AIコンテスト 2026・開発部門</span><span>2 / 4</span></footer>
 </div>
 
-<!-- ══════════ 3ページ目 ══════════ -->
+<!-- ══════════ 3 ══════════ -->
 <div class="page">
-
   <section style="margin-top:0">
-    <h2><span class="n">05</span>実証 ── 実在の商品で全パターンを確認<span class="en">Validation</span></h2>
+    <h2><span class="n">05</span>システム構成<span class="en">Architecture</span></h2>
+    <div class="diagram">スマートフォン（ブラウザ / PWA）
+ │  成分表示を撮影 → <b>クライアント側でリサイズ</b>（lib/image.ts）
+ │  在庫・服薬記録・肌質は端末の localStorage に保持（lib/storage.ts に集約）
+ ▼
+<b>Next.js Route Handler  POST /api/analyze</b>          <span class="c">← APIキーはここにしか存在しない</span>
+ │  ① 抽出   画像 ─────────────────→ 商品名・成分・剤形のJSON
+ │  ② 判定   抽出結果 ＋ 在庫 ──────→ シグナル・見出し・根拠
+ │  ③ 後処理 <b>赤判定なら相談フラグを強制／成分名のない理由を除外</b>
+ ▼
+Azure OpenAI 互換プロキシ（<b>gpt-5.1</b>・学校提供）
+
+<span class="c">※ 在庫はリクエスト時に送るだけで、サーバーには一切保存しない</span></div>
+    <p style="margin-top:2.6mm"><b>2段階だが、クライアントからのリクエストは1回。</b>抽出と判定でエンドポイントを分けると往復が2回になり、レイテンシがそのまま倍になるため、サーバー内で連結している。</p>
+  </section>
+
+  <section>
+    <h2><span class="n">06</span>2段階のAIパイプライン<span class="en">AI Pipeline</span></h2>
+    <div class="pipe">
+      <div class="step">
+        <div class="n">STEP 1</div><div class="t">成分抽出（Vision）</div>
+        <div class="d">画像から商品名・成分・剤形を構造化JSONで取り出す。<b>JANコードではなく成分表示を直接読む</b>（化粧品の公式成分DBが日本に存在しないため）。</div>
+        <div class="m">実測 4.7秒</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step">
+        <div class="n">STEP 2</div><div class="t">在庫照合判定</div>
+        <div class="d">抽出結果と在庫を突き合わせ、成分重複・効能重複・併用リスク・吸収阻害から3色を決める。薬効の分類表をプロンプトに持たせている。</div>
+        <div class="m">実測 4.1秒</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step">
+        <div class="n">OUTPUT</div><div class="t">判定 ＋ 根拠</div>
+        <div class="d">Zodスキーマから生成した JSON Schema（strict）で型を強制。<b>判定理由に成分名を含めることはスキーマ側の必須項目</b>にしている。</div>
+        <div class="m">合計 8.6〜9.3秒</div>
+      </div>
+    </div>
+    <p style="margin-top:2.6mm"><b>単一プロンプトにしなかった理由。</b>「読む」と「判断する」を1回で行うと、読み間違いと判断の誤りが区別できません。分けることで<span class="em">抽出結果をユーザー自身が検証でき</span>、ローディングも「成分を読み取っています → 家の在庫と照合しています」の2段階になり、何が起きているかが伝わります。</p>
+  </section>
+
+  <section>
+    <h2><span class="n">07</span>AIを使う場所と、使わない場所<span class="en">Where AI is used</span></h2>
     <table>
-      <tr><th style="width:44%">実際に撮影した市販商品</th><th style="width:12%">判定</th><th>理由</th></tr>
+      <tr><th style="width:31%">処理</th><th style="width:19%">方式</th><th>そう決めた理由</th></tr>
+      <tr><td class="k">成分抽出</td><td style="color:var(--blue);font-weight:700">AI（Vision）</td><td>印字の状態も書式もばらばらな画像から読むため、推論が要る</td></tr>
+      <tr><td class="k">在庫照合判定</td><td style="color:var(--blue);font-weight:700">AI</td><td><b>公式データベースが存在しない領域</b>のため、成分の性質からの推論が要る</td></tr>
+      <tr><td class="k">塗る・洗う順序</td><td style="font-weight:700">ルールベース</td><td>剤形と基剤から順序が一意に決まる。推論を挟むと不安定になるだけ</td></tr>
+      <tr><td class="k">洗浄基剤の分類</td><td style="font-weight:700">ルールベース</td><td>全成分表示は配合量の多い順に並ぶ。<b>先に現れた洗浄成分が主剤</b>と決まる</td></tr>
+      <tr><td class="k">期限・酸化の目安</td><td style="font-weight:700">ルールベース</td><td>剤形ごとの目安月数と日付計算だけで決まる</td></tr>
+    </table>
+    <p style="margin-top:2.4mm"><b>全部をAIに投げてはいない。</b>決定的に決まるものはルールとして書き、AIは推論が必要な2箇所だけに使っています。結果として<span class="em">判定が使えない状況でも、順序ナビ・期限・服薬記録はそのまま動きます。</span></p>
+  </section>
+
+  <footer><span><b>Overlai</b> ／ 作品概要書</span><span>ユメカタリ 学生生成AIコンテスト 2026・開発部門</span><span>3 / 4</span></footer>
+</div>
+
+<!-- ══════════ 4 ══════════ -->
+<div class="page">
+  <section style="margin-top:0">
+    <h2><span class="n">09</span>実証 ── 実在の商品で全パターンを確認<span class="en">Validation</span></h2>
+    <table>
+      <tr><th style="width:44%">実際に撮影した市販商品</th><th style="width:11%">判定</th><th>理由</th></tr>
       <tr><td class="k">バファリン プレミアムDX クイックプラス</td><td style="color:var(--amber);font-weight:700">🟡</td><td>在庫のイブA錠と鎮痛成分が重複</td></tr>
       <tr><td class="k">ストナジェルサイナスEX</td><td style="color:var(--red);font-weight:700">🔴</td><td>抗ヒスタミン薬・解熱鎮痛薬の効能が二重に重複</td></tr>
-      <tr><td class="k">肌ラボ極潤 薬用トラブルケア</td><td style="color:var(--red);font-weight:700">🔴</td><td><b>エタノール × 処方ステロイド外用薬</b>（本企画の中核）</td></tr>
+      <tr><td class="k">肌ラボ極潤 薬用トラブルケア</td><td style="color:var(--red);font-weight:700">🔴</td><td><b>エタノール × 処方ステロイド外用薬</b>（塗り合わせの判断）</td></tr>
       <tr><td class="k">肌ラボ極潤 ヒアルロン液</td><td style="color:var(--blue);font-weight:700">🔵</td><td>刺激成分がなく、手持ちと重複しない</td></tr>
       <tr><td class="k">御岳百草丸</td><td style="color:var(--blue);font-weight:700">🔵</td><td>在庫に胃腸薬がなく、薬効が重ならない</td></tr>
     </table>
-
     <div class="proof">
       <div class="h">在庫を変えると、同じ商品の判定が変わる</div>
       <div class="flow">
@@ -339,53 +399,52 @@
       </div>
       <div class="p"><b>商品は一度も変えていない。変えたのは家の在庫だけ。</b>商品データベースを持つ既存サービスには原理的にできない挙動であり、この企画の主張そのものを1つの商品で実演できます。実機で確認済み。</div>
     </div>
-    <p class="note" style="margin-top:2.4mm">同じ画像を3回ずつ×3シナリオ＝9回で判定の揺らぎなし。gpt-4o-mini は成分名を誤読（「イブプロフェン」→「いブプロフェン」）したため、成分名の正確さを機能の前提として gpt-5.1 を採用しています。</p>
+    <p class="note" style="margin-top:2.4mm">同じ画像を3回ずつ×3シナリオ＝9回で判定の揺らぎなし。抽出モデルの比較では軽量モデルが成分名を誤読（「イブプロフェン」→「いブプロフェン」）したため、<b>成分名の正確さを機能の前提</b>として gpt-5.1 を採用しています。</p>
   </section>
 
   <section>
-    <h2><span class="n">06</span>安全設計 ── お願いではなく、仕組みで強制する<span class="en">Safety</span></h2>
+    <h2><span class="n">10</span>安全設計 ── お願いではなく、仕組みで強制する<span class="en">Safety</span></h2>
     <table>
-      <tr><th style="width:46%">守っていること</th><th>強制している場所</th></tr>
+      <tr><th style="width:44%">守っていること</th><th>強制している場所</th></tr>
       <tr><td class="k">診断・治療判断を行わない／断定表現を使わない</td><td>プロンプト（「〜の可能性があります」で統一）</td></tr>
-      <tr><td class="k">判定理由に必ず成分名を含める</td><td>出力スキーマで必須化。成分名のない理由はサーバー側で除外</td></tr>
-      <tr><td class="k">🔴判定では必ず相談を促す</td><td><b>サーバー側で上書き</b>。安全に関わる値をAIの判断に委ねない</td></tr>
+      <tr><td class="k">判定理由に必ず成分名を含める</td><td><b>出力スキーマで必須化</b>。成分名のない理由はサーバー側で除外</td></tr>
+      <tr><td class="k">🔴判定では必ず相談を促す</td><td><b>サーバー側で上書き。</b>安全に関わる値をAIの判断に委ねない</td></tr>
       <tr><td class="k">薬剤師・皮膚科への相談導線を常設</td><td>全判定色の判定カード下部</td></tr>
-      <tr><td class="k">服薬情報を端末から出さない</td><td>データベースを持たない設計。在庫は端末内に保持し、判定リクエスト時のみ送信</td></tr>
+      <tr><td class="k">服薬情報を端末から出さない</td><td>データベースを持たない設計。判定リクエスト時のみ送信し、保存しない</td></tr>
     </table>
     <p style="margin-top:2.4mm">服薬情報は<b>要配慮個人情報</b>です。サーバーに永続化しないことを設計判断として選びました。</p>
   </section>
 
   <section>
-    <h2><span class="n">07</span>実装状況とこれから<span class="en">Status &amp; Roadmap</span></h2>
+    <h2><span class="n">11</span>これから<span class="en">Roadmap</span></h2>
     <div class="two">
       <div>
-        <h3>実装済み（すべて実機で動作確認）</h3>
         <ul>
-          <li>3色判定スキャナー（実AI・カメラ／画像選択）</li>
-          <li>マイストック（登録・編集・削除・カテゴリ管理）</li>
-          <li>成分表のカメラ読み取りによる在庫登録</li>
-          <li>塗る順序・洗う順序のナビ（ルールベース）</li>
-          <li>洗浄基剤 × 肌質・頭皮の相性判定</li>
-          <li>使用期限・開封後の酸化目安アラート</li>
-          <li>服用カレンダー・残薬カウント・服薬履歴</li>
-          <li>PWA対応（ホーム画面から全画面起動）</li>
+          <li><b>医療用QRコード（JAHIS）読み取り。</b>処方薬を一括で登録できるようにする</li>
+          <li><b>レシート撮影による一括登録。</b>買ったものをその場で在庫に入れる</li>
         </ul>
       </div>
       <div>
-        <h3>これから</h3>
         <ul>
-          <li>医療用QRコード（JAHIS）読み取りによる処方薬の一括登録</li>
-          <li>レシート撮影による複数商品の一括登録</li>
-          <li>ネイティブアプリ化（店頭での起動速度）</li>
-          <li>家族の薬箱の共有 ── 高齢の親の残薬を離れて暮らす家族が把握する</li>
+          <li><b>ネイティブアプリ化。</b>店頭で立ったまま使うには起動速度が効く</li>
+          <li><b>家族の薬箱の共有。</b>高齢の親の残薬を、離れて暮らす家族が把握する</li>
         </ul>
-        <h3>技術スタック</h3>
-        <p class="note">Next.js 16（App Router）／ TypeScript ／ React 19 ／ Tailwind CSS 4 ／ Azure OpenAI gpt-5.1（Vision・Structured Outputs）／ Vercel</p>
       </div>
     </div>
+    <p style="margin-top:2mm" class="note">家族共有は要配慮個人情報を預かるため、実装より先に同意の設計と安全管理措置の整理が必要だと考えています。</p>
   </section>
 
-  <footer><span><b>Overlai</b> ／ 買う前に、家の棚を重ねて見る。</span><span class="mono">overlai-delta.vercel.app</span><span>3 / 3</span></footer>
+  <section>
+    <h2><span class="n">12</span>技術スタック<span class="en">Stack</span></h2>
+    <table>
+      <tr><td class="k" style="width:26mm">フレームワーク</td><td>Next.js 16（App Router・Route Handler）／ TypeScript ／ React 19 ／ Tailwind CSS 4 ／ PWA</td></tr>
+      <tr><td class="k">AI</td><td>Azure OpenAI <span class="mono">gpt-5.1</span>（Vision ＋ Structured Outputs）。学校提供のプロキシ</td></tr>
+      <tr><td class="k">永続化</td><td>localStorage（<b>DB不使用</b>）。アクセスを <span class="mono">lib/storage.ts</span> の1ファイルに集約</td></tr>
+      <tr><td class="k">配信・検証</td><td>Vercel（本番稼働中）／ Playwright（WebKit）でスマートフォン幅を確認、実機テスト</td></tr>
+    </table>
+  </section>
+
+  <footer><span><b>Overlai</b> ／ 買う前に、家の棚を重ねて見る。</span><span class="mono">overlai-delta.vercel.app</span><span>4 / 4</span></footer>
 </div>
 
 </body>
