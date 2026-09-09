@@ -38,6 +38,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
     成功として扱うと、壊れた判定が黙って返る
 12. **ルーティンの順序をAIに委ねない** — 洗う順・塗る順は `lib/routine.ts` が剤形で決める。
     AIが書くのは言葉だけで、`RoutineAdviceSchema` の出力に並び順は含まれない。
+    順番を変えられるのはユーザーだけ（`routineOrder`）。
     `routineSignature()` に残量を含めないこと（開くたびAIを呼ぶことになる）
 
 ## 書く場所
