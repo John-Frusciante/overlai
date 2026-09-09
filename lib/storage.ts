@@ -63,6 +63,16 @@ export function updateStock(id: string, patch: Partial<StockItem>): StockItem[] 
   return next;
 }
 
+/**
+ * カテゴリを付け替える。カテゴリを削除するとき、その中身を別のカテゴリへ移すために使う。
+ * 在庫そのものは消さない。
+ */
+export function moveCategory(from: string, to: string): StockItem[] {
+  const next = loadStock().map((i) => (i.category === from ? { ...i, category: to } : i));
+  saveStock(next);
+  return next;
+}
+
 export function removeStock(id: string): StockItem[] {
   const next = loadStock().filter((i) => i.id !== id);
   saveStock(next);
