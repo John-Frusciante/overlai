@@ -24,7 +24,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 2. **`consult_recommended` のサーバー側上書きを消さない** — 安全に関わる値をLLMに委ねない
 3. **成分名のない `reason` のフィルタを消さない** — 根拠なき警告を出さない
 4. **判定（ステップ2）の設定を弱めない** — 判定品質がそのまま評価対象。
-   Anthropic 経路は `effort: 'high'`、Azure 経路は `gpt-5.1`、Gemini 経路は `gemini-2.5-pro`。
+   Anthropic 経路は `effort: 'high'`、Azure 経路は `gpt-5.1`、Gemini 経路は `gemini-3.6-flash`。
    速度のために下げるなら**抽出側だけ**にする
 5. **Anthropic 経路で `thinking` を明示的に無効化しない** — ツール呼び出しが本文に混入する既知の失敗モードがある
 6. **出力トークン上限を切り詰めない** — Anthropic は `max_tokens: 16000`（thinking 分を含む）、

@@ -111,13 +111,18 @@ function azure(): OpenAI {
 }
 
 /**
- * Gemini で使うモデル。
- * 抽出は速度重視で flash 系、判定は品質重視で pro 系にしている。
- * 判定は 🟡/🔴 の分かれ目そのものなので、フォールバック時でも下げない（§7.5）。
- * 速度のために下げてよいのは抽出側だけ。
+ * Gemini で使うモデル。実測で選んだ（詳細は ARCHITECTURE.md §7）。
+ *
+ * `gemini-2.5-pro` と `gemini-2.5-flash` は新規プロジェクトには 404 を返す。
+ * `gemini-3.8-flash` は無料枠だと 503（高需要）が返り続けて実用にならなかった。
+ * 実際に通ったのは 3.6 / 3.5 の flash 2つで、成分名の読み取りはどちらも正確。
+ *
+ * 速い方（3.6）を判定に、遅い方（3.5）を抽出に割り当てている。
+ * 判定は 🟡/🔴 の分かれ目そのものなので下げない。下げてよいのは抽出側だけ（§7.5）。
+ * モデルを分けるとクォータも分かれる（無料枠の 5 RPM はモデル単位）。
  */
-const GEMINI_MODEL_EXTRACT = process.env.GEMINI_MODEL_EXTRACT ?? 'gemini-3.8-flash';
-const GEMINI_MODEL_JUDGE = process.env.GEMINI_MODEL_JUDGE ?? 'gemini-2.5-pro';
+const GEMINI_MODEL_EXTRACT = process.env.GEMINI_MODEL_EXTRACT ?? 'gemini-3.5-flash';
+const GEMINI_MODEL_JUDGE = process.env.GEMINI_MODEL_JUDGE ?? 'gemini-3.6-flash';
 
 let _gemini: GoogleGenAI | null = null;
 function gemini(): GoogleGenAI {
@@ -193,6 +198,32 @@ async function callGemini<T>(
 }
 
 /**
+ * 一時的な失敗（5xx）だけは、同じプロバイダで1回だけ待って再試行する。
+ *
+ * Gemini の無料枠は 503（高需要）をかなりの頻度で返す（実測で4回中2回）。
+ * 1回で諦めると保険が半分の確率で効かないので、ここだけ粘る。
+ * 429 は対象にしない — 復帰まで数十秒かかるため、待たせるより次に行くほうが速い。
+ */
+function isTransient(err: unknown): boolean {
+  if (err instanceof ApiError) return err.status >= 500;
+  return (
+    err instanceof Anthropic.InternalServerError || err instanceof OpenAI.InternalServerError
+  );
+}
+
+const TRANSIENT_RETRY_DELAY_MS = 1500;
+
+async function attempt<T>(run: () => Promise<T | null>): Promise<T | null> {
+  try {
+    return await run();
+  } catch (err) {
+    if (!isTransient(err)) throw err;
+    await new Promise((r) => setTimeout(r, TRANSIENT_RETRY_DELAY_MS));
+    return run();
+  }
+}
+
+/**
  * チェーンの先頭から順に試し、失敗したら次のプロバイダに落とす。
  *
  * どのエラーでも次に進む。レート制限とキー失効はもちろん、スキーマ違反や
@@ -208,7 +239,7 @@ async function withFallback<T>(
 
   for (const provider of chain) {
     try {
-      const value = await run(provider);
+      const value = await attempt(() => run(provider));
       if (provider !== chain[0]) {
         console.warn(`[${label}] ${chain[0]} が失敗したため ${provider} で応答しました`);
         return { value, provider, fellBackFrom: chain[0] };
