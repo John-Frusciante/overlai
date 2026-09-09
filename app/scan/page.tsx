@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Check, Images, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { JudgementCard } from '@/components/JudgementCard';
 import { toResizedDataUrl } from '@/lib/image';
@@ -121,7 +122,7 @@ export default function ScanPage() {
   const busy = phase === 'extracting' || phase === 'judging';
 
   return (
-    <main className="relative min-h-dvh bg-zinc-900">
+    <main className="relative min-h-dvh bg-[#0b0d12]">
       {/* カメラビュー */}
       <video
         ref={videoRef}
@@ -132,7 +133,7 @@ export default function ScanPage() {
 
       {!cameraReady && (
         <div className="absolute inset-0 flex items-center justify-center px-10 text-center">
-          <p className="text-[14px] leading-relaxed text-zinc-400">
+          <p className="text-[14px] leading-relaxed text-white/55">
             カメラを利用できません。
             <br />
             下の「画像を選ぶ」から撮影済みの写真を選んでください。
@@ -140,29 +141,39 @@ export default function ScanPage() {
         </div>
       )}
 
-      {/* ガイド枠 */}
+      {/* ガイド枠。四隅のコーナーマークで囲む */}
       {cameraReady && !busy && (
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <div className="h-56 w-[78%] rounded-2xl border-2 border-white/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]" />
-          <p className="mt-5 text-[14px] font-medium text-white drop-shadow">
+          <div className="relative h-56 w-[78%] rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.42)]">
+            {[
+              'left-0 top-0 border-l-[3px] border-t-[3px] rounded-tl-2xl',
+              'right-0 top-0 border-r-[3px] border-t-[3px] rounded-tr-2xl',
+              'left-0 bottom-0 border-l-[3px] border-b-[3px] rounded-bl-2xl',
+              'right-0 bottom-0 border-r-[3px] border-b-[3px] rounded-br-2xl',
+            ].map((c) => (
+              <span key={c} className={`absolute h-9 w-9 border-white/90 ${c}`} />
+            ))}
+          </div>
+          <p className="mt-6 text-[14px] font-medium text-white/95 drop-shadow">
             成分表示をこの枠に入れてください
           </p>
         </div>
       )}
 
-      {/* 2段階ローディング — §9.3 */}
+      {/* 2段階ローディング — §9.3
+          パイプラインが2段構成であることを画面で示す。これは演出ではなく仕様。 */}
       {busy && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 px-10">
-          <div className="h-9 w-9 animate-spin rounded-full border-[3px] border-white/25 border-t-white" />
-          <p className="mt-6 text-[15px] font-semibold text-white">
-            {phase === 'extracting' ? '成分を読み取っています…' : '家の在庫と照合しています…'}
-          </p>
-          <div className="mt-4 flex gap-1.5">
-            <span className="h-1 w-8 rounded-full bg-white" />
-            <span
-              className={`h-1 w-8 rounded-full ${phase === 'judging' ? 'bg-white' : 'bg-white/25'}`}
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/78 px-9 backdrop-blur-sm">
+          <ol className="w-full max-w-[280px] space-y-3">
+            <PipelineStep
+              label="成分を読み取っています"
+              state={phase === 'extracting' ? 'active' : 'done'}
             />
-          </div>
+            <PipelineStep
+              label="家の在庫と照合しています"
+              state={phase === 'judging' ? 'active' : 'waiting'}
+            />
+          </ol>
         </div>
       )}
 
@@ -173,13 +184,13 @@ export default function ScanPage() {
           <div className="mt-7 flex w-full max-w-xs flex-col gap-2.5">
             <button
               onClick={() => setPhase('idle')}
-              className="rounded-xl bg-white py-3 text-[15px] font-semibold text-zinc-900 active:bg-zinc-200"
+              className="rounded-2xl bg-white py-3.5 text-[15px] font-semibold text-ink transition-transform active:scale-[0.98]"
             >
               もう一度撮る
             </button>
             <button
               onClick={() => fileRef.current?.click()}
-              className="rounded-xl border border-white/30 py-3 text-[15px] font-medium text-white active:bg-white/10"
+              className="rounded-2xl border border-white/25 py-3.5 text-[15px] font-medium text-white transition-transform active:scale-[0.98] active:bg-white/10"
             >
               画像を選ぶ
             </button>
@@ -192,7 +203,7 @@ export default function ScanPage() {
         <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-8 pb-safe">
           <button
             onClick={() => router.push('/')}
-            className="text-[14px] font-medium text-white/80 active:text-white"
+            className="w-[52px] text-[13.5px] font-medium text-white/80 transition-transform active:scale-95 active:text-white"
           >
             閉じる
           </button>
@@ -201,15 +212,18 @@ export default function ScanPage() {
             onClick={shoot}
             disabled={!cameraReady}
             aria-label="撮影"
-            className="h-[70px] w-[70px] rounded-full border-4 border-white/90 bg-white/25 disabled:opacity-30 active:scale-95"
-          />
+            className="flex h-[74px] w-[74px] items-center justify-center rounded-full border-[3px] border-white/90 transition-transform duration-150 active:scale-90 disabled:opacity-30"
+          >
+            <span className="h-[58px] w-[58px] rounded-full bg-white shadow-[0_2px_12px_rgba(255,255,255,0.35)]" />
+          </button>
 
           {/* 画像選択は常時表示（FR-04）— 実機デモで最も事故が起きるのはカメラ */}
           <button
             onClick={() => fileRef.current?.click()}
-            className="text-[14px] font-medium text-white/80 active:text-white"
+            className="flex flex-col items-center gap-1 text-white/80 transition-transform active:scale-95 active:text-white"
           >
-            画像を選ぶ
+            <Images size={20} strokeWidth={1.9} />
+            <span className="text-[11px] font-medium">画像を選ぶ</span>
           </button>
         </div>
       )}
@@ -234,5 +248,41 @@ export default function ScanPage() {
         />
       )}
     </main>
+  );
+}
+
+/** パイプラインの各段。2段構成であることが映像で伝わるようにする */
+function PipelineStep({
+  label,
+  state,
+}: {
+  label: string;
+  state: 'waiting' | 'active' | 'done';
+}) {
+  return (
+    <li className="flex items-center gap-3">
+      <span
+        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors ${
+          state === 'done'
+            ? 'bg-white text-ink'
+            : state === 'active'
+              ? 'bg-white/15 text-white'
+              : 'border border-white/20 text-white/30'
+        }`}
+      >
+        {state === 'done' ? (
+          <Check size={14} strokeWidth={3} />
+        ) : state === 'active' ? (
+          <Loader2 size={14} strokeWidth={2.4} className="animate-spin" />
+        ) : null}
+      </span>
+      <span
+        className={`text-[14.5px] font-medium transition-colors ${
+          state === 'waiting' ? 'text-white/35' : 'text-white'
+        }`}
+      >
+        {label}
+      </span>
+    </li>
   );
 }

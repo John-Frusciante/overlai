@@ -23,12 +23,15 @@ export default function PreviewPage() {
   useEffect(() => {
     setStock(loadStock());
     setProfile(loadProfile());
+    // ?open=red のように直接カードを開ける（スクリーンショット・デモ用）
+    const open = new URLSearchParams(window.location.search).get('open');
+    if (open === 'yellow' || open === 'red' || open === 'blue') setSignal(open);
   }, []);
 
   return (
     <main className="mx-auto min-h-dvh max-w-md px-5 pt-safe">
-      <h1 className="text-[22px] font-bold text-zinc-900">判定カード プレビュー</h1>
-      <p className="mt-2 text-[13.5px] leading-relaxed text-zinc-500">
+      <h1 className="text-[22px] font-bold text-ink">判定カード プレビュー</h1>
+      <p className="mt-2 text-[13.5px] leading-relaxed text-muted">
         開発用。APIを呼ばずに3色の表示を確認できます。
       </p>
 
@@ -37,13 +40,13 @@ export default function PreviewPage() {
           <button
             key={s}
             onClick={() => setSignal(s)}
-            className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-4 text-left active:bg-zinc-50"
+            className="w-full rounded-2xl border border-line bg-surface px-4 py-4 text-left shadow-e1 transition-transform active:scale-[0.99]"
           >
-            <span className="text-[15px] font-semibold text-zinc-900">
+            <span className="text-[15px] font-semibold text-ink">
               {s === 'yellow' ? '🟡' : s === 'red' ? '🔴' : '🔵'}{' '}
               {FIXTURES[s].judgement.headline}
             </span>
-            <span className="mt-1 block text-[13px] text-zinc-500">
+            <span className="mt-1 block text-[13px] text-muted">
               {FIXTURES[s].extraction.product_name}
             </span>
           </button>

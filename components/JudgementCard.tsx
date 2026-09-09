@@ -1,44 +1,21 @@
 'use client';
 
 import { useState } from 'react';
+import { ChevronDown, Stethoscope, X } from 'lucide-react';
 import { matchCleanser } from '@/lib/cleanser';
 import { toItemForm } from '@/lib/mapping';
 import { CleanserMatchRow } from '@/components/CleanserMatchCard';
-import type { AnalyzeResponse, Profile, Signal, StockItem } from '@/lib/types';
+import { SectionHeader } from '@/components/ui/SectionHeader';
+import { CATEGORY_STYLE, SIGNAL_ORDER, SIGNAL_STYLE, overlaySymbolPath } from '@/lib/ui';
+import type { AnalyzeResponse, Profile, StockItem } from '@/lib/types';
 
 /**
  * 判定カード — 設計仕様書 §9.4
+ *
  * デモ映像の山場。3秒で色が判別できる視認性を最優先にする。
+ * 構造は「グラデーションのヒーロー ＋ せり上がる白いシート」。
+ * シグナルは絵文字ではなく、重なる2つの角丸矩形（プロダクト名 Overlay の由来）で表す。
  */
-
-const SIGNAL_STYLE: Record<
-  Signal,
-  { bar: string; chip: string; ring: string; emoji: string; label: string }
-> = {
-  blue: {
-    bar: 'bg-[#2563EB]',
-    chip: 'bg-[#2563EB]/10 text-[#1D4ED8]',
-    ring: 'ring-[#2563EB]/20',
-    emoji: '🔵',
-    label: '買ってよさそうです',
-  },
-  yellow: {
-    // 視認性のため黄色ではなくアンバーを使う（§9.4）
-    bar: 'bg-[#D97706]',
-    chip: 'bg-[#D97706]/10 text-[#B45309]',
-    ring: 'ring-[#D97706]/20',
-    emoji: '🟡',
-    label: '家にあります',
-  },
-  red: {
-    bar: 'bg-[#DC2626]',
-    chip: 'bg-[#DC2626]/10 text-[#B91C1C]',
-    ring: 'ring-[#DC2626]/20',
-    emoji: '🔴',
-    label: '注意が必要です',
-  },
-};
-
 export function JudgementCard({
   result,
   stock,
@@ -53,7 +30,9 @@ export function JudgementCard({
   const [open, setOpen] = useState(false);
   const { extraction, judgement } = result;
   const style = SIGNAL_STYLE[judgement.signal];
+  const symbol = overlaySymbolPath();
   const matched = stock.filter((s) => judgement.matched_item_ids.includes(s.id));
+
   // 洗浄料なら、肌質・頭皮との相性をルールベースで補足する（企画書 §6-13）
   const cleanser = matchCleanser(
     { form: toItemForm(extraction.form), ingredients: extraction.ingredients },
@@ -61,53 +40,80 @@ export function JudgementCard({
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-white">
-      {/* シグナル — 画面上部に大きく */}
-      <div className={`${style.bar} px-5 pt-safe pb-8 text-white`}>
-        <div className="flex items-start justify-between">
-          <span className="text-5xl leading-none">{style.emoji}</span>
-          <button
-            onClick={onClose}
-            aria-label="閉じる"
-            className="rounded-full bg-white/20 px-3 py-1 text-sm font-medium active:bg-white/30"
-          >
-            閉じる
-          </button>
+    <div className="fixed inset-0 z-50 flex flex-col bg-surface">
+      {/* ヒーロー */}
+      <div
+        className="relative px-5 pt-safe pb-16 text-white"
+        style={{
+          background: `linear-gradient(142deg, ${style.base} 0%, ${style.deep} 100%)`,
+        }}
+      >
+        <button
+          onClick={onClose}
+          aria-label="閉じる"
+          className="absolute right-4 top-safe flex h-9 w-9 items-center justify-center rounded-full bg-white/15 backdrop-blur-sm transition-transform active:scale-90"
+        >
+          <X size={17} strokeWidth={2.2} />
+        </button>
+
+        <div className="animate-scale-in mt-3 flex items-center gap-4">
+          <svg viewBox="0 0 90 90" className="h-[62px] w-[62px]" aria-hidden>
+            <path d={symbol.a} fill="#fff" fillOpacity="0.5" />
+            <path d={symbol.b} fill="#fff" fillOpacity="0.5" />
+          </svg>
+
+          {/* 判定が3段階であること自体を示す */}
+          <div className="flex flex-col gap-1.5" aria-hidden>
+            {SIGNAL_ORDER.map((sig) => (
+              <span
+                key={sig}
+                className={`h-2 rounded-full bg-white transition-all duration-300 ${
+                  sig === judgement.signal ? 'w-7 opacity-100' : 'w-2 opacity-35'
+                }`}
+              />
+            ))}
+          </div>
         </div>
-        <h1 className="mt-5 text-[2rem] font-bold leading-tight tracking-tight">
-          {judgement.headline}
-        </h1>
-        <p className="mt-3 text-[15px] leading-relaxed text-white/90">{judgement.summary}</p>
+
+        <div className="animate-fade-up">
+          <h1 className="mt-7 text-[2.05rem] font-bold leading-[1.15] tracking-tight">
+            {judgement.headline}
+          </h1>
+          <p className="mt-3.5 max-w-[34ch] text-[14.5px] leading-relaxed text-white/85">
+            {judgement.summary}
+          </p>
+        </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 pb-28 pt-6">
+      {/* せり上がる白いシート */}
+      <div className="animate-sheet-up relative -mt-7 flex-1 overflow-y-auto rounded-t-[26px] bg-surface px-5 pb-36 pt-7 shadow-e4">
         {/* 検出成分 */}
         <section>
-          <h2 className="text-xs font-semibold tracking-wide text-zinc-500">
-            この商品から検出された成分
-          </h2>
+          <SectionHeader title="この商品から検出された成分" />
           {extraction.product_name && (
-            <p className="mt-1.5 text-[15px] font-semibold text-zinc-900">
+            <p className="mt-2 px-1 text-[16px] font-semibold leading-snug text-ink">
               {extraction.product_name}
             </p>
           )}
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {extraction.ingredients.slice(0, 3).map((ing) => (
+          <div className="mt-2.5 flex flex-wrap gap-1.5 px-1">
+            {extraction.ingredients.slice(0, 3).map((ing, i) => (
               <span
                 key={ing}
-                className={`rounded-full px-2.5 py-1 text-[13px] font-medium ${style.chip}`}
+                className={`rounded-full px-3 py-1.5 text-[13px] font-semibold ${
+                  i === 0 ? style.chip : 'bg-surface-sunken text-muted'
+                }`}
               >
                 {ing}
               </span>
             ))}
             {extraction.ingredients.length > 3 && (
-              <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[13px] text-zinc-500">
+              <span className="rounded-full px-3 py-1.5 text-[13px] text-faint">
                 ほか{extraction.ingredients.length - 3}件
               </span>
             )}
           </div>
           {extraction.confidence === 'low' && (
-            <p className="mt-2.5 rounded-lg bg-amber-50 px-3 py-2 text-[13px] leading-relaxed text-amber-800">
+            <p className="mx-1 mt-3 rounded-xl bg-amber-50 px-3.5 py-2.5 text-[13px] leading-relaxed text-amber-800">
               読み取り精度が低い可能性があります。判定は参考程度にご覧ください。
             </p>
           )}
@@ -115,11 +121,9 @@ export function JudgementCard({
 
         {/* 洗浄基剤 × 肌質 */}
         {cleanser && (
-          <section className="mt-7">
-            <h2 className="text-xs font-semibold tracking-wide text-zinc-500">
-              洗浄力とあなたの状態
-            </h2>
-            <div className="mt-2">
+          <section className="mt-8">
+            <SectionHeader title="洗浄力とあなたの状態" />
+            <div className="mt-2.5">
               <CleanserMatchRow match={cleanser} />
             </div>
           </section>
@@ -127,80 +131,108 @@ export function JudgementCard({
 
         {/* 該当する自宅アイテム */}
         {matched.length > 0 && (
-          <section className="mt-7">
-            <h2 className="text-xs font-semibold tracking-wide text-zinc-500">
-              あなたの家にあるもの
-            </h2>
-            <ul className="mt-2 space-y-2">
-              {matched.map((item) => (
-                <li
-                  key={item.id}
-                  className={`rounded-xl bg-white p-3.5 ring-1 ${style.ring} shadow-sm`}
-                >
-                  <div className="flex items-start gap-2">
-                    <span className="text-[15px] font-semibold text-zinc-900">{item.name}</span>
-                    {item.isPrescription && (
-                      <span className="mt-0.5 shrink-0 rounded bg-zinc-900 px-1.5 py-0.5 text-[11px] font-medium text-white">
-                        処方
+          <section className="mt-8">
+            <SectionHeader title="あなたの家にあるもの" count={matched.length} />
+            <ul className="stagger mt-2.5 space-y-2">
+              {matched.map((item, i) => {
+                const cat = CATEGORY_STYLE[item.category];
+                const Icon = cat?.icon;
+                return (
+                  <li
+                    key={item.id}
+                    style={{ '--i': i } as React.CSSProperties}
+                    className={`flex items-start gap-3 rounded-2xl bg-surface p-4 shadow-e2 ring-1 ${style.ring}`}
+                  >
+                    {Icon && (
+                      <span
+                        className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${cat.bg} ${cat.text}`}
+                      >
+                        <Icon size={17} strokeWidth={2} />
                       </span>
                     )}
-                  </div>
-                  <p className="mt-1 text-[13px] text-zinc-500">
-                    {item.ingredients.join('、')} ／ {item.status}
-                  </p>
-                </li>
-              ))}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start gap-2">
+                        <span className="flex-1 text-[15px] font-semibold leading-snug text-ink">
+                          {item.name}
+                        </span>
+                        {item.isPrescription && (
+                          <span className="mt-0.5 shrink-0 rounded-md bg-brand px-1.5 py-0.5 text-[10.5px] font-semibold tracking-wide text-white">
+                            処方
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-[12.5px] leading-relaxed text-muted">
+                        {item.ingredients.join('、')}
+                      </p>
+                      <p className="mt-0.5 text-[12.5px] tabular-nums text-faint">
+                        {item.remaining
+                          ? `残${item.remaining.count}${item.remaining.unit}`
+                          : item.status}
+                      </p>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           </section>
         )}
 
         {/* 根拠を見る */}
         {judgement.reasons.length > 0 && (
-          <section className="mt-7">
+          <section className="mt-8">
             <button
               onClick={() => setOpen((v) => !v)}
-              className="flex w-full items-center justify-between rounded-xl border border-zinc-200 bg-white px-4 py-3.5 text-left active:bg-zinc-50"
+              aria-expanded={open}
+              className="flex w-full items-center justify-between rounded-2xl border border-line bg-surface px-4 py-4 text-left shadow-e1 transition-transform active:scale-[0.99]"
             >
-              <span className="text-[15px] font-semibold text-zinc-900">根拠を見る</span>
-              <span
-                className={`text-zinc-400 transition-transform ${open ? 'rotate-180' : ''}`}
-                aria-hidden
-              >
-                ▾
-              </span>
+              <span className="text-[15px] font-semibold text-ink">根拠を見る</span>
+              <ChevronDown
+                size={18}
+                className={`text-faint transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
+              />
             </button>
 
-            {open && (
-              <ul className="mt-2 space-y-2.5">
+            <div
+              className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
+                open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+              }`}
+            >
+              <ul className="mt-2 space-y-2.5 overflow-hidden">
                 {judgement.reasons.map((r, i) => (
-                  <li key={i} className="rounded-xl border border-zinc-200 bg-white p-4">
+                  <li key={i} className="rounded-2xl border border-line bg-surface p-4 shadow-e1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded bg-zinc-900 px-2 py-0.5 text-[11px] font-medium text-white">
+                      <span className="rounded-md bg-brand px-2 py-0.5 text-[10.5px] font-semibold tracking-wide text-white">
                         {r.type}
                       </span>
-                      <span className="text-[14px] font-semibold text-zinc-900">
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-[13px] font-semibold ${style.chip}`}
+                      >
                         {r.ingredient}
                       </span>
                     </div>
-                    <p className="mt-2 text-[14px] leading-relaxed text-zinc-700">{r.detail}</p>
-                    <p className="mt-1.5 text-[13px] text-zinc-500">該当：{r.related_item}</p>
+                    <p className="mt-2.5 text-[14px] leading-relaxed text-ink/85">{r.detail}</p>
+                    <p className="mt-2 text-[12.5px] text-faint">該当：{r.related_item}</p>
                   </li>
                 ))}
               </ul>
-            )}
+            </div>
           </section>
         )}
 
         {/* 免責 — §12.2 */}
-        <p className="mt-8 text-[12px] leading-relaxed text-zinc-400">
+        <p className="mt-9 px-1 text-[11.5px] leading-relaxed text-faint">
           本アプリは一般的な成分情報を提示するものであり、診断・治療の判断を行うものではありません。
           実際の使用可否は薬剤師・医師にご相談ください。
+        </p>
+        <p className="mt-2 px-1 text-[11px] tabular-nums text-faint/70">
+          判定にかかった時間 {(result.elapsed_ms / 1000).toFixed(1)}秒
         </p>
       </div>
 
       {/* 相談導線 — 全判定色で常設（FR-10） */}
-      <div className="fixed inset-x-0 bottom-0 border-t border-zinc-200 bg-white/95 px-5 pb-safe pt-3 backdrop-blur">
-        <button className="w-full rounded-xl bg-zinc-900 py-3.5 text-[15px] font-semibold text-white active:bg-zinc-700">
+      <div className="fixed inset-x-0 bottom-0 border-t border-line bg-surface/92 px-5 pb-safe pt-3 backdrop-blur-xl">
+        <button className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand py-3.5 text-[15px] font-semibold text-white shadow-e2 transition-transform active:scale-[0.985] active:bg-brand-soft">
+          <Stethoscope size={17} strokeWidth={2} />
           薬剤師・皮膚科に相談する
         </button>
       </div>

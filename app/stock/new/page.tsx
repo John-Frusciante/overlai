@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Camera, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toResizedDataUrl } from '@/lib/image';
 import { addStock, loadStock, updateStock } from '@/lib/storage';
@@ -116,12 +117,12 @@ export default function NewStockPage() {
   return (
     <main className="mx-auto min-h-dvh max-w-md px-4 pb-32 pt-safe">
       <header className="flex items-center justify-between px-1">
-        <h1 className="text-[22px] font-bold tracking-tight text-zinc-900">
+        <h1 className="text-[22px] font-bold tracking-tight text-ink">
           {editId ? 'ストックを編集' : 'ストックを追加'}
         </h1>
         <button
           onClick={() => router.back()}
-          className="text-[14px] font-medium text-zinc-500 active:text-zinc-900"
+          className="text-[14px] font-medium text-muted active:text-ink"
         >
           キャンセル
         </button>
@@ -131,27 +132,23 @@ export default function NewStockPage() {
       <button
         onClick={() => fileRef.current?.click()}
         disabled={reading}
-        className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-300 bg-white py-5 text-[14.5px] font-semibold text-zinc-700 active:bg-zinc-50 disabled:opacity-50"
+        className="mt-7 flex w-full items-center justify-center gap-2 rounded-2xl transition-transform active:scale-[0.99] border border-dashed border-line-strong bg-surface py-6 shadow-e1 text-[14.5px] font-semibold text-muted active:bg-surface-sunken disabled:opacity-50"
       >
         {reading ? (
           <>
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-700" />
+            <Loader2 size={17} strokeWidth={2.2} className="animate-spin" />
             成分を読み取っています…
           </>
         ) : (
           <>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <rect x="3" y="6" width="18" height="14" rx="2.4" stroke="currentColor" strokeWidth="1.9" />
-              <circle cx="12" cy="13" r="3.4" stroke="currentColor" strokeWidth="1.9" />
-              <path d="M8.5 6l1.2-2h4.6L15.5 6" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" />
-            </svg>
+            <Camera size={18} strokeWidth={2} />
             成分表示を撮って読み取る
           </>
         )}
       </button>
       <input ref={fileRef} type="file" accept="image/*" onChange={readFromImage} className="hidden" />
       {readError && <p className="mt-2 px-1 text-[13px] text-red-600">{readError}</p>}
-      <p className="mt-2 px-1 text-[12.5px] text-zinc-400">
+      <p className="mt-2 px-1 text-[12.5px] text-faint">
         読み取らずに手で入力しても登録できます。
       </p>
 
@@ -162,7 +159,7 @@ export default function NewStockPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="例：しっとり化粧水"
-            className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-3 text-[15px] outline-none focus:border-zinc-900"
+            className="w-full rounded-2xl border border-line bg-surface px-3.5 py-3 text-[15px] shadow-e1 outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(30,42,69,0.07)]"
           />
         </Field>
 
@@ -174,7 +171,7 @@ export default function NewStockPage() {
           <select
             value={form}
             onChange={(e) => setForm(e.target.value as ItemForm)}
-            className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-3 text-[15px] outline-none focus:border-zinc-900"
+            className="w-full rounded-2xl border border-line bg-surface px-3.5 py-3 text-[15px] shadow-e1 outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(30,42,69,0.07)]"
           >
             {FORMS.map((f) => (
               <option key={f} value={f}>{f}</option>
@@ -188,7 +185,7 @@ export default function NewStockPage() {
             onChange={(e) => setIngredients(e.target.value)}
             rows={3}
             placeholder="例：グリセリン、BG"
-            className="w-full resize-none rounded-xl border border-zinc-200 bg-white px-3.5 py-3 text-[15px] outline-none focus:border-zinc-900"
+            className="w-full resize-none rounded-2xl border border-line bg-surface px-3.5 py-3 text-[15px] shadow-e1 outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(30,42,69,0.07)]"
           />
         </Field>
 
@@ -197,7 +194,7 @@ export default function NewStockPage() {
             value={status}
             onChange={(e) => setStatus(e.target.value)}
             placeholder="例：残12錠 / 使用中"
-            className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-3 text-[15px] outline-none focus:border-zinc-900"
+            className="w-full rounded-2xl border border-line bg-surface px-3.5 py-3 text-[15px] shadow-e1 outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(30,42,69,0.07)]"
           />
         </Field>
 
@@ -206,7 +203,7 @@ export default function NewStockPage() {
             type="date"
             value={openedAt}
             onChange={(e) => setOpenedAt(e.target.value)}
-            className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-3 text-[15px] outline-none focus:border-zinc-900"
+            className="w-full rounded-2xl border border-line bg-surface px-3.5 py-3 text-[15px] shadow-e1 outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(30,42,69,0.07)]"
           />
         </Field>
 
@@ -224,7 +221,7 @@ export default function NewStockPage() {
         <button
           onClick={save}
           disabled={!name.trim()}
-          className="w-full rounded-2xl bg-zinc-900 py-4 text-[15px] font-semibold text-white shadow-lg shadow-zinc-900/20 active:bg-zinc-700 disabled:opacity-30"
+          className="w-full rounded-2xl bg-brand py-4 text-[15px] font-semibold text-white shadow-e3 transition-transform active:scale-[0.985] active:bg-brand-soft disabled:opacity-30"
         >
           {editId ? '保存する' : '追加する'}
         </button>
@@ -236,7 +233,7 @@ export default function NewStockPage() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block px-1 text-xs font-semibold tracking-wide text-zinc-500">
+      <span className="mb-1.5 block px-1 text-xs font-semibold tracking-wide text-muted">
         {label}
       </span>
       {children}
@@ -264,8 +261,8 @@ function Chips<T extends string>({
           onClick={() => onChange(o)}
           className={`rounded-full px-3.5 py-2 text-[13.5px] font-medium transition-colors ${
             value === o
-              ? 'bg-zinc-900 text-white'
-              : 'border border-zinc-200 bg-white text-zinc-600 active:bg-zinc-50'
+              ? 'bg-brand text-white'
+              : 'border border-line bg-surface text-muted active:bg-surface-sunken'
           }`}
         >
           {labels?.[o] ?? o}

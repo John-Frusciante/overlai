@@ -2,57 +2,57 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Clock, Layers, ScanLine } from 'lucide-react';
 
 /** 3画面のナビゲーション — 企画書「画面は3つ：スキャナー／マイストック／今日のルーティン」 */
 export function BottomNav({ scanHref = '/scan' }: { scanHref?: string }) {
   const path = usePathname();
-  const on = (p: string) => path === p;
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white/95 backdrop-blur">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/88 backdrop-blur-xl">
       <div className="mx-auto flex max-w-md items-center justify-around px-2 pb-safe pt-2">
-        <Link
-          href="/"
-          className={`flex flex-1 flex-col items-center gap-1 py-1.5 ${
-            on('/') ? 'text-zinc-900' : 'text-zinc-400'
-          }`}
-        >
-          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <rect x="3" y="4" width="18" height="7" rx="1.6" stroke="currentColor" strokeWidth="1.9" />
-            <rect x="3" y="13" width="18" height="7" rx="1.6" stroke="currentColor" strokeWidth="1.9" />
-          </svg>
-          <span className="text-[11px] font-medium">ストック</span>
-        </Link>
+        <NavItem href="/" label="ストック" icon={Layers} active={path === '/'} />
 
         <Link
           href={scanHref}
           aria-label="スキャン"
-          className="-mt-6 flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-white shadow-lg shadow-zinc-900/25 active:bg-zinc-700"
+          className="-mt-7 flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-full bg-brand text-white shadow-e3 ring-4 ring-canvas transition-transform active:scale-95 active:bg-brand-soft"
         >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <path
-              d="M3 9V6a3 3 0 013-3h3M21 9V6a3 3 0 00-3-3h-3M3 15v3a3 3 0 003 3h3M21 15v3a3 3 0 01-3 3h-3"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-            <circle cx="12" cy="12" r="3.2" stroke="currentColor" strokeWidth="2" />
-          </svg>
+          <ScanLine size={23} strokeWidth={2.1} />
         </Link>
 
-        <Link
-          href="/routine"
-          className={`flex flex-1 flex-col items-center gap-1 py-1.5 ${
-            on('/routine') ? 'text-zinc-900' : 'text-zinc-400'
-          }`}
-        >
-          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <circle cx="12" cy="12" r="8.6" stroke="currentColor" strokeWidth="1.9" />
-            <path d="M12 7.4V12l3 2" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
-          </svg>
-          <span className="text-[11px] font-medium">ルーティン</span>
-        </Link>
+        <NavItem href="/routine" label="ルーティン" icon={Clock} active={path === '/routine'} />
       </div>
     </nav>
+  );
+}
+
+function NavItem({
+  href,
+  label,
+  icon: Icon,
+  active,
+}: {
+  href: string;
+  label: string;
+  icon: typeof Layers;
+  active: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`relative flex flex-1 flex-col items-center gap-1 py-1.5 transition-colors ${
+        active ? 'text-ink' : 'text-faint'
+      }`}
+    >
+      {/* アクティブを色だけでなくインジケーターでも示す */}
+      <span
+        className={`absolute -top-[9px] h-[3px] w-7 rounded-full bg-brand transition-opacity duration-200 ${
+          active ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
+      <Icon size={20} strokeWidth={active ? 2.3 : 1.9} />
+      <span className="text-[10.5px] font-semibold">{label}</span>
+    </Link>
   );
 }

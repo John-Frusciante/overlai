@@ -1,21 +1,74 @@
 @import "tailwindcss";
 
-:root {
-  --background: #f7f7f8;
-  --foreground: #18181b;
+/**
+ * デザイントークン
+ *
+ * ニュートラルは純グレー（zinc）ではなく、わずかに青みのある slate 系に寄せている。
+ * 医療に隣接するプロダクトとしての清潔感を出しつつ、無彩色の冷たさを避けるため。
+ * 判定3色（blue/amber/red）はシグナル専用で、ブランド色とは役割を分ける。
+ */
+@theme {
+  /* サーフェス */
+  --color-canvas: #f7f8fa;
+  --color-surface: #ffffff;
+  --color-surface-sunken: #f1f3f7;
+  --color-line: rgba(15, 23, 42, 0.07);
+  --color-line-strong: rgba(15, 23, 42, 0.12);
+
+  /* テキスト3階層 */
+  --color-ink: #0f172a;
+  --color-muted: #566076;
+  --color-faint: #94a3b8;
+
+  /* ブランド。判定の青(#2563EB)と混同しないよう彩度を落とした深い藍 */
+  --color-brand: #1e2a45;
+  --color-brand-soft: #2c3c5f;
+
+  /* シグナル。設計仕様書 §9.4 の指定値を変更しない */
+  --color-signal-blue: #2563eb;
+  --color-signal-yellow: #d97706;
+  --color-signal-red: #dc2626;
+
+  /* カテゴリアクセント。彩度を抑えてシグナル3色と競合させない */
+  --color-cat-indigo: #4f46e5;
+  --color-cat-teal: #0d9488;
+  --color-cat-amber: #b45309;
+  --color-cat-rose: #be185d;
+  --color-cat-violet: #7c3aed;
+  --color-cat-green: #15803d;
+
+  /* 影。3段階の階層をつくる */
+  --shadow-e1: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --shadow-e2: 0 4px 8px -2px rgba(16, 24, 40, 0.06), 0 2px 4px -2px rgba(16, 24, 40, 0.04);
+  --shadow-e3: 0 12px 24px -6px rgba(16, 24, 40, 0.1), 0 4px 8px -4px rgba(16, 24, 40, 0.06);
+  --shadow-e4: 0 24px 48px -12px rgba(16, 24, 40, 0.18);
+
+  /* 欧文は Inter、日本語はシステムフォント（実機での読み込み待ちを避けるため） */
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+    "Noto Sans JP", "Yu Gothic", sans-serif;
+
+  --animate-fade-up: fade-up 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-scale-in: scale-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-sheet-up: sheet-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP",
-    "Yu Gothic", sans-serif;
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.86); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes sheet-up {
+  from { transform: translateY(22px); opacity: 0; }
+  to { transform: none; opacity: 1; }
 }
 
 html,
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color-canvas);
+  color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: none;
@@ -33,4 +86,24 @@ video {
 }
 .pt-safe {
   padding-top: max(3.5rem, calc(env(safe-area-inset-top) + 1.25rem));
+}
+.top-safe {
+  top: max(3.25rem, calc(env(safe-area-inset-top) + 1rem));
+}
+
+/* リストを順に立ち上げる。--i に添字を渡す */
+.stagger > * {
+  animation: fade-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+/* 動きを減らす設定を尊重する */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

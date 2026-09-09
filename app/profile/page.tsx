@@ -31,23 +31,23 @@ export default function ProfilePage() {
   return (
     <main className="mx-auto min-h-dvh max-w-md px-4 pb-32 pt-safe">
       <header className="flex items-center justify-between px-1">
-        <h1 className="text-[22px] font-bold tracking-tight text-zinc-900">肌質の設定</h1>
+        <h1 className="text-[22px] font-bold tracking-tight text-ink">肌質の設定</h1>
         <button
           onClick={() => router.back()}
-          className="text-[14px] font-medium text-zinc-500 active:text-zinc-900"
+          className="text-[14px] font-medium text-muted active:text-ink"
         >
           完了
         </button>
       </header>
 
-      <p className="mt-3 px-1 text-[13.5px] leading-relaxed text-zinc-500">
+      <p className="mt-3 px-1 text-[13.5px] leading-relaxed text-muted">
         シャンプーや洗顔料の洗浄力が、いまの状態に合っているかを見るために使います。
         設定は任意です。
       </p>
 
       <section className="mt-8">
-        <h2 className="px-1 text-xs font-semibold tracking-wide text-zinc-500">肌の状態</h2>
-        <p className="mt-1 px-1 text-[12.5px] text-zinc-400">洗顔料・ボディソープの判定に使います</p>
+        <h2 className="px-1 text-xs font-semibold tracking-wide text-muted">肌の状態</h2>
+        <p className="mt-1 px-1 text-[12.5px] text-faint">洗顔料・ボディソープの判定に使います</p>
         <Options
           options={SKINS}
           value={profile.skin}
@@ -56,8 +56,8 @@ export default function ProfilePage() {
       </section>
 
       <section className="mt-8">
-        <h2 className="px-1 text-xs font-semibold tracking-wide text-zinc-500">頭皮の状態</h2>
-        <p className="mt-1 px-1 text-[12.5px] text-zinc-400">シャンプーの判定に使います</p>
+        <h2 className="px-1 text-xs font-semibold tracking-wide text-muted">頭皮の状態</h2>
+        <p className="mt-1 px-1 text-[12.5px] text-faint">シャンプーの判定に使います</p>
         <Options
           options={SCALPS}
           value={profile.scalp}
@@ -65,7 +65,7 @@ export default function ProfilePage() {
         />
       </section>
 
-      <p className="mt-10 px-1 text-[12px] leading-relaxed text-zinc-400">
+      <p className="mt-10 px-1 text-[12px] leading-relaxed text-faint">
         ここで選ぶのはご自身の感じ方であり、診断ではありません。
         肌トラブルが続く場合は皮膚科にご相談ください。
       </p>
@@ -88,10 +88,10 @@ function Options<T extends string>({
         <button
           key={o}
           onClick={() => onChange(value === o ? undefined : o)}
-          className={`rounded-full px-4 py-2.5 text-[14px] font-medium transition-colors ${
+          className={`rounded-full px-4 py-2.5 text-[14px] font-medium transition-[transform,background-color] duration-150 active:scale-95 ${
             value === o
-              ? 'bg-zinc-900 text-white'
-              : 'border border-zinc-200 bg-white text-zinc-600 active:bg-zinc-50'
+              ? 'bg-brand text-white shadow-e1'
+              : 'border border-line bg-surface text-muted active:bg-surface-sunken'
           }`}
         >
           {o}

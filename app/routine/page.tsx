@@ -2,10 +2,12 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { AlertTriangle, Check, ChevronRight, Sparkles } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
+import { SectionHeader } from '@/components/ui/SectionHeader';
+import { CleanserMatchRow, ProfilePrompt } from '@/components/CleanserMatchCard';
 import { buildRoutine, findConflicts } from '@/lib/routine';
 import { matchCleanser } from '@/lib/cleanser';
-import { CleanserMatchRow, ProfilePrompt } from '@/components/CleanserMatchCard';
 import {
   doseKey,
   loadDoseLog,
@@ -16,6 +18,7 @@ import {
   todayKey,
 } from '@/lib/storage';
 import { SEED_STOCK } from '@/lib/seed';
+import { CATEGORY_STYLE, FALLBACK_ICON } from '@/lib/ui';
 import type { DoseLog, DoseTime, Profile, RoutineStep, StockItem } from '@/lib/types';
 
 /**
@@ -61,54 +64,61 @@ export default function RoutinePage() {
   return (
     <main className="mx-auto min-h-dvh max-w-md px-4 pb-32 pt-safe">
       <header className="px-1">
-        <p className="text-[13px] font-medium tracking-wide text-zinc-400">Overlai</p>
-        <h1 className="mt-1 text-[28px] font-bold tracking-tight text-zinc-900">今日のルーティン</h1>
-        <p className="mt-1.5 text-[13.5px] text-zinc-500">
+        <p className="text-[12.5px] font-semibold tracking-[0.12em] text-faint">TODAY</p>
+        <h1 className="mt-2 text-[29px] font-bold leading-tight tracking-tight text-ink">
+          今日のルーティン
+        </h1>
+        <p className="mt-1.5 text-[13.5px] text-muted">
           家にあるものから、使う順番を組み立てています
         </p>
       </header>
 
       <Link
         href="/profile"
-        className="mt-5 flex items-center justify-between rounded-xl border border-zinc-200 bg-white px-4 py-3 active:bg-zinc-50"
+        className="mt-6 flex items-center gap-3 rounded-2xl border border-line bg-surface px-4 py-3.5 shadow-e1 transition-transform active:scale-[0.99]"
       >
-        <span className="text-[13.5px] font-medium text-zinc-700">
-          肌質・頭皮の設定
-          {(profile.skin || profile.scalp) && (
-            <span className="ml-2 text-zinc-400">
-              {[profile.skin && `肌: ${profile.skin}`, profile.scalp && `頭皮: ${profile.scalp}`]
-                .filter(Boolean)
-                .join(' / ')}
-            </span>
-          )}
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#be185d]/8 text-[#be185d]">
+          <Sparkles size={16} strokeWidth={2} />
         </span>
-        <span className="text-zinc-400" aria-hidden>›</span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[14px] font-semibold text-ink">肌質・頭皮の設定</span>
+          <span className="mt-0.5 block truncate text-[12.5px] text-faint">
+            {profile.skin || profile.scalp
+              ? [profile.skin && `肌: ${profile.skin}`, profile.scalp && `頭皮: ${profile.scalp}`]
+                  .filter(Boolean)
+                  .join(' / ')
+              : '洗浄力が合っているかを判定に反映します'}
+          </span>
+        </span>
+        <ChevronRight size={17} className="shrink-0 text-faint" />
       </Link>
 
       {/* 服薬 */}
       {meds.length > 0 && (
-        <section className="mt-8">
-          <div className="flex items-baseline justify-between px-1">
-            <h2 className="text-xs font-semibold tracking-wide text-zinc-500">今日のお薬</h2>
-            <span className="text-[12px] tabular-nums text-zinc-400">
-              {doneCount}/{totalCount}
-            </span>
-          </div>
+        <section className="mt-9">
+          <SectionHeader
+            title="今日のお薬"
+            right={<ProgressRing done={doneCount} total={totalCount} />}
+          />
 
-          <ul className="mt-2 space-y-2">
-            {meds.map((item) => (
-              <li key={item.id} className="rounded-xl border border-zinc-200/80 bg-white p-4">
+          <ul className="stagger mt-2.5 space-y-2">
+            {meds.map((item, idx) => (
+              <li
+                key={item.id}
+                style={{ '--i': idx } as React.CSSProperties}
+                className="rounded-2xl border border-line bg-surface p-4 shadow-e1"
+              >
                 <div className="flex items-start gap-2">
-                  <h3 className="flex-1 text-[15px] font-semibold leading-snug text-zinc-900">
+                  <h3 className="flex-1 text-[15px] font-semibold leading-snug text-ink">
                     {item.name}
                   </h3>
                   {item.isPrescription && (
-                    <span className="mt-0.5 shrink-0 rounded bg-zinc-900 px-1.5 py-0.5 text-[11px] font-medium text-white">
+                    <span className="mt-0.5 shrink-0 rounded-md bg-brand px-1.5 py-0.5 text-[10.5px] font-semibold tracking-wide text-white">
                       処方
                     </span>
                   )}
                 </div>
-                <p className="mt-1 text-[13px] text-zinc-500">
+                <p className="mt-1 text-[12.5px] tabular-nums text-faint">
                   1回{item.dose!.perTime}錠
                   {item.remaining && ` ／ 残${item.remaining.count}${item.remaining.unit}`}
                 </p>
@@ -120,13 +130,14 @@ export default function RoutinePage() {
                       <button
                         key={t}
                         onClick={() => onToggle(item, t)}
-                        className={`flex-1 rounded-lg py-2.5 text-[14px] font-semibold transition-colors ${
+                        className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-[14px] font-semibold transition-[transform,background-color] duration-150 active:scale-[0.97] ${
                           taken
-                            ? 'bg-zinc-900 text-white'
-                            : 'border border-zinc-300 bg-white text-zinc-600 active:bg-zinc-50'
+                            ? 'bg-brand text-white shadow-e1'
+                            : 'border border-line bg-surface text-muted'
                         }`}
                       >
-                        {taken ? `${t} ✓` : t}
+                        {taken && <Check size={14} strokeWidth={3} />}
+                        {t}
                       </button>
                     );
                   })}
@@ -158,20 +169,21 @@ export default function RoutinePage() {
 
       {/* 成分バッティング警告 */}
       {conflicts.length > 0 && (
-        <section className="mt-8">
-          <h2 className="px-1 text-xs font-semibold tracking-wide text-zinc-500">
-            重ねるときの注意
-          </h2>
-          <ul className="mt-2 space-y-2">
+        <section className="mt-9">
+          <SectionHeader title="重ねるときの注意" />
+          <ul className="mt-2.5 space-y-2">
             {conflicts.map((c, i) => (
-              <li key={i} className="rounded-xl bg-amber-50 p-4">
-                <p className="text-[14px] font-semibold text-amber-900">
-                  {c.ingredients[0]} × {c.ingredients[1]}
-                </p>
-                <p className="mt-1.5 text-[13.5px] leading-relaxed text-amber-800">{c.detail}</p>
-                <p className="mt-1.5 text-[12.5px] text-amber-700">
-                  {c.items[0]} ／ {c.items[1]}
-                </p>
+              <li key={i} className="flex gap-3 rounded-2xl bg-amber-50 p-4">
+                <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-700" strokeWidth={2.2} />
+                <div>
+                  <p className="text-[13.5px] font-semibold text-amber-900">
+                    {c.ingredients[0]} × {c.ingredients[1]}
+                  </p>
+                  <p className="mt-1.5 text-[13px] leading-relaxed text-amber-800">{c.detail}</p>
+                  <p className="mt-1.5 text-[12px] text-amber-700/90">
+                    {c.items[0]} ／ {c.items[1]}
+                  </p>
+                </div>
               </li>
             ))}
           </ul>
@@ -179,7 +191,7 @@ export default function RoutinePage() {
       )}
 
       {outbath.some((s) => s.item.isPrescription) && (
-        <p className="mt-8 px-1 text-[12px] leading-relaxed text-zinc-400">
+        <p className="mt-9 px-1 text-[11.5px] leading-relaxed text-faint">
           処方薬の塗る順番や間隔について指示を受けている場合は、医師・薬剤師の指示が優先されます。
           ここに表示しているのは剤形にもとづく一般的な目安です。
         </p>
@@ -190,9 +202,39 @@ export default function RoutinePage() {
   );
 }
 
+/** 服薬の進捗。数字だけよりも達成感が出る */
+function ProgressRing({ done, total }: { done: number; total: number }) {
+  const r = 15.5;
+  const c = 2 * Math.PI * r;
+  const ratio = total === 0 ? 0 : done / total;
+
+  return (
+    <span className="relative flex h-10 w-10 items-center justify-center">
+      <svg viewBox="0 0 36 36" className="h-10 w-10 -rotate-90">
+        <circle cx="18" cy="18" r={r} fill="none" strokeWidth="3" className="stroke-surface-sunken" />
+        {ratio > 0 && (
+          <circle
+            cx="18"
+            cy="18"
+            r={r}
+            fill="none"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeDasharray={`${(c * ratio).toFixed(2)} ${c.toFixed(2)}`}
+            className="stroke-brand transition-[stroke-dasharray] duration-500 ease-out"
+          />
+        )}
+      </svg>
+      <span className="absolute text-[10.5px] font-bold tabular-nums text-ink">
+        {done}/{total}
+      </span>
+    </span>
+  );
+}
+
 /**
  * 直近7日の服薬状況 — Issue #17
- * 記録のない日と飲み忘れを区別する（未来の日付は存在しないので常に過去7日）。
+ * 記録のない日と飲み忘れを区別する。
  */
 function DoseHistory({ meds, history }: { meds: StockItem[]; history: DoseLog[] }) {
   if (meds.length === 0) return null;
@@ -201,35 +243,41 @@ function DoseHistory({ meds, history }: { meds: StockItem[]; history: DoseLog[] 
   const label = (d: string) => ['日', '月', '火', '水', '木', '金', '土'][new Date(d).getDay()];
 
   return (
-    <div className="mt-3 rounded-xl border border-zinc-200/80 bg-white p-4">
-      <p className="text-[12.5px] font-semibold text-zinc-500">この1週間</p>
-      <ol className="mt-3 flex justify-between gap-1">
+    <div className="mt-2 rounded-2xl border border-line bg-surface p-4 shadow-e1">
+      <p className="text-[11.5px] font-semibold uppercase tracking-[0.08em] text-faint">
+        この1週間
+      </p>
+      <ol className="mt-3.5 flex justify-between gap-1">
         {history.map((h, i) => {
           const done = h.taken.length;
           const isToday = i === history.length - 1;
           const full = perDay > 0 && done >= perDay;
           const some = done > 0;
           return (
-            <li key={h.date} className="flex flex-1 flex-col items-center gap-1.5">
-              <span className={`text-[11px] ${isToday ? 'font-bold text-zinc-900' : 'text-zinc-400'}`}>
+            <li key={h.date} className="flex flex-1 flex-col items-center gap-2">
+              <span
+                className={`text-[10.5px] ${isToday ? 'font-bold text-ink' : 'text-faint'}`}
+              >
                 {label(h.date)}
               </span>
               <span
                 title={`${h.date}：${done}/${perDay}`}
-                className={`h-7 w-7 rounded-full ${
+                className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
                   full
-                    ? 'bg-zinc-900'
+                    ? 'bg-brand text-white shadow-e1'
                     : some
-                      ? 'bg-zinc-400'
-                      : 'border border-dashed border-zinc-300 bg-white'
+                      ? 'bg-brand/35 text-white'
+                      : 'border border-dashed border-line-strong'
                 }`}
-              />
+              >
+                {full && <Check size={13} strokeWidth={3} />}
+              </span>
             </li>
           );
         })}
       </ol>
-      <p className="mt-3 text-[12px] leading-relaxed text-zinc-400">
-        ● すべて記録済み　● 一部のみ　○ 記録なし
+      <p className="mt-3.5 text-[11.5px] leading-relaxed text-faint">
+        すべて記録済み ／ 一部のみ ／ 記録なし
       </p>
     </div>
   );
@@ -249,47 +297,62 @@ function RoutineSection({
   if (steps.length === 0) return null;
 
   return (
-    <section className="mt-8">
-      <h2 className="px-1 text-xs font-semibold tracking-wide text-zinc-500">{title}</h2>
-      <p className="mt-1 px-1 text-[12.5px] text-zinc-400">{caption}</p>
+    <section className="mt-9">
+      <SectionHeader title={title} caption={caption} />
 
-      <ol className="mt-3">
-        {steps.map((s, idx) => (
-          <li key={s.item.id} className="flex gap-3">
-            {/* 番号と縦線 */}
-            <div className="flex flex-col items-center">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-[12.5px] font-bold tabular-nums text-white">
-                {s.order}
-              </span>
-              {idx < steps.length - 1 && <span className="w-px flex-1 bg-zinc-200" />}
-            </div>
+      <ol className="stagger mt-3.5">
+        {steps.map((s, idx) => {
+          const cat = CATEGORY_STYLE[s.item.category];
+          const Icon = cat?.icon ?? FALLBACK_ICON;
+          const match = matchCleanser(s.item, profile);
+          const last = idx === steps.length - 1;
 
-            <div className="flex-1 pb-5">
-              <div className="flex items-start gap-2">
-                <h3 className="flex-1 text-[15px] font-semibold leading-snug text-zinc-900">
-                  {s.item.name}
-                </h3>
-                {s.item.isPrescription && (
-                  <span className="mt-0.5 shrink-0 rounded bg-zinc-900 px-1.5 py-0.5 text-[11px] font-medium text-white">
-                    処方
-                  </span>
+          return (
+            <li
+              key={s.item.id}
+              style={{ '--i': idx } as React.CSSProperties}
+              className="flex gap-3.5"
+            >
+              {/* 番号と縦線 */}
+              <div className="flex flex-col items-center">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-[12.5px] font-bold tabular-nums text-white shadow-e1">
+                  {s.order}
+                </span>
+                {!last && (
+                  <span className="w-px flex-1 bg-gradient-to-b from-line-strong to-line" />
                 )}
               </div>
-              <p className="mt-0.5 text-[12.5px] text-zinc-400">{s.item.form}</p>
-              {s.note && (
-                <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-600">{s.note}</p>
-              )}
-              {(() => {
-                const match = matchCleanser(s.item, profile);
-                return match ? (
-                  <div className="mt-2">
+
+              <div className={`min-w-0 flex-1 ${last ? 'pb-1' : 'pb-6'}`}>
+                <div className="flex items-start gap-2">
+                  <span
+                    className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${cat?.bg} ${cat?.text}`}
+                  >
+                    <Icon size={14} strokeWidth={2.1} />
+                  </span>
+                  <h3 className="flex-1 text-[15px] font-semibold leading-snug text-ink">
+                    {s.item.name}
+                  </h3>
+                  {s.item.isPrescription && (
+                    <span className="mt-0.5 shrink-0 rounded-md bg-brand px-1.5 py-0.5 text-[10.5px] font-semibold tracking-wide text-white">
+                      処方
+                    </span>
+                  )}
+                </div>
+
+                <p className="mt-1 pl-9 text-[12px] text-faint">{s.item.form}</p>
+                {s.note && (
+                  <p className="mt-1.5 pl-9 text-[13px] leading-relaxed text-muted">{s.note}</p>
+                )}
+                {match && (
+                  <div className="mt-2.5 pl-9">
                     <CleanserMatchRow match={match} />
                   </div>
-                ) : null;
-              })()}
-            </div>
-          </li>
-        ))}
+                )}
+              </div>
+            </li>
+          );
+        })}
       </ol>
     </section>
   );
