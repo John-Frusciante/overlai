@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronDown, MoreHorizontal, PencilLine, Trash2 } from 'lucide-react';
-import { CATEGORY_STYLE, FALLBACK_ICON } from '@/lib/ui';
-import { CATEGORY_ORDER } from '@/lib/seed';
+import { ChevronDown, PencilLine, Trash2 } from 'lucide-react';
+import { categoryStyle } from '@/lib/ui';
+import { orderedCategories } from '@/lib/categories';
 import type { ExpiryAlert, StockItem } from '@/lib/types';
 
 /** マイストック一覧 — 設計仕様書 §9.2 */
@@ -12,6 +12,7 @@ export function StockList({
   items,
   alerts,
   editing,
+  customCategories,
   collapsed,
   onToggleCategory,
   onSelect,
@@ -20,6 +21,8 @@ export function StockList({
   items: StockItem[];
   alerts: ExpiryAlert[];
   editing: boolean;
+  /** ユーザーが追加したカテゴリ。組み込みの後ろに並ぶ */
+  customCategories: string[];
   collapsed: string[];
   onToggleCategory: (category: string) => void;
   onSelect: (item: StockItem) => void;
@@ -28,18 +31,17 @@ export function StockList({
   /** 削除の確認待ちのid。誤タップで消えると復元できないため二段階にする */
   const [confirmId, setConfirmId] = useState<string | null>(null);
 
-  const grouped = CATEGORY_ORDER.map((category) => ({
-    category,
-    items: items.filter((i) => i.category === category),
-  })).filter((g) => g.items.length > 0);
+  const grouped = orderedCategories(customCategories, items)
+    .map((category) => ({ category, items: items.filter((i) => i.category === category) }))
+    .filter((g) => g.items.length > 0);
 
   const alertOf = (id: string) => alerts.find((a) => a.itemId === id);
 
   return (
     <div className="space-y-3">
       {grouped.map(({ category, items: group }) => {
-        const cat = CATEGORY_STYLE[category];
-        const Icon = cat?.icon ?? FALLBACK_ICON;
+        const cat = categoryStyle(category);
+        const Icon = cat.icon;
         const open = !collapsed.includes(category);
         const alertCount = group.filter((i) => alertOf(i.id)).length;
 
@@ -51,9 +53,9 @@ export function StockList({
               aria-expanded={open}
               className="flex w-full items-center gap-2 rounded-xl px-1 py-2 text-left transition-colors active:bg-surface-sunken"
             >
-              <Icon size={14} className={cat?.text} strokeWidth={2.4} />
+              <Icon size={14} className={cat.text} strokeWidth={2.4} />
               <span className="text-[12px] font-semibold tracking-[0.06em] text-muted">
-                {cat?.label ?? category}
+                {cat.label}
               </span>
               <span className="rounded-full bg-surface-sunken px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-faint">
                 {group.length}
@@ -104,7 +106,7 @@ export function StockList({
 
                       <div className="flex items-start gap-3">
                         <span
-                          className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${cat?.bg} ${cat?.text}`}
+                          className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${cat.bg} ${cat.text}`}
                         >
                           <Icon size={17} strokeWidth={2} />
                         </span>
@@ -144,17 +146,6 @@ export function StockList({
                             </span>
                           </p>
                         </div>
-
-                        {/* タップで操作できることを示す。カテゴリ見出しの「開く」矢印と
-                            同じ形にすると意味が混ざるため、こちらは「…」にする */}
-                        {!editing && (
-                          <MoreHorizontal
-                            size={17}
-                            strokeWidth={2.2}
-                            className="shrink-0 self-center text-faint/70"
-                            aria-hidden
-                          />
-                        )}
 
                         {editing && (
                           <div className="relative z-10 flex shrink-0 flex-col gap-1.5">

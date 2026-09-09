@@ -40,7 +40,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 | AI出力スキーマ | `lib/schemas.ts` |
 | データ構造 | `lib/types.ts` |
 | localStorage | `lib/storage.ts` |
-| ルールベースの判定 | `lib/routine.ts` `lib/expiry.ts` `lib/cleanser.ts` |
+| ルールベースの判定 | `lib/routine.ts` `lib/expiry.ts` `lib/cleanser.ts` `lib/categories.ts` |
 | AIの呼び出し | `lib/llm.ts`（プロバイダ抽象。route から直接SDKを呼ばない） |
 
 ## 作業後にやること

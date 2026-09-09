@@ -18,7 +18,7 @@ import {
   todayKey,
 } from '@/lib/storage';
 import { SEED_STOCK } from '@/lib/seed';
-import { CATEGORY_STYLE, FALLBACK_ICON } from '@/lib/ui';
+import { categoryStyle } from '@/lib/ui';
 import type { DoseLog, DoseTime, Profile, RoutineStep, StockItem } from '@/lib/types';
 
 /**
@@ -302,8 +302,8 @@ function RoutineSection({
 
       <ol className="stagger mt-3.5">
         {steps.map((s, idx) => {
-          const cat = CATEGORY_STYLE[s.item.category];
-          const Icon = cat?.icon ?? FALLBACK_ICON;
+          const cat = categoryStyle(s.item.category);
+          const Icon = cat.icon;
           const match = matchCleanser(s.item, profile);
           const last = idx === steps.length - 1;
 
@@ -326,7 +326,7 @@ function RoutineSection({
               <div className={`min-w-0 flex-1 ${last ? 'pb-1' : 'pb-6'}`}>
                 <div className="flex items-start gap-2">
                   <span
-                    className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${cat?.bg} ${cat?.text}`}
+                    className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${cat.bg} ${cat.text}`}
                   >
                     <Icon size={14} strokeWidth={2.1} />
                   </span>

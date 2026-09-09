@@ -9,7 +9,9 @@ import {
   Plus,
   RotateCcw,
   SlidersHorizontal,
+  Tag,
   Trash2,
+  X,
 } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
 import { StockList } from '@/components/StockList';
@@ -18,11 +20,14 @@ import { ButtonLink } from '@/components/ui/Button';
 import { collectAlerts, lowStock } from '@/lib/expiry';
 import {
   loadCollapsed,
+  loadCustomCategories,
   loadStock,
   removeStock,
   resetStock,
   saveCollapsed,
+  saveCustomCategories,
 } from '@/lib/storage';
+import { MAX_CATEGORY_LENGTH, countIn, validateCategoryName } from '@/lib/categories';
 import { SEED_STOCK } from '@/lib/seed';
 import { overlaySymbolPath } from '@/lib/ui';
 import type { ExpiryAlert, StockItem } from '@/lib/types';
@@ -42,6 +47,8 @@ export default function MyStockPage() {
   const [collapsed, setCollapsed] = useState<string[]>([]);
   /** タップで開いている操作シートの対象 */
   const [selected, setSelected] = useState<StockItem | null>(null);
+  /** ユーザーが追加したカテゴリ */
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
 
   const refresh = useCallback((items: StockItem[]) => {
     setStock(items);
@@ -52,6 +59,7 @@ export default function MyStockPage() {
   useEffect(() => {
     refresh(loadStock());
     setCollapsed(loadCollapsed());
+    setCustomCategories(loadCustomCategories());
     const demo = new URLSearchParams(window.location.search).get('demo');
     if (demo) setScanHref(`/scan?demo=${encodeURIComponent(demo)}`);
   }, [refresh]);
@@ -71,6 +79,7 @@ export default function MyStockPage() {
   const onReset = useCallback(() => {
     refresh(resetStock());
     setCollapsed([]);
+    setCustomCategories([]);
   }, [refresh]);
 
   const symbol = overlaySymbolPath();
@@ -135,11 +144,21 @@ export default function MyStockPage() {
       )}
 
       {editing && (
-        <p className="mt-6 rounded-2xl border border-line bg-surface px-4 py-3 text-[12.5px] leading-relaxed text-muted shadow-e1">
-          各項目の <PencilLine size={12} className="inline align-[-1px]" strokeWidth={2.4} /> で内容を編集、
-          <Trash2 size={12} className="inline align-[-1px] text-red-600" strokeWidth={2.4} /> で削除できます。
-          編集モードに入らなくても、<span className="font-semibold text-ink">項目をタップ</span>すれば同じ操作ができます。
-        </p>
+        <>
+          <p className="mt-6 rounded-2xl border border-line bg-surface px-4 py-3 text-[12.5px] leading-relaxed text-muted shadow-e1">
+            各項目の <PencilLine size={12} className="inline align-[-1px]" strokeWidth={2.4} /> で内容を編集、
+            <Trash2 size={12} className="inline align-[-1px] text-red-600" strokeWidth={2.4} /> で削除できます。
+            編集モードに入らなくても、<span className="font-semibold text-ink">項目をタップ</span>すれば同じ操作ができます。
+          </p>
+          <CategoryManager
+            categories={customCategories}
+            stock={stock}
+            onChange={(next) => {
+              saveCustomCategories(next);
+              setCustomCategories(next);
+            }}
+          />
+        </>
       )}
 
       <div className="mt-7 flex gap-2">
@@ -163,6 +182,7 @@ export default function MyStockPage() {
           items={stock}
           alerts={alerts}
           editing={editing}
+          customCategories={customCategories}
           collapsed={collapsed}
           onToggleCategory={onToggleCategory}
           onSelect={setSelected}
@@ -231,5 +251,132 @@ function AlertRow({ alert, index }: { alert: ExpiryAlert; index: number }) {
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * カテゴリの管理 — 編集モード中だけ出す。
+ *
+ * 組み込みの6区分は消せない。ユーザーが作ったものだけを対象にする。
+ * **使っている在庫があるカテゴリは消せない。** 消せてしまうと、
+ * その項目がどこにも属さない状態になり、一覧での置き場所が説明できなくなるため。
+ */
+function CategoryManager({
+  categories,
+  stock,
+  onChange,
+}: {
+  categories: string[];
+  stock: StockItem[];
+  onChange: (next: string[]) => void;
+}) {
+  const [adding, setAdding] = useState<string | null>(null);
+  const [error, setError] = useState('');
+
+  const commit = () => {
+    const result = validateCategoryName(adding ?? '', categories);
+    if (!result.ok) {
+      setError(result.reason);
+      return;
+    }
+    onChange([...categories, result.name]);
+    setAdding(null);
+    setError('');
+  };
+
+  return (
+    <section className="mt-2 rounded-2xl border border-line bg-surface px-4 py-3.5 shadow-e1">
+      <h2 className="flex items-center gap-1.5 text-[11.5px] font-semibold uppercase tracking-[0.08em] text-faint">
+        <Tag size={12} strokeWidth={2.4} />
+        自分で作ったカテゴリ
+      </h2>
+
+      {categories.length === 0 && adding === null && (
+        <p className="mt-1.5 text-[12.5px] leading-relaxed text-faint">
+          「出先用」「常備薬」など、自分の分け方でカテゴリを増やせます。
+        </p>
+      )}
+
+      {categories.length > 0 && (
+        <ul className="mt-2.5 flex flex-wrap gap-1.5">
+          {categories.map((c) => {
+            const used = countIn(stock, c);
+            return (
+              <li
+                key={c}
+                className="flex items-center gap-1.5 rounded-full border border-line bg-surface-sunken py-1.5 pl-3 pr-1.5 text-[13px] font-medium text-ink"
+              >
+                {c}
+                {used > 0 ? (
+                  <span className="rounded-full bg-surface px-2 py-0.5 text-[11px] tabular-nums text-faint">
+                    {used}件
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => onChange(categories.filter((x) => x !== c))}
+                    aria-label={`${c} を削除`}
+                    className="flex h-5 w-5 items-center justify-center rounded-full text-faint transition-transform active:scale-90"
+                  >
+                    <X size={13} strokeWidth={2.6} />
+                  </button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {adding === null ? (
+        <button
+          onClick={() => {
+            setAdding('');
+            setError('');
+          }}
+          className="mt-2.5 flex items-center gap-1 rounded-full border border-dashed border-line-strong px-3 py-1.5 text-[12.5px] font-medium text-muted transition-colors active:bg-surface-sunken"
+        >
+          <Plus size={13} strokeWidth={2.6} />
+          カテゴリを追加
+        </button>
+      ) : (
+        <div className="mt-2.5">
+          <div className="flex gap-1.5">
+            <input
+              autoFocus
+              value={adding}
+              onChange={(e) => {
+                setAdding(e.target.value);
+                setError('');
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') commit();
+                if (e.key === 'Escape') setAdding(null);
+              }}
+              maxLength={MAX_CATEGORY_LENGTH}
+              placeholder="例：出先用"
+              className="flex-1 rounded-xl border border-line bg-surface px-3 py-2 text-[14px] outline-none focus:border-brand"
+            />
+            <button
+              onClick={commit}
+              aria-label="カテゴリを作る"
+              className="flex w-10 shrink-0 items-center justify-center rounded-xl bg-brand text-white transition-transform active:scale-95"
+            >
+              <Check size={16} strokeWidth={2.6} />
+            </button>
+            <button
+              onClick={() => setAdding(null)}
+              aria-label="やめる"
+              className="flex w-10 shrink-0 items-center justify-center rounded-xl border border-line bg-surface text-muted transition-transform active:scale-95"
+            >
+              <X size={16} strokeWidth={2.2} />
+            </button>
+          </div>
+          {error && <p className="mt-1.5 text-[12.5px] text-red-600">{error}</p>}
+        </div>
+      )}
+
+      <p className="mt-2.5 text-[12px] leading-relaxed text-faint">
+        使っている在庫があるカテゴリは、件数だけ表示して削除できないようにしています。
+      </p>
+    </section>
   );
 }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PencilLine, Trash2, X } from 'lucide-react';
-import { CATEGORY_STYLE, FALLBACK_ICON } from '@/lib/ui';
+import { categoryStyle } from '@/lib/ui';
 import type { StockItem } from '@/lib/types';
 
 /**
@@ -47,8 +47,8 @@ export function StockActionSheet({
 
   if (!item) return null;
 
-  const cat = CATEGORY_STYLE[item.category];
-  const Icon = cat?.icon ?? FALLBACK_ICON;
+  const cat = categoryStyle(item.category);
+  const Icon = cat.icon;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center">
@@ -66,14 +66,14 @@ export function StockActionSheet({
       >
         <div className="flex items-start gap-3 px-1">
           <span
-            className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${cat?.bg} ${cat?.text}`}
+            className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${cat.bg} ${cat.text}`}
           >
             <Icon size={19} strokeWidth={2} />
           </span>
           <div className="min-w-0 flex-1">
             <h2 className="text-[16px] font-semibold leading-snug text-ink">{item.name}</h2>
             <p className="mt-1 flex flex-wrap items-center gap-x-2 text-[12.5px] text-faint">
-              <span>{cat?.label ?? item.category}</span>
+              <span>{cat.label}</span>
               <span className="rounded bg-surface-sunken px-1.5 py-0.5 text-[11px]">
                 {item.form}
               </span>

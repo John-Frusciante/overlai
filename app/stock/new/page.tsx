@@ -1,11 +1,18 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Camera, Loader2 } from 'lucide-react';
+import { Camera, Check, Loader2, Plus, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toResizedDataUrl } from '@/lib/image';
-import { addStock, loadStock, updateStock } from '@/lib/storage';
+import {
+  addStock,
+  loadCustomCategories,
+  loadStock,
+  saveCustomCategories,
+  updateStock,
+} from '@/lib/storage';
 import { toItemForm, toStockCategory } from '@/lib/mapping';
+import { BUILTIN_CATEGORIES, MAX_CATEGORY_LENGTH, validateCategoryName } from '@/lib/categories';
 import type { ApiErrorBody, ExtractionResult, ItemForm, RoutineKind, StockCategory } from '@/lib/types';
 
 /**
@@ -16,15 +23,6 @@ import type { ApiErrorBody, ExtractionResult, ItemForm, RoutineKind, StockCatego
  *
  * `?id=` が付いていれば既存アイテムの編集として動く。
  */
-
-const CATEGORIES: StockCategory[] = [
-  '処方薬',
-  '処方薬(外用)',
-  '市販薬・サプリ',
-  'スキンケア',
-  'ヘアケア',
-  'ボディケア',
-];
 
 const FORMS: ItemForm[] = [
   '錠剤', 'カプセル', '導入液', '化粧水', '美容液', 'ローション', '乳液',
@@ -43,10 +41,34 @@ export default function NewStockPage() {
   const [openedAt, setOpenedAt] = useState('');
   const [routine, setRoutine] = useState<RoutineKind | ''>('');
 
+  /** ユーザーが追加したカテゴリ。この画面から新規作成もできる */
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
+  const [newCategory, setNewCategory] = useState<string | null>(null);
+  const [categoryError, setCategoryError] = useState('');
+
   const [reading, setReading] = useState(false);
   const [readError, setReadError] = useState('');
   /** 編集対象のid。null なら新規追加 */
   const [editId, setEditId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCustomCategories(loadCustomCategories());
+  }, []);
+
+  /** その場でカテゴリを作って、そのまま選択状態にする */
+  const commitNewCategory = useCallback(() => {
+    const result = validateCategoryName(newCategory ?? '', [...customCategories]);
+    if (!result.ok) {
+      setCategoryError(result.reason);
+      return;
+    }
+    const next = [...customCategories, result.name];
+    saveCustomCategories(next);
+    setCustomCategories(next);
+    setCategory(result.name);
+    setNewCategory(null);
+    setCategoryError('');
+  }, [newCategory, customCategories]);
 
   // 既存アイテムの編集として開かれた場合は値を読み込む
   useEffect(() => {
@@ -164,7 +186,83 @@ export default function NewStockPage() {
         </Field>
 
         <Field label="カテゴリ">
-          <Chips options={CATEGORIES} value={category} onChange={setCategory} />
+          <div className="flex flex-wrap gap-1.5">
+            {[...BUILTIN_CATEGORIES, ...customCategories].map((o) => (
+              <button
+                key={o}
+                type="button"
+                onClick={() => setCategory(o)}
+                className={`rounded-full px-3.5 py-2 text-[13.5px] font-medium transition-colors ${
+                  category === o
+                    ? 'bg-brand text-white'
+                    : 'border border-line bg-surface text-muted active:bg-surface-sunken'
+                }`}
+              >
+                {o}
+              </button>
+            ))}
+            {newCategory === null && (
+              <button
+                type="button"
+                onClick={() => {
+                  setNewCategory('');
+                  setCategoryError('');
+                }}
+                className="flex items-center gap-1 rounded-full border border-dashed border-line-strong px-3.5 py-2 text-[13.5px] font-medium text-muted transition-colors active:bg-surface-sunken"
+              >
+                <Plus size={14} strokeWidth={2.6} />
+                カテゴリを追加
+              </button>
+            )}
+          </div>
+
+          {newCategory !== null && (
+            <div className="mt-2">
+              <div className="flex gap-1.5">
+                <input
+                  autoFocus
+                  value={newCategory}
+                  onChange={(e) => {
+                    setNewCategory(e.target.value);
+                    setCategoryError('');
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      commitNewCategory();
+                    }
+                    if (e.key === 'Escape') setNewCategory(null);
+                  }}
+                  maxLength={MAX_CATEGORY_LENGTH}
+                  placeholder="例：出先用"
+                  className="flex-1 rounded-2xl border border-line bg-surface px-3.5 py-2.5 text-[15px] shadow-e1 outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(30,42,69,0.07)]"
+                />
+                <button
+                  type="button"
+                  onClick={commitNewCategory}
+                  aria-label="カテゴリを作る"
+                  className="flex w-11 shrink-0 items-center justify-center rounded-2xl bg-brand text-white transition-transform active:scale-95"
+                >
+                  <Check size={17} strokeWidth={2.6} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNewCategory(null)}
+                  aria-label="やめる"
+                  className="flex w-11 shrink-0 items-center justify-center rounded-2xl border border-line bg-surface text-muted transition-transform active:scale-95"
+                >
+                  <X size={17} strokeWidth={2.2} />
+                </button>
+              </div>
+              {categoryError ? (
+                <p className="mt-1.5 px-1 text-[12.5px] text-red-600">{categoryError}</p>
+              ) : (
+                <p className="mt-1.5 px-1 text-[12.5px] text-faint">
+                  「出先用」「常備薬」など、自分の分け方で作れます。
+                </p>
+              )}
+            </div>
+          )}
         </Field>
 
         <Field label="剤形">

@@ -6,7 +6,7 @@ import { matchCleanser } from '@/lib/cleanser';
 import { toItemForm } from '@/lib/mapping';
 import { CleanserMatchRow } from '@/components/CleanserMatchCard';
 import { SectionHeader } from '@/components/ui/SectionHeader';
-import { CATEGORY_STYLE, SIGNAL_ORDER, SIGNAL_STYLE, overlaySymbolPath } from '@/lib/ui';
+import { categoryStyle, SIGNAL_ORDER, SIGNAL_STYLE, overlaySymbolPath } from '@/lib/ui';
 import type { AnalyzeResponse, Profile, StockItem } from '@/lib/types';
 
 /**
@@ -135,8 +135,8 @@ export function JudgementCard({
             <SectionHeader title="あなたの家にあるもの" count={matched.length} />
             <ul className="stagger mt-2.5 space-y-2">
               {matched.map((item, i) => {
-                const cat = CATEGORY_STYLE[item.category];
-                const Icon = cat?.icon;
+                const cat = categoryStyle(item.category);
+                const Icon = cat.icon;
                 return (
                   <li
                     key={item.id}

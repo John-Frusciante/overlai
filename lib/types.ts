@@ -6,13 +6,22 @@
  * 一方を他方へキャストしないこと。
  */
 
-export type StockCategory =
+/** 最初から用意してあるカテゴリ。表示順の基準になる */
+export type BuiltinCategory =
   | '処方薬'
   | '処方薬(外用)'
   | '市販薬・サプリ'
   | 'スキンケア'
   | 'ヘアケア'
   | 'ボディケア';
+
+/**
+ * 在庫のカテゴリ。ユーザーが追加した名前（「出先用」など）も入る。
+ *
+ * 判定プロンプトはこの値で分岐していない（処方薬かどうかは `isPrescription` で判断する）ため、
+ * 任意の名前が増えても判定の挙動は変わらない。
+ */
+export type StockCategory = BuiltinCategory | (string & {});
 
 /**
  * 剤形。塗る順序のソートキーになる（lib/routine.ts）。

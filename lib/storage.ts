@@ -13,6 +13,7 @@ const STOCK_KEY = 'overlai.stock.v3';
 const DOSE_KEY = 'overlai.dose.v1';
 const PROFILE_KEY = 'overlai.profile.v1';
 const COLLAPSED_KEY = 'overlai.collapsed.v1';
+const CATEGORY_KEY = 'overlai.categories.v1';
 
 function read<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
@@ -73,7 +74,23 @@ export function resetStock(): StockItem[] {
   write(DOSE_KEY, []);
   write(PROFILE_KEY, {});
   write(COLLAPSED_KEY, []);
+  write(CATEGORY_KEY, []);
   return SEED_STOCK;
+}
+
+// ── ユーザーが追加したカテゴリ ───────────────────────
+
+/**
+ * 組み込みの6区分に加えて、ユーザーが自分で作ったカテゴリ名。
+ * 「出先用」「常備薬」のように、その人の暮らしに合わせた区切りを持てるようにする。
+ */
+export function loadCustomCategories(): string[] {
+  const v = read<string[]>(CATEGORY_KEY, []);
+  return Array.isArray(v) ? v.filter((x) => typeof x === 'string') : [];
+}
+
+export function saveCustomCategories(names: string[]): void {
+  write(CATEGORY_KEY, names);
 }
 
 // ── 一覧の折りたたみ状態 ─────────────────────────────────────────────
