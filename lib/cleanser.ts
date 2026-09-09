@@ -66,67 +66,135 @@ export function classifyCleanser(ingredients: string[]): {
  * 相性ルール。
  * 「肌に良い／悪い」ではなく「洗浄力が強い／おだやか」という性質と、
  * ユーザーが申告した状態との噛み合わせだけを述べる。
+ *
+ * 系統ごとに分岐を書き下すと組み合わせが抜けやすい（頭皮側で石鹸系が抜けていた）。
+ * 洗浄力の強さに畳んでから、肌質・頭皮のすべての値を必ず埋める。
  */
-function judgeSkin(base: CleanserBase, skin: Profile['skin']): Omit<CleanserMatch, 'base' | 'ingredient'> | null {
+/** 主剤が判定できた系統。'不明' は matchCleanser で先に弾く */
+type KnownBase = Exclude<CleanserBase, '不明'>;
+
+type Strength = 'strong' | 'mild';
+
+const STRENGTH: Record<KnownBase, Strength> = {
+  高級アルコール系: 'strong',
+  石鹸系: 'strong',
+  アミノ酸系: 'mild',
+  ベタイン系: 'mild',
+};
+
+type Verdict = Omit<CleanserMatch, 'base' | 'ingredient'>;
+
+function judgeSkin(base: KnownBase, skin: Profile['skin']): Verdict | null {
   if (!skin) return null;
 
-  if (base === '高級アルコール系') {
-    if (skin === '乾燥' || skin === '敏感')
+  const strong = STRENGTH[base] === 'strong';
+  // 石鹸系は洗浄力の強さとは別に、アルカリ性であることが効いてくる
+  const soap = base === '石鹸系';
+
+  switch (skin) {
+    case '乾燥':
+    case '敏感':
+      if (!strong)
+        return {
+          level: 'good',
+          message: '洗浄力がおだやかな系統です。乾燥や刺激が気になる肌に向いています。',
+        };
       return {
         level: 'caution',
-        message: `洗浄力が強い系統です。${skin}肌では必要な皮脂まで落ちて、つっぱりや刺激につながる可能性があります。`,
+        message: soap
+          ? 'さっぱり洗えますがアルカリ性です。乾燥や刺激を感じる場合は、弱酸性のものに替える選択肢があります。'
+          : `洗浄力が強い系統です。${skin}肌では必要な皮脂まで落ちて、つっぱりや刺激につながる可能性があります。`,
       };
-    if (skin === '脂性')
-      return { level: 'good', message: '洗浄力が強い系統です。皮脂が気になる肌には合いやすい傾向があります。' };
-  }
 
-  if (base === '石鹸系') {
-    if (skin === '乾燥' || skin === '敏感')
+    case '脂性':
+      if (!strong)
+        return {
+          level: 'caution',
+          message:
+            '洗浄力がおだやかな系統です。皮脂が多い場合は洗い上がりが物足りない可能性があります。',
+        };
       return {
-        level: 'caution',
-        message: 'さっぱり洗えますがアルカリ性です。乾燥や刺激を感じる場合は、弱酸性のものに替える選択肢があります。',
+        level: 'good',
+        message: soap
+          ? 'さっぱり洗える系統です。皮脂が気になる肌には合いやすい傾向があります。'
+          : '洗浄力が強い系統です。皮脂が気になる肌には合いやすい傾向があります。',
       };
-    if (skin === '脂性')
-      return { level: 'good', message: 'さっぱり洗える系統です。皮脂が気になる肌には合いやすい傾向があります。' };
-  }
 
-  if (base === 'アミノ酸系' || base === 'ベタイン系') {
-    if (skin === '乾燥' || skin === '敏感')
-      return { level: 'good', message: '洗浄力がおだやかな系統です。乾燥や刺激が気になる肌に向いています。' };
-    if (skin === '脂性')
-      return {
-        level: 'caution',
-        message: '洗浄力がおだやかな系統です。皮脂が多い場合は洗い上がりが物足りない可能性があります。',
-      };
-  }
+    // 部位によって状態が違うため、片側だけを見て良し悪しを言わない
+    case '混合':
+      return strong
+        ? {
+            level: 'neutral',
+            message:
+              '洗浄力が強い系統です。皮脂の多い部分には合う一方、乾燥しやすい部分ではつっぱりを感じる可能性があります。',
+          }
+        : {
+            level: 'good',
+            message:
+              '洗浄力がおだやかな系統です。乾燥しやすい部分に負担をかけにくい傾向があります。',
+          };
 
-  return null;
+    case '普通':
+      return strong
+        ? {
+            level: 'neutral',
+            message:
+              '洗浄力が強い系統です。つっぱりや乾燥を感じたときは、おだやかな系統に替える選択肢があります。',
+          }
+        : {
+            level: 'neutral',
+            message: '洗浄力がおだやかな系統です。日常的に使いやすい傾向があります。',
+          };
+  }
 }
 
-function judgeScalp(base: CleanserBase, scalp: Profile['scalp']): Omit<CleanserMatch, 'base' | 'ingredient'> | null {
+function judgeScalp(base: KnownBase, scalp: Profile['scalp']): Verdict | null {
   if (!scalp) return null;
 
-  if (base === '高級アルコール系') {
-    if (scalp === '乾燥' || scalp === 'ふけ・かゆみ')
+  const strong = STRENGTH[base] === 'strong';
+  const soap = base === '石鹸系';
+
+  switch (scalp) {
+    case '乾燥':
+    case 'ふけ・かゆみ':
+      if (!strong)
+        return {
+          level: 'good',
+          message: '洗浄力がおだやかな系統です。頭皮への負担を抑えたい場合に向いています。',
+        };
       return {
         level: 'caution',
-        message: `洗浄力が強い系統です。${scalp === '乾燥' ? '乾燥した頭皮' : 'ふけ・かゆみがある頭皮'}では刺激になる可能性があります。`,
+        message: soap
+          ? `さっぱり洗えますがアルカリ性です。${scalp === '乾燥' ? '乾燥した頭皮' : 'ふけ・かゆみがある頭皮'}では刺激になる可能性があります。`
+          : `洗浄力が強い系統です。${scalp === '乾燥' ? '乾燥した頭皮' : 'ふけ・かゆみがある頭皮'}では刺激になる可能性があります。`,
       };
-    if (scalp === '脂性')
-      return { level: 'good', message: '洗浄力が強い系統です。皮脂が多い頭皮には合いやすい傾向があります。' };
-  }
 
-  if (base === 'アミノ酸系' || base === 'ベタイン系') {
-    if (scalp === '乾燥' || scalp === 'ふけ・かゆみ')
-      return { level: 'good', message: '洗浄力がおだやかな系統です。頭皮への負担を抑えたい場合に向いています。' };
-    if (scalp === '脂性')
+    case '脂性':
+      if (!strong)
+        return {
+          level: 'caution',
+          message:
+            '洗浄力がおだやかな系統です。皮脂が多い場合は洗い上がりが物足りない可能性があります。',
+        };
       return {
-        level: 'caution',
-        message: '洗浄力がおだやかな系統です。皮脂が多い場合は洗い上がりが物足りない可能性があります。',
+        level: 'good',
+        message: soap
+          ? 'さっぱり洗える系統です。皮脂が多い頭皮には合いやすい傾向があります。'
+          : '洗浄力が強い系統です。皮脂が多い頭皮には合いやすい傾向があります。',
       };
-  }
 
-  return null;
+    case '普通':
+      return strong
+        ? {
+            level: 'neutral',
+            message:
+              '洗浄力が強い系統です。乾燥やかゆみを感じたときは、おだやかな系統に替える選択肢があります。',
+          }
+        : {
+            level: 'neutral',
+            message: '洗浄力がおだやかな系統です。日常的に使いやすい傾向があります。',
+          };
+  }
 }
 
 /**
@@ -145,6 +213,7 @@ export function matchCleanser(
   const judged =
     item.form === 'シャンプー' ? judgeScalp(base, profile.scalp) : judgeSkin(base, profile.skin);
 
+  // 肌質・頭皮が未設定のときだけ、系統の一般的な説明にとどめる
   if (!judged) {
     return {
       base,
