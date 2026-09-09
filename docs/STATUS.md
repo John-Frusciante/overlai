@@ -106,7 +106,7 @@ GEMINI_API_KEY     → Google Gemini (gemini-3.5-flash / gemini-3.6-flash)
 | `should` | ブース展示用のワンタップ初期化 | 前の来場者の在庫が残ると、次の人に見せる判定が変わる | [#25](https://github.com/John-Frusciante/overlai/issues/25) |
 | `should` | Anthropic 経路の動作確認 | キー入手時。プロバイダ抽象が本当に切り替わるかの証明 | [#20](https://github.com/John-Frusciante/overlai/issues/20) |
 | `should` | Gemini 無料枠の 5 RPM をどう扱うか決める | フォールバック中に来場者が並ぶと 429 になる。課金するか、待たせる文言を出すか | — |
-| `should` | ルーティンの解説を実機で見る | ローカルの Azure 経路では確認済み。**キャッシュが効いているか**（開くたび呼んでいないか）は実機で見たい | — |
+| `should` | 石鹸系シャンプーで頭皮設定が効くか見る | 今回直した穴そのもの。シードに石鹸系が無いため、1件登録して確認する（TESTING.md §G-2） | — |
 
 ### 本選より先（将来構想）
 
@@ -122,6 +122,8 @@ GEMINI_API_KEY     → Google Gemini (gemini-3.5-flash / gemini-3.6-flash)
 
 **2026年9月10日に実装完了**：服薬設定のUI（飲むタイミング・1回量・残量）／ 肌質・頭皮の判定の穴埋め（頭皮×石鹸系・「普通」「混合」）／
 ルーティンの解説のAI生成（`POST /api/routine`・順序はルールのまま）／ ルーティンの手動並べ替え
+
+服薬設定・解説のキャッシュ・手動並べ替えはブラウザで動作確認済み（TESTING.md §G-1・§G-3・§G-4）。
 
 ### 意図的に実装しないもの
 
