@@ -41,9 +41,9 @@
   .tagline { margin-top:2.2mm; font-size:11.8pt; font-weight:700; letter-spacing:.015em; }
   .subline { margin-top:1.6mm; font-size:8.6pt; color:var(--muted); }
 
-  .meta { width:57mm; font-size:7.5pt; line-height:1.62; color:var(--muted); border-left:.7pt solid var(--line2); padding-left:5mm; }
+  .meta { width:57mm; font-size:7.5pt; line-height:1.54; color:var(--muted); border-left:.7pt solid var(--line2); padding-left:5mm; }
   .meta dt { color:var(--faint); font-size:6.7pt; letter-spacing:.09em; text-transform:uppercase; }
-  .meta dd { color:var(--ink); font-weight:600; margin-bottom:1.5mm; }
+  .meta dd { color:var(--ink); font-weight:600; margin-bottom:1.1mm; }
   .meta dd.url { font-weight:700; color:var(--brand); word-break:break-all; letter-spacing:0; }
 
   /* ── リード ─────────────────────────────── */
@@ -53,7 +53,7 @@
   .lead .sub { margin-top:2.4mm; font-size:8.5pt; font-weight:400; color:var(--muted); line-height:1.7; }
 
   /* ── セクション ─────────────────────────── */
-  section { margin-top:4.9mm; }
+  section { margin-top:4.4mm; }
   h2 { display:flex; align-items:baseline; gap:2.8mm; font-size:10.4pt; font-weight:800; letter-spacing:.02em; padding-bottom:1.5mm; border-bottom:.7pt solid var(--line2); margin-bottom:2.8mm; }
   h2 .n { font-size:7pt; font-weight:800; letter-spacing:.13em; color:var(--blue); }
   h2 .en { margin-left:auto; font-size:6.6pt; font-weight:600; letter-spacing:.15em; color:var(--faint); text-transform:uppercase; }
@@ -66,9 +66,23 @@
   .two { display:grid; grid-template-columns:1fr 1fr; gap:6mm; }
   .three { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5mm; }
 
+  /* 2つの判断軸 */
+  .axes { display:grid; grid-template-columns:1fr 1fr; gap:4mm; margin-top:2.6mm; }
+  .axis { border:.7pt solid var(--line); border-radius:2.2mm; padding:2.4mm 3.2mm; background:#fff; }
+  .axis .hd { font-size:8.8pt; font-weight:800; }
+  .axis .dot { display:inline-block; width:2.4mm; height:2.4mm; border-radius:50%; vertical-align:-.2mm; margin-right:1.6mm; }
+  .axis p { margin-top:1mm; font-size:7.6pt; line-height:1.58; color:var(--muted); }
+  .axis p b { color:var(--ink); }
+  .axis.y { border-color:rgba(194,112,10,.28); background:rgba(194,112,10,.035); }
+  .axis.y .hd { color:var(--amber); } .axis.y .dot { background:var(--amber); }
+  .axis.r { border-color:rgba(220,38,38,.26); background:rgba(220,38,38,.032); }
+  .axis.r .hd { color:var(--red); } .axis.r .dot { background:var(--red); }
+
   /* 場面カード */
-  .scene { background:#fff; border:.7pt solid var(--line); border-left:2.2pt solid var(--line2); border-radius:1.6mm; padding:3mm 3.6mm; }
-  .scene .h { font-size:7.2pt; font-weight:700; letter-spacing:.06em; color:var(--faint); margin-bottom:1.4mm; }
+  .scene { background:#fff; border:.7pt solid var(--line); border-left:2.2pt solid var(--line2); border-radius:1.6mm; padding:2.7mm 3.4mm; }
+  .scene .h { font-size:7.2pt; font-weight:700; letter-spacing:.04em; color:var(--faint); margin-bottom:1.4mm; }
+  .scene.y { border-left-color:var(--amber); } .scene.y .h { color:var(--amber); }
+  .scene.r { border-left-color:var(--red); } .scene.r .h { color:var(--red); }
   .scene p { font-size:8.1pt; line-height:1.62; color:var(--muted); }
   .scene b { color:var(--ink); }
 
@@ -95,7 +109,7 @@
   /* テーブル */
   table { width:100%; border-collapse:collapse; font-size:7.9pt; }
   th { text-align:left; font-weight:700; font-size:6.9pt; letter-spacing:.07em; color:var(--faint); text-transform:uppercase; padding:0 2.4mm 1.5mm; border-bottom:.7pt solid var(--line2); }
-  td { padding:1.65mm 2.4mm; border-bottom:.5pt solid var(--line); vertical-align:top; line-height:1.6; }
+  td { padding:1.5mm 2.4mm; border-bottom:.5pt solid var(--line); vertical-align:top; line-height:1.6; }
   tr:last-child td { border-bottom:none; }
   td.k { font-weight:700; white-space:nowrap; }
   td.no { color:var(--faint); }
@@ -108,7 +122,7 @@
   .mono { font-family:"SF Mono",Menlo,monospace; font-size:7.2pt; letter-spacing:-.01em; }
 
   /* 主張バンド */
-  .claim { margin-top:3.4mm; background:var(--brand); color:#fff; border-radius:2.6mm; padding:3.8mm 4.8mm; }
+  .claim { margin-top:3mm; background:var(--brand); color:#fff; border-radius:2.6mm; padding:3.4mm 4.4mm; }
   .claim .t { font-size:10pt; font-weight:700; line-height:1.6; }
   .claim .s { margin-top:1.6mm; font-size:7.9pt; line-height:1.66; color:rgba(255,255,255,.72); }
 
@@ -151,10 +165,10 @@
           <path d="M14 14 h30 a10 10 0 0 1 10 10 v30 a10 10 0 0 1 -10 10 h-30 a10 10 0 0 1 -10 -10 v-30 a10 10 0 0 1 10 -10 z" fill="#1B2A4A" fill-opacity=".38"/>
           <path d="M36 36 h30 a10 10 0 0 1 10 10 v30 a10 10 0 0 1 -10 10 h-30 a10 10 0 0 1 -10 -10 v-30 a10 10 0 0 1 10 -10 z" fill="#1B2A4A" fill-opacity=".72"/>
         </svg>
-        <span class="wordmark">OVERLAI</span>
+        <span class="wordmark">OVERLAI</span><span style="margin-left:3mm;font-size:7.4pt;color:var(--faint);letter-spacing:.02em">オーバーレイ ／ Overlay（重ねる）＋ AI</span>
       </div>
       <div class="tagline">買う前に、家の棚を重ねて見る。</div>
-      <div class="subline">Overlay（重ねる）＋ AI ／ ユメカタリ 学生生成AIコンテスト 2026・開発部門 応募作品概要書</div>
+      <div class="subline">ユメカタリ 学生生成AIコンテスト 2026・開発部門 ／ 応募作品概要書</div>
     </div>
     <dl class="meta">
       <dt>応募者</dt><dd>井上 高志・濱田 圭太郎・杉本 隼都<br><span style="font-weight:400;color:var(--muted)">鈴鹿工業高等専門学校／3名チーム</span></dd>
@@ -166,11 +180,21 @@
   <section>
     <h2><span class="n">00</span>作品サマリー<span class="en">Summary</span></h2>
     <div class="oneline">
-      <p>「その商品がいいかどうか」ではなく、<em>「あなたの家に、もうあるかどうか」</em>を判定する。</p>
-      <p class="sub">店頭で成分表示にカメラをかざすと、自宅の在庫と突合した判定が3色で返る。同じ商品でも、家の在庫が違えば結果が変わる。</p>
+      <p>「その商品がいいかどうか」ではなく、<em>「あなたの家にあるものと、合うかどうか」</em>を判定する。</p>
+      <p class="sub">店頭で成分表示にカメラをかざすと、自宅の在庫と突合した判定が3色で返る。</p>
+    </div>
+
+    <div class="axes">
+      <div class="axis y">
+        <div class="hd"><span class="dot"></span>もう持っていないか</div>
+        <p>同一成分・同効能のものが家にあるか。<b>重複購入と残薬を防ぐ。</b></p>
+      </div>
+      <div class="axis r">
+        <div class="hd"><span class="dot"></span>いま使っている薬と合うか</div>
+        <p>手持ちの処方薬との併用リスク。<b>外用薬 × 化粧品の相互作用データベースは日本に存在しない。</b></p>
+      </div>
     </div>
     <table class="summary">
-      <tr><td class="k">作品名</td><td>Overlai（オーバーレイ）／ Overlay（重ねる）＋ AI</td></tr>
       <tr><td class="k">対象ユーザー</td><td>処方薬を使いながら市販薬・化粧品も買う人／家族の薬箱を管理する人</td></tr>
       <tr><td class="k">主な機能</td><td>3色判定スキャナー ／ マイストック ／ 塗る・洗う順序ナビ ／ 期限アラート ／ 服薬記録</td></tr>
       <tr><td class="k">動作環境</td><td>Webアプリ（PWA）。スマートフォンのブラウザで動作し、ホーム画面から全画面起動できる</td></tr>
@@ -178,15 +202,15 @@
   </section>
 
   <section>
-    <h2><span class="n">01</span>課題<span class="en">Problem</span></h2>
+    <h2><span class="n">01</span>課題 ── 判断が足りない2つの場面<span class="en">Problem</span></h2>
     <div class="two">
-      <div class="scene">
-        <div class="h">場面1 ── 鎮痛薬の棚の前</div>
-        <p>頭痛薬を切らした気がして棚の前に立つ。でも、この前もらった処方薬に同じ成分が入っていないか分からない。家の救急箱にまだ残っていた気もするが、思い出せない。結局、買う。家に帰ると<b>同じ薬が8回分残っている</b>。</p>
+      <div class="scene y">
+        <div class="h">鎮痛薬の棚の前 ── もう持っていないか</div>
+        <p>頭痛薬を切らした気がして棚の前に立つ。この前もらった処方薬に同じ成分が入っていないか分からない。家の救急箱に残っていた気もするが、思い出せない。結局、買う。家に帰ると<b>同じ薬が8回分残っている</b>。</p>
       </div>
-      <div class="scene">
-        <div class="h">場面2 ── 化粧水の棚の前</div>
-        <p>皮膚科でステロイドの塗り薬をもらっている。目の前の化粧水は、その薬と一緒に使って大丈夫なのか。パッケージの「敏感肌の方にも」は、<b>薬を塗っている肌</b>を想定した言葉ではない。判断材料がないまま、雰囲気で買う。</p>
+      <div class="scene r">
+        <div class="h">化粧水の棚の前 ── いま使っている薬と合うか</div>
+        <p>皮膚科でステロイドの塗り薬をもらっている。この化粧水は、その薬と一緒に使って大丈夫なのか。パッケージの「敏感肌の方にも」は、<b>薬を塗っている肌</b>を想定した言葉ではない。</p>
       </div>
     </div>
     <p style="margin-top:3mm">どちらも、<span class="em">判断に必要な情報は全部「家」にある</span>のに、その情報を店頭に持ち出せないことが原因です。</p>
@@ -200,10 +224,10 @@
       <tr><td class="k">お薬手帳アプリ</td><td>調剤履歴</td><td>飲み合わせは大丈夫か</td><td class="no">棚の商品と被るか</td></tr>
       <tr><td class="k">小売アプリ</td><td>自社全商品・口コミ</td><td>この商品の評判は</td><td class="no">家の在庫と重複するか</td></tr>
     </table>
-    <p style="margin-top:2.8mm">全員が<span class="em">「商品側」のデータベース</span>で戦っている。商品DBをどれだけ大きくしても「あなたの家にもうある」だけは言えません。さらに産業が縦に割れています ── 飲む薬は製薬・調剤、塗る化粧品は化粧品メーカー、洗うものは日用品メーカー。<span class="em">処方された塗り薬は、このどこにも居場所がない。</span></p>
+    <p style="margin-top:2.8mm">全員が<span class="em">「商品側」のデータベース</span>で戦っている。商品DBをどれだけ大きくしても「あなたの家にもうある」だけは言えません。さらに産業が縦に割れています ── 飲む薬は製薬・調剤、塗る化粧品は化粧品メーカー。<span class="em">処方された塗り薬は、このどこにも居場所がない。</span></p>
     <div class="claim">
       <div class="t">でも、それを全部使う体は、ひとつしかない。</div>
-      <div class="s">Overlai は判定の基準を、商品から「その人の家」へ移します。外用薬 × 化粧品の相互作用データベースは日本に存在せず、成分の性質からの推論が必要な領域として20年間空白のまま残されてきました。</div>
+      <div class="s">Overlai は判定の基準を、商品から「その人の家」へ移します。外用薬 × 化粧品は、成分の性質からの推論が必要な領域として空白のまま残されてきました。</div>
     </div>
   </section>
 
