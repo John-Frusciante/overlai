@@ -47,7 +47,7 @@ AZURE_PROXY_KEY    → Azure OpenAI プロキシ (gpt-5.1)  ← 現在これ
 | 6 | 自宅ストック一元管理 | **基盤** | ✅ | `app/page.tsx` + `lib/storage.ts` |
 | 7 | 店頭スキャン3色判定 | **中核** | ✅ | `app/scan` + `api/analyze` |
 | 8 | 処方薬 × 市販薬の成分重複警告 | 判定エンジン | ✅ | `lib/prompts.ts` |
-| 9 | 吸収阻害の警告 | 判定エンジン | ❌ ルール無し | 型だけ存在 |
+| 9 | 吸収阻害の警告 | 判定エンジン | ✅ | `lib/prompts.ts` |
 | 10 | 処方外用薬 × 化粧品の刺激判定 | 判定エンジン | ✅ | `lib/prompts.ts` |
 | 11 | インバス／アウトバス順序ソート | 日常利用 | ✅ | `lib/routine.ts` |
 | 12 | 成分バッティング警告 | 日常利用 | ✅ | `lib/routine.ts` |
@@ -56,8 +56,6 @@ AZURE_PROXY_KEY    → Azure OpenAI プロキシ (gpt-5.1)  ← 現在これ
 **凡例**　✅ 動作確認済み ／ ❌ 未実装
 
 ### 補足が必要なもの
-
-**#9 吸収阻害** — `ReasonType` に `'吸収阻害'` という選択肢はあるが、**判定プロンプトにルールを書いていない**。AIが自発的に使う可能性はあるが、意図した機能としては成立していない。シードに鉄剤等がないため発火もしない。
 
 **#13 洗浄基剤 × 肌質** — 実装済み。成分名から洗浄基剤の系統（アミノ酸系／ベタイン系／高級アルコール系／石鹸系）を判定し、肌質・頭皮の自己申告と突き合わせる。**AIを使わずルールベースなので、モックモードでも本物として動く。**
 
@@ -88,7 +86,6 @@ AZURE_PROXY_KEY    → Azure OpenAI プロキシ (gpt-5.1)  ← 現在これ
 
 | 項目 | 実装コスト | 備考 |
 | :--- | :---: | :--- |
-| 吸収阻害のルール | 小 | [#15](https://github.com/John-Frusciante/overlai/issues/15) プロンプトに数行追加するだけ。実AIが動くようになったので検証も可能 |
 | JAHIS QR読み取り | 大 | [#18](https://github.com/John-Frusciante/overlai/issues/18) 仕様調査が必要 |
 | レシート一括登録 | 大 | [#19](https://github.com/John-Frusciante/overlai/issues/19) |
 
@@ -125,6 +122,7 @@ AZURE_PROXY_KEY    → Azure OpenAI プロキシ (gpt-5.1)  ← 現在これ
 | **本物のAIが本番で判定を返す**（10.6秒・`provider=azure`） | `curl -X POST /api/analyze` |
 | 🟡判定：市販の鎮痛薬 × 在庫のイブA錠（8.6秒） | 成分表示画像を生成して実APIで検証 |
 | 🔴判定：薬用化粧水 × ステロイド外用薬（9.3秒） | 同上。エタノール・サリチル酸を根拠に挙げた |
+| 🔴判定：鉄サプリ × 処方の抗菌薬（9.0秒） | 吸収阻害を検出し、時間差での使用に言及した |
 | Vision と Structured Outputs（strict）がプロキシで通る | 直接叩いて確認 |
 | 型チェック・本番ビルドが通る | `npx tsc --noEmit` / `npx next build` |
 

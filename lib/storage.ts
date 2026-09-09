@@ -9,7 +9,7 @@ import { SEED_STOCK } from './seed';
  * コンポーネントから localStorage を直接呼ばないこと。
  */
 
-const STOCK_KEY = 'overlai.stock.v2';
+const STOCK_KEY = 'overlai.stock.v3';
 const DOSE_KEY = 'overlai.dose.v1';
 const PROFILE_KEY = 'overlai.profile.v1';
 

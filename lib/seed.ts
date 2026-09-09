@@ -15,6 +15,10 @@ function daysLater(n: number): string {
 /**
  * デモ用シードデータ — 設計仕様書 §6.2
  *
+ * stk-011（ニューキノロン系抗菌薬）は吸収阻害の判定を実演するために置いている。
+ * 鉄・カルシウム・マグネシウムを含むサプリをスキャンすると、この薬の吸収が
+ * 妨げられる可能性を指摘できる（企画書 §6 の機能一覧9番）。
+ *
  * ⚠ 内服薬に処方NSAIDsを置いてはならない。
  * 処方のロキソプロフェン等が在庫にあると、市販イブプロフェン製剤のスキャンが
  * 「NSAIDsの重複投与＝過量摂取リスク」として🔴の条件にも該当し、
@@ -33,6 +37,18 @@ export const SEED_STOCK: StockItem[] = [
     remaining: { count: 28, unit: '錠' },
     dose: { times: ['朝', '夜'], perTime: 1 },
     expiresAt: daysLater(120),
+  },
+  {
+    id: 'stk-011',
+    name: 'レボフロキサシン錠500mg（処方）',
+    category: '処方薬',
+    form: '錠剤',
+    ingredients: ['レボフロキサシン水和物'],
+    status: '残3日分',
+    isPrescription: true,
+    remaining: { count: 3, unit: '錠' },
+    dose: { times: ['朝'], perTime: 1 },
+    expiresAt: daysLater(90),
   },
   {
     id: 'stk-002',
