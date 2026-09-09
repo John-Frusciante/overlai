@@ -178,3 +178,13 @@
 | 在庫を追加してから判定 | ✅ 実機で確認（🔵→🟡） |
 | プロキシの利用条件 | ✅ 先生より無条件で利用可の回答 |
 | Anthropic Claude 経路 | キー入手時に確認（[#20](https://github.com/John-Frusciante/overlai/issues/20)） |
+
+### 本選に進んだ場合に足すテスト
+
+ブース展示は**来場者が実機を触る**点と**会場のネットワークを使う**点が、動画撮影と決定的に違う。
+
+| 項目 | Issue |
+| :--- | :---: |
+| 429・タイムアウト・オフラインを意図的に起こしてUIを確認する | [#23](https://github.com/John-Frusciante/overlai/issues/23) |
+| 連続して何人も触ったあと、初期状態に戻せるか | [#25](https://github.com/John-Frusciante/overlai/issues/25) |
+| 数週間空けたあとに在庫が残っているか（Safari の ITP） | [#22](https://github.com/John-Frusciante/overlai/issues/22) |

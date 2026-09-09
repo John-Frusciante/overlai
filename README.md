@@ -115,16 +115,43 @@ docs/                   全ドキュメント
 
 ## 開発の進め方
 
-Issue は [GitHub Issues](https://github.com/John-Frusciante/overlai/issues) で管理している。ラベルの意味：
+Issue は [GitHub Issues](https://github.com/John-Frusciante/overlai/issues) で管理している。
+
+### マイルストーン
+
+| マイルストーン | 期限 | 内容 |
+| :--- | :--- | :--- |
+| [デモ提出](https://github.com/John-Frusciante/overlai/milestone/1) | 2026-09-10 | **完了**。エントリーまでに必要なもの |
+| [本選](https://github.com/John-Frusciante/overlai/milestone/3) | 2026-10-01 | ブース展示と連続デモに耐えるための整備 |
+| [将来構想](https://github.com/John-Frusciante/overlai/milestone/2) | — | 登録経路の追加、ネイティブ化、家族共有 |
+
+**本選はブース展示で来場者が実機を触る。** 会場のネットワークで動くこと、
+連続して触られても崩れないことが、そのマイルストーンの判断基準になる。
+
+### ラベル
 
 | ラベル | 意味 |
 | :--- | :--- |
-| `must` | デモ成立に必須 |
+| `must` | そのマイルストーンの成立に必須 |
 | `should` | 加点項目 |
 | `low` | 余力があれば |
+| `future` | 本選より先 |
 | `frontend` `backend` `ai` `infra` `docs` | 領域 |
 
 変更を加えたら [docs/STATUS.md](docs/STATUS.md) を更新すること。**実装状況の唯一の出所**にしている。
+
+## 応募
+
+ユメカタリ 学生生成AIコンテスト 2026・開発部門。
+**井上 高志・濱田 圭太郎・杉本 隼都（鈴鹿工業高等専門学校）の3名チーム。**
+
+| 提出物 | 場所 |
+| :--- | :--- |
+| 作品概要書 | [docs/Overlai_作品概要書.pdf](docs/Overlai_作品概要書.pdf)（A4・3ページ） |
+| デモ動画・ピッチ動画 | 撮影手順は [docs/TESTING.md](docs/TESTING.md)、台本は[企画書の付録](docs/企画書_Overlai_ユメカタリ2026.md) |
+| 公開URL | https://overlai-delta.vercel.app |
+
+日程と評価軸は [docs/CONTEST.md](docs/CONTEST.md) にまとめてある。
 
 ## ライセンス
 

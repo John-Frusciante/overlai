@@ -172,4 +172,5 @@ Anthropic 経路で `thinking` を明示的に無効化しないこと（ツー�
 | 何を作るべきか・なぜその仕様か | [設計仕様書](設計仕様書_Overlai_デモ版.md) |
 | なぜこれを作るのか | [企画書](企画書_Overlai_ユメカタリ2026.md) |
 | 用語の意味 | [GLOSSARY.md](GLOSSARY.md) |
-| 応募先の評価軸 | [CONTEST.md](CONTEST.md) |
+| 応募先の評価軸・本選で聞かれそうなこと | [CONTEST.md](CONTEST.md) |
+| 何をテストすればいいか | [TESTING.md](TESTING.md) |

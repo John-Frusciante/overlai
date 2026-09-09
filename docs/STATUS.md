@@ -82,12 +82,26 @@ AZURE_PROXY_KEY    → Azure OpenAI プロキシ (gpt-5.1)  ← 現在これ
 
 なし。AI経路・カメラ実機・全機能の動作確認がすべて完了した。
 
-### 機能として欠けているもの
+### 本選（10/1・10/11）までに片付けたいもの
 
-| 項目 | 実装コスト | 備考 |
-| :--- | :---: | :--- |
-| JAHIS QR読み取り | 大 | [#18](https://github.com/John-Frusciante/overlai/issues/18) 仕様調査が必要 |
+**ブース展示では来場者が実機を触る。** 会場のネットワークで動き、連続して触られても崩れないことが要件になる。
+
+| 優先 | 項目 | なぜ | Issue |
+| :---: | :--- | :--- | :---: |
+| `must` | 在庫のエクスポート／インポート | localStorage しか無く、Safari の ITP で消えることがある。当日まで数週間空く | [#22](https://github.com/John-Frusciante/overlai/issues/22) |
+| `must` | 通信エラー時のUIを実際に確認する | 会場のネットワークで 429／タイムアウトが起きる確率は家より高い。**唯一の未検証領域** | [#23](https://github.com/John-Frusciante/overlai/issues/23) |
+| `should` | 判定レイテンシの短縮（抽出側のみ） | 実測 8.6〜10.6秒。動画は編集できるが、ブースでは来場者が実際に待つ | [#24](https://github.com/John-Frusciante/overlai/issues/24) |
+| `should` | ブース展示用のワンタップ初期化 | 前の来場者の在庫が残ると、次の人に見せる判定が変わる | [#25](https://github.com/John-Frusciante/overlai/issues/25) |
+| `should` | Anthropic 経路の動作確認 | キー入手時。プロバイダ抽象が本当に切り替わるかの証明 | [#20](https://github.com/John-Frusciante/overlai/issues/20) |
+
+### 本選より先（将来構想）
+
+| 項目 | 実装コスト | Issue |
+| :--- | :---: | :---: |
+| JAHIS QR読み取り | 大（仕様調査が必要） | [#18](https://github.com/John-Frusciante/overlai/issues/18) |
 | レシート一括登録 | 大 | [#19](https://github.com/John-Frusciante/overlai/issues/19) |
+| ネイティブアプリ化 | 大 | [#26](https://github.com/John-Frusciante/overlai/issues/26) |
+| 家族の薬箱の共有 | 大（**法的な整理が先**） | [#27](https://github.com/John-Frusciante/overlai/issues/27) |
 
 **2026年9月9日に実装完了**：洗浄基剤 × 肌質（#14）／ PWA対応（#11）／ 在庫の編集（#16）／ 服薬履歴（#17）／
 マイストックのカテゴリ折りたたみ・項目タップでの編集／削除・削除の確認（#21）
@@ -103,10 +117,13 @@ AZURE_PROXY_KEY    → Azure OpenAI プロキシ (gpt-5.1)  ← 現在これ
 
 ### マイルストーン
 
-| マイルストーン | 内容 |
-| :--- | :--- |
-| [デモ提出（2026-09-10）](https://github.com/John-Frusciante/overlai/milestone/1) | #5 #6 #8 #9 #13 — ここが揃えばデモ動画は撮れる |
-| [提出後・機能拡充](https://github.com/John-Frusciante/overlai/milestone/2) | #11 #14〜#19 — 企画書にあるがデモのスコープ外だった機能 |
+| マイルストーン | 期限 | 状態 | 内容 |
+| :--- | :--- | :---: | :--- |
+| [デモ提出](https://github.com/John-Frusciante/overlai/milestone/1) | 2026-09-10 | **完了** | エントリーまでに必要なもの。開発側は全部終わった |
+| [本選](https://github.com/John-Frusciante/overlai/milestone/3) | 2026-10-01 | 進行中 | #20 #22〜#25 — ブース展示と連続デモに耐えるための整備 |
+| [将来構想](https://github.com/John-Frusciante/overlai/milestone/2) | — | — | #18 #19 #26 #27 — 登録経路の追加、ネイティブ化、家族共有 |
+
+**本選の期限を 10/1（名古屋）にしている。** 東京は10/11だが、どちらの会場になるか分からないうちは早い方に合わせる。
 
 ---
 
@@ -213,7 +230,7 @@ AZURE_PROXY_KEY    → Azure OpenAI プロキシ (gpt-5.1)  ← 現在これ
 | 内容 | なぜ未検証か |
 | :--- | :--- |
 | Anthropic Claude 経路 | `ANTHROPIC_API_KEY` を持っていない（コードは実装済み・[#20](https://github.com/John-Frusciante/overlai/issues/20)） |
-| エラー時のUI（429/500） | 実際にレート制限や障害を起こさないと確認できない |
+| エラー時のUI（429/500） | 実際にレート制限や障害を起こさないと確認できない（[#23](https://github.com/John-Frusciante/overlai/issues/23) で本選までに潰す） |
 
 **それ以外の品質確認はすべて完了している。** PWA・Android Chrome・在庫追加からの判定は実機で確認済み。
 学校配布プロキシの利用についても、無条件で使用してよいとの回答を得ている。
