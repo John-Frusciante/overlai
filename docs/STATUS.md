@@ -211,6 +211,8 @@ AZURE_PROXY_KEY    → Azure OpenAI プロキシ (gpt-5.1)  ← 現在これ
 
 | 内容 | なぜ未検証か |
 | :--- | :--- |
-| Anthropic Claude 経路 | `ANTHROPIC_API_KEY` を持っていない（コードは実装済み） |
+| Anthropic Claude 経路 | `ANTHROPIC_API_KEY` を持っていない（コードは実装済み・[#20](https://github.com/John-Frusciante/overlai/issues/20)） |
 | エラー時のUI（429/500） | 実際にレート制限や障害を起こさないと確認できない |
-| 在庫追加フォームの実機での使用感 | 実機での確認が必要 |
+
+**それ以外の品質確認はすべて完了している。** PWA・Android Chrome・在庫追加からの判定は実機で確認済み。
+学校配布プロキシの利用についても、無条件で使用してよいとの回答を得ている。
