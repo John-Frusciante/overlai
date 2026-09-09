@@ -28,25 +28,28 @@ APIキーは**なくても動く**。未設定ならモックモードで起動�
 | `/?demo=red` | マイストック → スキャン → 🔴判定 の一連の流れ |
 | `/routine` | 洗う順序・塗る順序の自動ソート |
 
-## 3. モックモードと本番モード
+## 3. どのAIで動くか
+
+`lib/llm.ts` の `activeProvider()` が環境変数から決める。**切り替えにコード変更は不要。**
 
 ```
-ANTHROPIC_API_KEY 未設定  →  モックモード（lib/mock.ts の固定応答）
-ANTHROPIC_API_KEY 設定済  →  本物のAIパイプライン
-OVERLAI_MOCK=1           →  キーがあっても強制的にモック
+OVERLAI_MOCK=1     → モック（AIを呼ばない）
+ANTHROPIC_API_KEY  → Anthropic Claude (claude-opus-5)
+AZURE_PROXY_KEY    → Azure OpenAI 互換プロキシ (gpt-5.1)  ← 現在これ
+いずれも無し        → モック
 ```
 
-**切り替えにコード変更は不要。** 環境変数だけで決まる（`app/api/*/route.ts` の `useMock()`）。
-
-モック時の判定シナリオは `?demo=yellow|red|blue` で選ぶ。マイストックからスキャン画面へ引き継がれるため、撮影の流れを止めずにシナリオを固定できる。
-
-本物に切り替えるとき：
+`.env.local` の例：
 
 ```bash
-echo 'ANTHROPIC_API_KEY=sk-ant-...' > .env.local
+AZURE_PROXY_KEY=...
+AZURE_PROXY_ENDPOINT=https://.../
+AZURE_PROXY_API_VERSION=2025-04-01-preview
 ```
 
----
+レスポンスの `provider` フィールドで、いまどれで動いたかが分かる。
+
+モック時の判定シナリオは `?demo=yellow|red|blue` で選ぶ。マイストックからスキャン画面へ引き継がれるため、撮影の流れを止めずにシナリオを固定できる。
 
 ## 4. どこに何を書くか
 
@@ -58,6 +61,7 @@ echo 'ANTHROPIC_API_KEY=sk-ant-...' > .env.local
 | localStorage の読み書き | `lib/storage.ts`（**コンポーネントから直接呼ばない**） |
 | ルールベースの判定ロジック | `lib/routine.ts` `lib/expiry.ts` |
 | リクエストの検証 | `lib/request.ts`（両APIで共有） |
+| AIの呼び出し | `lib/llm.ts`（route から直接SDKを呼ばない） |
 | 画面 | `app/*/page.tsx` |
 | 再利用するUI | `components/` |
 
@@ -93,15 +97,18 @@ reasons: raw.reasons.filter((r) => r.ingredient.trim().length > 0),
 
 赤判定なら相談導線を必ず出す。成分名のない理由は根拠として成立しないので落とす。**プロンプトのお願いに頼らない。**
 
-### 5.3 判定の effort を下げない
+### 5.3 判定側の設定を弱めない
 
-`/api/analyze` のステップ2は `effort: 'high'`。判定品質がそのまま評価対象になる。レイテンシを削るなら**ステップ1だけ**を `medium` → `low` の順に下げる。
+判定（ステップ2）の品質がそのまま評価対象になる。Anthropic 経路は `effort: 'high'`、Azure 経路は `gpt-5.1`。レイテンシを削るなら**抽出側だけ**を下げる。
 
-### 5.4 thinking を無効化しない
+**抽出側も安いモデルに落とさない。** gpt-4o-mini は「イブプロフェン」を「いブプロフェン」と誤読することがあり、成分名がズレると在庫と照合できない。
 
-`claude-opus-5` は adaptive thinking が既定でオン。無効化するとツール呼び出しや内部タグが本文に混入する既知の失敗モードがある。レイテンシは `effort` で調整する。
+### 5.4 出力トークン上限を切り詰めない
 
-`max_tokens` は 16,000。**thinking トークンもここから消費される**ため、切り詰めると出力が途中で切れる。
+- Anthropic: `max_tokens: 16000`。**thinking トークンもここから消費される**
+- Azure の gpt-5 系: **`max_tokens` は使えない。`max_completion_tokens` を指定する**
+
+Anthropic 経路で `thinking` を明示的に無効化しないこと（ツール呼び出しや内部タグが本文に混入する既知の失敗モードがある）。
 
 ### 5.5 `localStorage` をコンポーネントから直接呼ばない
 
@@ -145,7 +152,7 @@ reasons: raw.reasons.filter((r) => r.ingredient.trim().length > 0),
 
 | 症状 | 原因 |
 | :--- | :--- |
-| AIが動かない | `.env.local` に `ANTHROPIC_API_KEY` が無い。モックが返っている（サーバーログに警告が出る） |
+| AIが動かない | `.env.local` にキーが無い。モックが返っている（レスポンスの `provider` とサーバーログで分かる） |
 | カメラが起動しない | HTTPSでないと `getUserMedia` は動かない。`localhost` は例外的に可 |
 | 判定が毎回同じ | モックモード。`?demo=` を変えるかキーを設定する |
 | 出力が途中で切れる | `max_tokens` を絞りすぎ。thinking トークンの分を見込む |

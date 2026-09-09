@@ -14,7 +14,7 @@
 | 対象バージョン | 2026年9月9日時点の `main` |
 | 実装規模 | TypeScript 約3,000行（`app/` `components/` `lib/`） |
 | 公開URL | https://overlai-delta.vercel.app |
-| 稼働モード | **モックモード**（`ANTHROPIC_API_KEY` 未設定のため。§7 参照） |
+| 稼働モード | **Azure OpenAI プロキシ（`gpt-5.1`）で実稼働**（§7 参照） |
 
 ---
 
@@ -94,7 +94,7 @@ app/
   profile/page.tsx      肌質・頭皮の設定
   manifest.ts           PWAマニフェスト
   preview/page.tsx      判定カードのプレビュー（開発用）
-  api/analyze/route.ts  判定API（抽出→照合。APIキーを保持する場所）
+  api/analyze/route.ts  判定API（抽出→照合）
   api/extract/route.ts  成分抽出のみ（在庫登録用）
   layout.tsx            メタデータ・ビューポート
   globals.css           Tailwind + 日本語フォントスタック
@@ -108,6 +108,7 @@ components/
 lib/
   types.ts              全データ構造の定義。AIの入出力契約でもある
   schemas.ts            zodスキーマ（構造化出力の強制）
+  llm.ts                AIプロバイダの抽象（Anthropic / Azure / モック）
   prompts.ts            全プロンプトを集約
   seed.ts               デモ用シードデータ10件
   storage.ts            localStorage アクセスの集約点（在庫CRUD・服薬記録）
@@ -229,18 +230,31 @@ sequenceDiagram
     R-->>C: {extraction, judgement, elapsed_ms}
 ```
 
-### 4.3 モデル設定と根拠
+### 4.3 プロバイダ抽象（`lib/llm.ts`）
 
-| ステップ | モデル | effort | 根拠 |
+**プロンプトとスキーマはプロバイダに依存しない。** 差し替わるのは呼び出し方だけで、2段階パイプラインの構造は変わらない。route から SDK を直接呼ばず、`extractIngredients()` / `judgeAgainstStock()` を経由する。
+
+### 4.4 モデル選定と実測
+
+学校配布の Azure OpenAI プロキシで使えるモデルを、**実際の成分表示画像と実際のプロンプト**で比較した。
+
+| モデル | 抽出 | 判定 | 備考 |
+| :--- | :---: | :---: | :--- |
+| gpt-4o-mini | 5.3秒 | 3.1秒 | 「イブプロフェン」を**「いブプロフェン」と誤読**。商品名も「イヴA錠」 |
+| gpt-4o | 5.2秒 | 11.9秒 | 正確だが判定が遅い |
+| gpt-5-mini | 10.0秒 | 18.5秒 | 成分名に分量が混入（「イブプロフェン 150mg」） |
+| **gpt-5.1** | **4.7秒** | **4.1秒** | **最速かつ正確。採用** |
+
+**成分名の正確さは照合の前提**（「いブプロフェン」では在庫と一致しない）なので、抽出側も安いモデルに落とさない。
+
+| プロバイダ | 抽出 | 判定 | 出力上限 |
 | :--- | :--- | :--- | :--- |
-| 1. 成分抽出 | `claude-opus-5` | `medium` | 読み取り主体だが、精度が判定品質の上流にある |
-| 2. 在庫照合判定 | `claude-opus-5` | `high` | 成分間の関係推論が判定品質そのもの。**ここは下げない** |
+| Anthropic | `claude-opus-5` / effort `medium` | `claude-opus-5` / effort `high` | `max_tokens: 16000`（thinking 分を含む） |
+| Azure | `gpt-5.1` | `gpt-5.1` | **`max_completion_tokens: 4000`**（gpt-5 系は `max_tokens` を受け付けない） |
 
-**thinking は無効化していない。** `claude-opus-5` は adaptive thinking が既定でオンになる。無効化するとツール呼び出しや内部タグが本文テキストに混入する既知の失敗モードがあるため、レイテンシは thinking の無効化ではなく `effort` で調整する。
+**Anthropic 経路で thinking は無効化しない。** adaptive thinking が既定でオンであり、無効化するとツール呼び出しや内部タグが本文に混入する既知の失敗モードがある。レイテンシは `effort` で調整する。
 
-`max_tokens: 16000` としているのは、**thinking トークンもここから消費される**ため。4,000程度に絞ると出力が途中で切れて再試行が発生する。
-
-**チューニング方針**: レイテンシが10秒を超える場合、**ステップ1のみ** `medium` → `low` の順に下げる。ステップ2は下げない。
+**チューニング方針**: レイテンシが10秒を超える場合、下げるのは**抽出側だけ**。判定は評価対象そのものなので下げない。
 
 ### 4.4 構造化出力
 
@@ -327,27 +341,40 @@ reasons: raw.reasons.filter((r) => r.ingredient.trim().length > 0),
 
 ---
 
-## 7. モックモード
+## 7. プロバイダ切り替えとモック
 
-**現在のデプロイはこのモードで動いている。**
+`lib/llm.ts` の `activeProvider()` が環境変数から決める。**切り替えにコード変更は不要。**
 
-`ANTHROPIC_API_KEY` が未設定のとき、`/api/analyze` は `lib/mock.ts` の固定応答を返す。**AIは呼ばれていない。**
+| 環境変数 | 動作 |
+| :--- | :--- |
+| `OVERLAI_MOCK=1` | モック（最優先） |
+| `ANTHROPIC_API_KEY` | Anthropic Claude |
+| `AZURE_PROXY_KEY` | Azure OpenAI 互換プロキシ ← **現在これ** |
+| いずれも無し | モック |
 
-```ts
-function useMock(): boolean {
-  return process.env.OVERLAI_MOCK === '1' || !process.env.ANTHROPIC_API_KEY;
-}
+### Azure プロキシの接続
+
+学校配布の OpenAI 互換プロキシで、標準の `openai` SDK に `baseURL` を渡して使う。
+
 ```
+baseURL:  <endpoint>/models
+headers:  api-key: <key>
+query:    api-version=2025-04-01-preview
+```
+
+Vision（`image_url`）と Structured Outputs（`json_schema` の strict モード）が**どちらも通ることを実測で確認済み**。
+
+### モック
+
+APIキーが無くても全画面が動くよう、`lib/mock.ts` の固定応答を返す。
 
 | 項目 | 挙動 |
 | :--- | :--- |
 | シナリオ選択 | `?demo=yellow\|red\|blue`。マイストックからスキャン画面へ引き継がれる |
-| 応答時間 | 5.2秒の待機を挟む（2段階ローディングが映る程度） |
-| 識別 | レスポンスに `mocked: true`。サーバーログに警告を出力 |
+| 応答時間 | 5.2秒の待機（2段階ローディングが映る程度） |
+| 識別 | レスポンスに `provider` と `mocked: true`、サーバーログに警告 |
 
-**本物への切り替えはキーを設定するだけでよい。コード変更は不要。** Anthropic クライアントは遅延生成にしてあるため、キーがなくてもアプリは正常に起動する。
-
----
+デモ当日にAPI障害が起きた場合の最終手段としても機能する。
 
 ## 8. 状態管理と永続化
 
@@ -529,6 +556,8 @@ Tailwind の `@theme` に定義し、全画面で共有する。ニュートラ�
 | 11 | 順序ナビをルールベースで組む | AIに順序を決めさせる | 剤形から順序が一意に決まる。AIを挟むと不安定になるうえ遅い |
 | 12 | 服薬記録と残薬を同一関数で更新 | 別々に管理 | 記録と残量がズレる |
 | 13 | 抽出専用のエンドポイントを分けた | analyze を使い回す | 在庫登録では在庫照合が不要。ステップ2を走らせるのは無駄 |
+| 14 | プロバイダを抽象化した | Azure に置き換える | プロンプトとスキーマはプロバイダに依存しない。Anthropic のキーが手に入れば戻せる |
+| 15 | 抽出も `gpt-5.1` にした | 抽出だけ安いモデルに落とす | gpt-4o-mini は成分名を誤読する（「いブプロフェン」）。照合が成立しなくなる |
 
 ---
 
@@ -536,9 +565,9 @@ Tailwind の `@theme` に定義し、全画面で共有する。ニュートラ�
 
 | 項目 | 状態 |
 | :--- | :--- |
-| **本物のAIパイプライン** | **未検証。** 現在モックで迂回している（Issue #13） |
+| 本物のAIパイプライン | **動作確認済み**（Azure `gpt-5.1`。🟡🔴とも実画像で検証） |
 | カメラの実機動作 | **確認済み**（背面カメラの起動を実機で確認） |
-| エラー系の実挙動 | 本物のAI経路でのみ発生するため未検証（Issue #9） |
+| エラー系の実挙動（429/500） | 実際に障害を起こさないと確認できないため未検証 |
 | 在庫の追加・削除 | **実装済み**（カメラ読み取り＋手入力） |
 | 在庫の編集（既存項目の書き換え） | 未実装。削除して追加し直す運用 |
 | JAHIS QR・レシート登録 | 未実装（登録経路としては優先度が低い） |

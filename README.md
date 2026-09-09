@@ -10,11 +10,11 @@
 
 ---
 
-> ### ⚠️ いまAIは動いていない
+> ### AIは実際に動いている
 >
-> `ANTHROPIC_API_KEY` が未設定のため、**成分の読み取りと判定はモックの固定応答**を返している。
-> 画面・データフロー・UIはすべて本物で、キーを設定すればコード変更なしで切り替わる。
-> 詳細と切り替え手順 → [docs/STATUS.md](docs/STATUS.md)
+> 学校配布の **Azure OpenAI プロキシ（`gpt-5.1`）** で2段階パイプラインが本番稼働している（実測 約9秒）。
+> `lib/llm.ts` が環境変数からプロバイダを決めるため、**Anthropic Claude / Azure OpenAI / モック**を
+> コード変更なしで切り替えられる。詳細 → [docs/STATUS.md](docs/STATUS.md)
 
 ---
 
@@ -63,13 +63,19 @@ npm install
 npm run dev          # http://localhost:3000
 ```
 
-APIキーは**なくても動く**（モックモードで起動する）。本物のAIに切り替えるには：
+APIキーは**なくても動く**（モックモードで起動する）。実際のAIを使うには `.env.local` にどちらかを置く。
 
 ```bash
-echo 'ANTHROPIC_API_KEY=sk-ant-...' > .env.local
+# Azure OpenAI 互換プロキシを使う場合
+AZURE_PROXY_KEY=...
+AZURE_PROXY_ENDPOINT=https://.../
+AZURE_PROXY_API_VERSION=2025-04-01-preview
+
+# Anthropic を使う場合
+ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-コード変更は不要。
+**コード変更は不要**。`lib/llm.ts` が環境変数を見てプロバイダを決める。
 
 ## 技術構成
 
@@ -77,7 +83,7 @@ echo 'ANTHROPIC_API_KEY=sk-ant-...' > .env.local
 | :--- | :--- |
 | フレームワーク | Next.js 16（App Router）+ TypeScript |
 | UI | React 19 + Tailwind CSS 4 |
-| AI | Anthropic API（`claude-opus-5`）Vision + 構造化出力 |
+| AI | Azure OpenAI プロキシ（`gpt-5.1`）／ Anthropic（`claude-opus-5`）両対応。Vision + 構造化出力 |
 | データ | シードJSON + localStorage（**DB不使用**） |
 | デプロイ | Vercel |
 
@@ -89,6 +95,7 @@ app/
   stock/new/page.tsx    在庫の追加
   api/analyze/route.ts  判定API（抽出 → 照合）
   api/extract/route.ts  成分抽出のみ（在庫登録用）
+lib/llm.ts              AIプロバイダの抽象（Anthropic / Azure / モック）
 components/             BottomNav / StockList / JudgementCard
 lib/                    types・schemas・prompts・storage・routine・expiry ほか
 docs/                   全ドキュメント

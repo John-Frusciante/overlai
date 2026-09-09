@@ -23,11 +23,13 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 1. **`lib/seed.ts` の内服薬に処方NSAIDsを追加しない** — 🟡判定が🔴の条件にも該当して不安定になる
 2. **`consult_recommended` のサーバー側上書きを消さない** — 安全に関わる値をLLMに委ねない
 3. **成分名のない `reason` のフィルタを消さない** — 根拠なき警告を出さない
-4. **判定（ステップ2）の `effort: 'high'` を下げない** — 判定品質がそのまま評価対象
-5. **`thinking` を明示的に無効化しない** — ツール呼び出しが本文に混入する既知の失敗モードがある
-6. **`max_tokens` を切り詰めない（16000）** — thinking トークンもここから消費される
+4. **判定（ステップ2）の設定を弱めない** — 判定品質がそのまま評価対象。
+   Anthropic 経路は `effort: 'high'`、Azure 経路は `gpt-5.1`。速度のために下げるなら**抽出側だけ**にする
+5. **Anthropic 経路で `thinking` を明示的に無効化しない** — ツール呼び出しが本文に混入する既知の失敗モードがある
+6. **出力トークン上限を切り詰めない** — Anthropic は `max_tokens: 16000`（thinking 分を含む）、
+   Azure の gpt-5 系は **`max_tokens` が使えず `max_completion_tokens`** を指定する
 7. **`localStorage` をコンポーネントから直接呼ばない** — `lib/storage.ts` を経由する
-8. **`ANTHROPIC_API_KEY` に `NEXT_PUBLIC_` を付けない** — Route Handler でのみ読む
+8. **APIキーに `NEXT_PUBLIC_` を付けない** — `ANTHROPIC_API_KEY` も `AZURE_PROXY_KEY` も Route Handler でのみ読む
 9. **UIの文言に断定表現を使わない** — 「〜の可能性があります」で統一する
 
 ## 書く場所
@@ -38,7 +40,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 | AI出力スキーマ | `lib/schemas.ts` |
 | データ構造 | `lib/types.ts` |
 | localStorage | `lib/storage.ts` |
-| ルールベースの判定 | `lib/routine.ts` `lib/expiry.ts` |
+| ルールベースの判定 | `lib/routine.ts` `lib/expiry.ts` `lib/cleanser.ts` |
+| AIの呼び出し | `lib/llm.ts`（プロバイダ抽象。route から直接SDKを呼ばない） |
 
 ## 作業後にやること
 
