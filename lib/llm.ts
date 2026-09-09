@@ -84,9 +84,25 @@ const ANTHROPIC_MODEL = 'claude-opus-5';
 const AZURE_MODEL_EXTRACT = process.env.AZURE_MODEL_EXTRACT ?? 'gpt-5.1';
 const AZURE_MODEL_JUDGE = process.env.AZURE_MODEL_JUDGE ?? 'gpt-5.1';
 
+/**
+ * 時間の使い方 — route の `maxDuration`（60秒）を超えると Vercel が関数ごと打ち切る。
+ * 打ち切られるとユーザーには何も返らないので、その内側に収まるよう区切っている。
+ *
+ * `PROVIDER_TIMEOUT_MS` は1プロバイダあたりの待ち時間の上限。
+ * 先頭のプロバイダが「エラーを返す」のではなく「応答しない」障害のとき、
+ * ここが長すぎるとフォールバックが動く前に関数が終わってしまう。
+ * 実測は Azure 4〜10秒 / Gemini 5〜13秒なので、20秒あれば正常系は切らない。
+ *
+ * `CHAIN_BUDGET_MS` は1ステップ（抽出／判定）でチェーン全体に使ってよい時間。
+ * 抽出と判定で2回使うため、最悪ケースでも 60秒に収まる幅にしてある。
+ */
+const PROVIDER_TIMEOUT_MS = 20_000;
+const CHAIN_BUDGET_MS = 24_000;
+
 let _anthropic: Anthropic | null = null;
 function anthropic(): Anthropic {
-  if (!_anthropic) _anthropic = new Anthropic({ timeout: 60_000 }); // SDK はミリ秒指定
+  // SDK はミリ秒指定。effort `high` の思考時間もこの中に収める必要がある
+  if (!_anthropic) _anthropic = new Anthropic({ timeout: PROVIDER_TIMEOUT_MS });
   return _anthropic;
 }
 
@@ -104,7 +120,7 @@ function azure(): OpenAI {
       // プロキシは api-key ヘッダーと api-version クエリを要求する
       defaultHeaders: { 'api-key': key },
       defaultQuery: { 'api-version': process.env.AZURE_PROXY_API_VERSION ?? '2025-04-01-preview' },
-      timeout: 60_000,
+      timeout: PROVIDER_TIMEOUT_MS,
     });
   }
   return _azure;
@@ -126,7 +142,12 @@ const GEMINI_MODEL_JUDGE = process.env.GEMINI_MODEL_JUDGE ?? 'gemini-3.6-flash';
 
 let _gemini: GoogleGenAI | null = null;
 function gemini(): GoogleGenAI {
-  if (!_gemini) _gemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY ?? '' });
+  if (!_gemini) {
+    _gemini = new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY ?? '',
+      httpOptions: { timeout: PROVIDER_TIMEOUT_MS },
+    });
+  }
   return _gemini;
 }
 
@@ -213,11 +234,13 @@ function isTransient(err: unknown): boolean {
 
 const TRANSIENT_RETRY_DELAY_MS = 1500;
 
-async function attempt<T>(run: () => Promise<T | null>): Promise<T | null> {
+async function attempt<T>(run: () => Promise<T | null>, deadline: number): Promise<T | null> {
   try {
     return await run();
   } catch (err) {
     if (!isTransient(err)) throw err;
+    // 待って試し直すだけの余裕が無いなら、粘らずに次のプロバイダへ譲る
+    if (Date.now() + TRANSIENT_RETRY_DELAY_MS >= deadline) throw err;
     await new Promise((r) => setTimeout(r, TRANSIENT_RETRY_DELAY_MS));
     return run();
   }
@@ -235,11 +258,17 @@ async function withFallback<T>(
   run: (provider: Provider) => Promise<T | null>,
 ): Promise<LlmResult<T>> {
   const chain = providerChain().filter((p) => p !== 'mock');
+  const deadline = Date.now() + CHAIN_BUDGET_MS;
   let lastError: unknown = new Error('利用可能なAIプロバイダがありません');
 
   for (const provider of chain) {
+    // 残り時間が無いのに次を始めると、返す前に関数ごと打ち切られる
+    if (Date.now() >= deadline) {
+      console.warn(`[${label}] 時間切れのため ${provider} は試していません`);
+      break;
+    }
     try {
-      const value = await attempt(() => run(provider));
+      const value = await attempt(() => run(provider), deadline);
       if (provider !== chain[0]) {
         console.warn(`[${label}] ${chain[0]} が失敗したため ${provider} で応答しました`);
         return { value, provider, fellBackFrom: chain[0] };
