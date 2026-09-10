@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, Stethoscope, X } from 'lucide-react';
+import { ChevronDown, ExternalLink, Stethoscope, X } from 'lucide-react';
 import { matchCleanser } from '@/lib/cleanser';
 import { toItemForm } from '@/lib/mapping';
 import { CleanserMatchRow } from '@/components/CleanserMatchCard';
@@ -212,9 +212,26 @@ export function JudgementCard({
                     </div>
                     <p className="mt-2.5 text-[14px] leading-relaxed text-ink/85">{r.detail}</p>
                     <p className="mt-2 text-[12.5px] text-faint">該当：{r.related_item}</p>
+                    {/* 一次情報への入り口。出典はAIに書かせず、サーバー側で付ける（lib/verify.ts） */}
+                    {r.evidence && (
+                      <a
+                        href={r.evidence.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2.5 inline-flex items-start gap-1.5 text-[12px] font-medium leading-relaxed text-brand underline underline-offset-2"
+                      >
+                        <ExternalLink size={12} strokeWidth={2.2} className="mt-[3px] shrink-0" />
+                        <span>{r.evidence.label}</span>
+                      </a>
+                    )}
                   </li>
                 ))}
               </ul>
+              {/* ここで確かめられることと、確かめられないことを書き分ける */}
+              <p className="mt-3 px-1 text-[11.5px] leading-relaxed text-faint">
+                挙げている成分は、読み取った成分表示か登録済みのストックに実際にあったものだけです。
+                書かれている内容そのものの妥当性は、リンク先の添付文書でお確かめください。
+              </p>
             </div>
           </section>
         )}

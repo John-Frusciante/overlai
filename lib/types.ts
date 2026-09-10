@@ -107,6 +107,14 @@ export interface Reason {
   ingredient: string;
   detail: string;
   related_item: string;
+  /**
+   * 根拠にあたるための一次情報。**サーバー側で付ける**（lib/verify.ts）。
+   *
+   * AIに書かせない。出典はもっとも捏造されやすい情報であり、
+   * それらしいURLが返ってきても検証のしようがないため、
+   * こちらが持っている表（lib/knowledge.ts）から引くか、検索の入り口を渡すかに限る。
+   */
+  evidence?: { label: string; url: string };
 }
 
 /** ステップ2（在庫照合判定）の出力 — §6.4 */

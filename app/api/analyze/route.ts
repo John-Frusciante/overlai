@@ -2,13 +2,14 @@ import { NextResponse } from 'next/server';
 import { guard } from '@/lib/guard';
 import { MOCK_FIXTURES, isSignal } from '@/lib/mock';
 import { parseDataUrl, sanitizeStock } from '@/lib/request';
+import { verifyJudgement } from '@/lib/verify';
 import {
   activeProvider,
   classifyError,
   extractIngredients,
   judgeAgainstStock,
 } from '@/lib/llm';
-import type { ApiErrorCode, Judgement } from '@/lib/types';
+import type { ApiErrorCode } from '@/lib/types';
 
 /**
  * 判定API — 設計仕様書 §7・§8
@@ -102,13 +103,15 @@ export async function POST(req: Request) {
       return fail('UPSTREAM_ERROR', '判定に失敗しました', 500);
     }
 
-    // 安全に関わる値をモデル出力に委ねない（§7.4）
-    const judgement: Judgement = {
-      ...raw,
-      consult_recommended: raw.signal === 'red' ? true : raw.consult_recommended,
-      // 成分名のない理由は根拠として成立しないため落とす
-      reasons: raw.reasons.filter((r) => r.ingredient.trim().length > 0),
-    };
+    // 理由の裏取りと、安全に関わる値の上書き（lib/verify.ts）。
+    // 入力のどこにも無い成分名を挙げた理由は、根拠が確認できないものとして落とす
+    const { judgement, dropped } = verifyJudgement(raw, extraction, stock);
+    if (dropped.length > 0) {
+      console.warn(
+        '[analyze] 根拠を辿れない理由を落としました',
+        dropped.map((d) => `${d.type}:${d.ingredient}`),
+      );
+    }
 
     return NextResponse.json({
       extraction,
