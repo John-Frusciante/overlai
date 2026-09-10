@@ -99,7 +99,7 @@ export interface ExtractionResult {
 }
 
 export type Signal = 'blue' | 'yellow' | 'red';
-export type ReasonType = '成分重複' | '効能重複' | '刺激リスク' | '吸収阻害';
+export type ReasonType = '成分重複' | '効能重複' | '刺激リスク' | '吸収阻害' | '相互作用';
 
 export interface Reason {
   type: ReasonType;

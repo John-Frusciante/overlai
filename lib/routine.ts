@@ -1,3 +1,4 @@
+import { CONFLICT_RULES } from './knowledge';
 import type {
   BuiltinRoutine,
   ConflictWarning,
@@ -171,30 +172,9 @@ export function countInRoutine(items: StockItem[], kind: RoutineKind): number {
 /**
  * 成分バッティング — 企画書 §4「成分バッティング警告」
  *
- * 同時使用で刺激になる可能性が指摘されている組み合わせのみを列挙する。
- * 断定はせず「〜の可能性があります」で統一する（設計仕様書 §12）。
+ * 組み合わせそのものは lib/knowledge.ts が出典つきで持つ。
+ * ここが持つのは「並んだステップの総当たりで引き当てる」という手順だけ。
  */
-const CONFLICT_RULES: Array<{ a: string[]; b: string[]; detail: string }> = [
-  {
-    a: ['レチノール', 'レチノイン酸', 'パルミチン酸レチノール'],
-    b: ['アスコルビン酸', 'ビタミンC', 'アスコルビルグルコシド'],
-    detail:
-      'レチノールと高濃度のビタミンCは、同じタイミングで重ねると刺激になる可能性があります。朝と夜で分けることが一般的です。',
-  },
-  {
-    a: ['レチノール', 'レチノイン酸'],
-    b: ['グリコール酸', 'サリチル酸', '乳酸'],
-    detail:
-      'レチノールとAHA／BHAを同時に使うと、角質への作用が重なって刺激になる可能性があります。',
-  },
-  {
-    a: ['アスコルビン酸', 'ビタミンC'],
-    b: ['グリコール酸', 'サリチル酸'],
-    detail:
-      'ビタミンCとAHA／BHAはどちらも酸性度が高く、重ねると刺激になる可能性があります。',
-  },
-];
-
 const hit = (ingredients: string[], keys: string[]) =>
   keys.find((k) => ingredients.some((ing) => ing.includes(k)));
 

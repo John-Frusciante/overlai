@@ -5,6 +5,9 @@ import { z } from 'zod';
  *
  * ingredient を必須にすることで「根拠なき警告を出さない」という安全制約を
  * プロンプトのお願いではなくスキーマレベルで強制する（§12）。
+ *
+ * 出典（`Reason.evidence`）はここに含めない。AIに書かせず、サーバー側で
+ * 手持ちの表から付ける（lib/verify.ts）。出典は捏造されても検証しづらいため。
  */
 
 export const ExtractionSchema = z.object({
@@ -22,7 +25,7 @@ export const JudgementSchema = z.object({
   matched_item_ids: z.array(z.string()),
   reasons: z.array(
     z.object({
-      type: z.enum(['成分重複', '効能重複', '刺激リスク', '吸収阻害']),
+      type: z.enum(['成分重複', '効能重複', '刺激リスク', '吸収阻害', '相互作用']),
       ingredient: z.string(),
       detail: z.string(),
       related_item: z.string(),
