@@ -92,7 +92,7 @@ GEMINI_API_KEY     → Google Gemini (gemini-3.5-flash / gemini-3.6-flash)
 
 ### 提出前に片付けたいもの
 
-なし。AI経路・カメラ実機・全機能の動作確認に加えて、Gemini フォールバックも本番に入っている（`GEMINI_API_KEY` は Production に登録済み）。
+**なし。** 開発・テスト・デモ動画の撮影まで終わっている。AI経路・カメラ実機・全機能の動作確認に加えて、Gemini フォールバックも本番に入っている（`GEMINI_API_KEY` は Production に登録済み）。
 
 ただし**本番で Gemini 経路が実際に発火するかは確認できていない** — Azure が動いている限り呼ばれない作りなので、検証にはプロキシを止めるしかない。ローカルでは抽出→判定が Gemini 単独で通ることを確認済み（13.9〜30秒）。
 
@@ -169,7 +169,7 @@ GEMINI_API_KEY     → Google Gemini (gemini-3.5-flash / gemini-3.6-flash)
 
 | マイルストーン | 期限 | 状態 | 内容 |
 | :--- | :--- | :---: | :--- |
-| [デモ提出](https://github.com/John-Frusciante/overlai/milestone/1) | 2026-09-10 | **完了** | エントリーまでに必要なもの。開発側は全部終わった |
+| [デモ提出](https://github.com/John-Frusciante/overlai/milestone/1) | 2026-09-10 | **完了** | 開発・全テスト項目（TESTING.md §A〜§J）・デモ動画の撮影まで完了 |
 | [本選](https://github.com/John-Frusciante/overlai/milestone/3) | 2026-10-01 | 進行中 | #20 #22〜#25 — ブース展示と連続デモに耐えるための整備 |
 | [将来構想](https://github.com/John-Frusciante/overlai/milestone/2) | — | — | #18 #19 #26 #27 — 登録経路の追加、ネイティブ化、家族共有 |
 
