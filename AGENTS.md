@@ -59,6 +59,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
     吸収阻害の実演はテトラサイクリン系（鉄との組み合わせ）で成立する
 19. **`useEffect` の中で `localStorage` を読んで `setState` しない** — `lib/client.ts` の
     `useStoredState` を使う。描画の連鎖になり、lint も落ちる
+20. **URLのクエリを描画中に `window.location` から読まない** — `useSearchParams()` を使う。
+    app-router は履歴の書き換えを `useInsertionEffect` で行うため、クライアント遷移では
+    描画時点の `window.location` が**遷移前**を指す。実際に `?id=` を取り違えて、
+    編集が新規追加になった。`tests/routing.test.ts` が見張っている
 
 ## 書く場所
 
@@ -69,6 +73,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 | 判定理由の裏取り | `lib/verify.ts` |
 | APIの入口検査 | `lib/guard.ts` |
 | 端末の値を画面へ持ち込む | `lib/client.ts`（`useStoredState`） |
+| URLのクエリ | `useSearchParams()`（Suspense の内側に置く） |
 | AI出力スキーマ | `lib/schemas.ts` |
 | データ構造 | `lib/types.ts` |
 | localStorage | `lib/storage.ts` |

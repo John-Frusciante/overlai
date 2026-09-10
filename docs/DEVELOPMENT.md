@@ -241,6 +241,24 @@ const [stock, setStock] = useStoredState(loadStock, SEED_STOCK);
 
 `useSyncExternalStore` で「サーバーでは初期値、クライアントでは端末の値」を受け取る。保存は従来どおり `lib/storage.ts` の関数が行い、その戻り値を `setStock` に渡す（§5.5 は変わらない）。
 
+### 5.17 URLのクエリを描画中に `window.location` から読まない
+
+```tsx
+// ✗ クライアント遷移では、まだ遷移前のURLを指している
+const id = new URLSearchParams(window.location.search).get('id');
+
+// ○
+const id = useSearchParams().get('id');
+```
+
+Next の app-router は履歴の書き換えを `useInsertionEffect` で行う（`HistoryUpdater`）。**URLが変わるのはコミットのとき**なので、その画面が描画される時点の `window.location` は遷移前のままになる。
+
+実際にこれで壊した。一覧の鉛筆から編集画面を開いても `?id=` が取れず、元の値が入らないまま、保存すると別の項目が追加されていた。`useEffect` の中（コミット後）なら正しく読めるが、`useSearchParams()` を使えばそもそも時点に依存しない。
+
+**`useSearchParams()` を使う画面は `<Suspense>` の内側に置く。** 静的に書き出せなくなるため。`?id=` だけが変わる遷移ではコンポーネントが作り直されないので、作り直したいときは `key` を渡す。
+
+`tests/routing.test.ts` が、`app/` 以下で `window.location.search` を読んでいないことと、`useSearchParams` を使う画面に Suspense があることを確かめる。
+
 ---
 
 ## 6. 変更を加えるときの手順
@@ -278,6 +296,7 @@ const [stock, setStock] = useStoredState(loadStock, SEED_STOCK);
 | 出力が途中で切れる | `max_tokens` を絞りすぎ。thinking トークンの分を見込む |
 | 在庫が増えない | `lib/seed.ts` はシードであり、実データは localStorage にある。設定 → データ → 「見本のデータに戻す」で戻せる |
 | 本番で API が 403 になる | `lib/guard.ts` が別オリジンと判断している。`ALLOWED_ORIGINS` に足すか、独自ドメインの設定を見直す |
+| 遷移してきたときだけクエリが取れない | 描画中に `window.location` を読んでいる。`useSearchParams()` に替える（§5.17） |
 | 型エラー `form が無い` | `StockItem` に `form`（剤形）は必須。順序ソートのキーになる |
 | 削除したストックが戻せない | localStorage には履歴が無い。設定 → データ → 「書き出す」を習慣にしておく |
 | ドキュメントが巨大に膨らんだ | スクリプトで置換したとき、置換元が空文字だと全文字の間に挿入される。書き換え後は `wc -l` で行数を確認する |

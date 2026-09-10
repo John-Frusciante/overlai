@@ -30,6 +30,7 @@ npm run check
 | `tests/request.test.ts` | 端末から来る値の検証（長さ・件数・想定外の値） |
 | `tests/image.test.ts` | ガイド枠を映像の座標へ移す計算 |
 | `tests/guard.test.ts` | 別オリジン・curl を断るか。開発中は素通りするか |
+| `tests/routing.test.ts` | URLのクエリを描画中に `window.location` から読んでいないか |
 
 **テストで確かめられないもの**は下の A 以降に並べてある。実機・実物・人間の判断が要るもの、
 そしてAIの出力（判定の中身）はここには入らない。
