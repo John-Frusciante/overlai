@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { guard } from '@/lib/guard';
 import { MOCK_FIXTURES, isSignal } from '@/lib/mock';
 import { parseDataUrl, sanitizeStock } from '@/lib/request';
 import {
@@ -17,6 +18,7 @@ import type { ApiErrorCode, Judgement } from '@/lib/types';
  * 2段階に分ける設計思想はパイプラインの話であって、エンドポイント数の話ではない。
  *
  * どのAIを使うかは lib/llm.ts が環境変数から決める。APIキーはサーバー側でのみ読む（NFR-05）。
+ * 入口の戸締まり（別オリジンからの呼び出しと連打）は lib/guard.ts が見る。
  */
 
 export const maxDuration = 60;
@@ -27,6 +29,10 @@ function fail(code: ApiErrorCode, message: string, status: number) {
 
 export async function POST(req: Request) {
   const started = Date.now();
+
+  // 学校配布キーを第三者に使わせないための入口の検査（lib/guard.ts）
+  const blocked = guard(req, 'analyze');
+  if (blocked) return blocked;
 
   let body: { image?: unknown; stock?: unknown; demo?: unknown };
   try {

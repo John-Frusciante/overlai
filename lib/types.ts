@@ -138,6 +138,8 @@ export type ApiErrorCode =
   | 'EMPTY_STOCK'
   | 'EXTRACTION_FAILED'
   | 'RATE_LIMITED'
+  /** 別オリジンからの呼び出し。lib/guard.ts が返す */
+  | 'FORBIDDEN'
   | 'UPSTREAM_ERROR';
 
 export interface ApiErrorBody {

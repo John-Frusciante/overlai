@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { guard } from '@/lib/guard';
 import { MOCK_EXTRACTION } from '@/lib/mock';
 import { parseDataUrl } from '@/lib/request';
 import { activeProvider, classifyError, extractIngredients } from '@/lib/llm';
@@ -13,6 +14,9 @@ import { activeProvider, classifyError, extractIngredients } from '@/lib/llm';
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
+  const blocked = guard(req, 'extract');
+  if (blocked) return blocked;
+
   let body: { image?: unknown };
   try {
     body = await req.json();

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { guard } from '@/lib/guard';
 import { activeProvider, adviseRoutine, classifyError } from '@/lib/llm';
 import { MOCK_ROUTINE_ADVICE } from '@/lib/mock';
 import { sanitizeProfile, sanitizeStock } from '@/lib/request';
@@ -21,6 +22,9 @@ export const maxDuration = 60;
 const EMPTY: RoutineAdvice = { overall: '', steps: [] };
 
 export async function POST(req: Request) {
+  const blocked = guard(req, 'routine');
+  if (blocked) return blocked;
+
   let body: { stock?: unknown; profile?: unknown };
   try {
     body = await req.json();
