@@ -2,7 +2,7 @@
 
 **このファイルは実装の現在地を1枚で示す。** 機能の有無を判断するときは、企画書ではなくここを見る。
 
-| 更新日 | 2026年9月10日（リリース前の未解決課題を8件とも対応） |
+| 更新日 | 2026年9月11日（未解決課題8件の対応と、実APIでの再測定まで完了） |
 | :--- | :--- |
 | 公開URL | https://overlai-delta.vercel.app |
 | **稼働モード** | **Azure OpenAI プロキシ（gpt-5.1）で実稼働** |
@@ -98,16 +98,17 @@ GEMINI_API_KEY     → Google Gemini (gemini-3.5-flash / gemini-3.6-flash)
 
 ### リリース前の未解決課題（2026年9月10日に対応済み）
 
-検証で見つかった8件は**すべて手を入れた**。何をどう直したかは各 Issue とコミットに残してある。
+検証で見つかった8件は**すべて手を入れ、実APIと実機で確認まで済ませた**。
+何をどう直したかは各 Issue とコミットに残してある。
 
 | # | 問題 | どう直したか |
 | :---: | :--- | :--- |
-| 1 | [#28](https://github.com/John-Frusciante/overlai/issues/28) 判定に薬物相互作用の観点がない | `ReasonType` に「相互作用」を足し、添付文書に併用注意・禁忌のある10件を `lib/knowledge.ts` に列挙。吸収阻害とは分けた（避け方が違うため）。シードの抗菌薬はキノロン系からテトラサイクリン系へ替え、🟡デモが🔴に振れないようにした |
-| 2 | [#29](https://github.com/John-Frusciante/overlai/issues/29) API が誰でも叩ける | `lib/guard.ts` で `Origin`（無ければ `Referer`）を自分のホストと突き合わせ、同じ相手からの10分30回を上限にした。本番ビルドで curl → 403、別オリジン → 403、同一オリジン → 200、31回目 → 429 を確認 |
-| 3 | [#30](https://github.com/John-Frusciante/overlai/issues/30) 抽出が空でもフォールバックしない | `withFallback` に受け入れ条件を足し、成分0件か `confidence: low` なら次のプロバイダへ。全社が届かなければ、いちばん多く読めたものを返す |
-| 4 | [#22](https://github.com/John-Frusciante/overlai/issues/22) 在庫が消えうる | 設定 → データ に「書き出す」「読み込む」を追加。読み込みは丸ごと置き換えで、確認を挟む |
-| 5 | [#31](https://github.com/John-Frusciante/overlai/issues/31) Azure が小さい文字を読めない | 撮影時に**ガイド枠の中だけを切り出して送る**ようにした（`coverCrop`）。枠も縦長に広げた。全画面を 1568px に縮めていたのが原因なので、同じ画素数に文字が大きく収まる |
-| 6 | [#32](https://github.com/John-Frusciante/overlai/issues/32) 判定理由の中身が正しいとは限らない | `lib/verify.ts` を追加。店頭商品にも在庫にも辿れない成分名の理由を落とし、残った理由には出典（手持ちの表の添付文書名、無ければ PMDA の検索リンク）を付ける。判定カードにも「確かめられるのは成分の実在まで」と書いた |
+| 1 | [#28](https://github.com/John-Frusciante/overlai/issues/28) 判定に薬物相互作用の観点がない | `ReasonType` に「相互作用」を足し、添付文書に併用注意・禁忌のある10件を `lib/knowledge.ts` に列挙。吸収阻害とは分けた（避け方が違うため）。シードの抗菌薬はキノロン系からテトラサイクリン系へ替え、🟡デモが🔴に振れないようにした。**実APIで H-1〜H-5 を再測定し、見逃していた H-2・H-3 が🔴に変わり、H-5 の🟡は非退行**（TESTING.md §H） |
+| 2 | [#29](https://github.com/John-Frusciante/overlai/issues/29) API が誰でも叩ける | `lib/guard.ts` で `Origin`（無ければ `Referer`）を自分のホストと突き合わせ、同じ相手からの10分30回を上限にした。本番ビルドで curl → 403、別オリジン → 403、同一オリジン → 200、31回目 → 429 を確認。**実機の PWA（ホーム画面起動）が弾かれないことも確認** |
+| 3 | [#30](https://github.com/John-Frusciante/overlai/issues/30) 抽出が空でもフォールバックしない | `withFallback` に受け入れ条件を足し、成分0件か `confidence: low` なら次のプロバイダへ。全社が届かなければ、いちばん多く読めたものを返す。**Azure が空を返す画像で Gemini に落ちて判定まで進むことを確認**（TESTING.md §J） |
+| 4 | [#22](https://github.com/John-Frusciante/overlai/issues/22) 在庫が消えうる | 設定 → データ に「書き出す」「読み込む」を追加。読み込みは丸ごと置き換えで、確認を挟む。**書き出し → 1件消す → 読み込みで戻ることを確認** |
+| 5 | [#31](https://github.com/John-Frusciante/overlai/issues/31) Azure が小さい文字を読めない | 撮影時に**ガイド枠の中だけを切り出して送る**ようにした（`coverCrop`）。枠も縦長に広げた。全画面を 1568px に縮めていたのが原因なので、同じ画素数に文字が大きく収まる。**実機で、枠に収めると読み取れる成分が増えることを確認** |
+| 6 | [#32](https://github.com/John-Frusciante/overlai/issues/32) 判定理由の中身が正しいとは限らない | `lib/verify.ts` を追加。店頭商品にも在庫にも辿れない成分名の理由を落とし、残った理由には出典（手持ちの表の添付文書名、無ければ PMDA の検索リンク）を付ける。判定カードにも「確かめられるのは成分の実在まで」と書いた。**実APIで、根拠の薄い理由が残らず出典リンクが付くことを確認** |
 | 7 | [#33](https://github.com/John-Frusciante/overlai/issues/33) 自動テストゼロ・lint が9件で落ちる | `npm test` で75件（追加の依存なし）。lint は `lib/client.ts` の `useStoredState` へ寄せて0件 |
 | 8 | [#34](https://github.com/John-Frusciante/overlai/issues/34) 薬の知識がプロンプトに散在 | `lib/knowledge.ts` に集約し、全項目に出典を持たせた。プロンプトは並べるだけ。出典が付いていることはテストで確かめる |
 
