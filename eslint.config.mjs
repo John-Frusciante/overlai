@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // テストのコンパイル出力（npm test が毎回作り直す）
+    ".test-build/**",
   ]),
 ]);
 
