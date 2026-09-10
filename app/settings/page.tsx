@@ -1,12 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronRight, RotateCcw, Sparkles } from 'lucide-react';
+import { ChevronRight, Download, RotateCcw, Sparkles, Upload } from 'lucide-react';
 import { CategoryManager } from '@/components/CategoryManager';
 import { RoutineManager } from '@/components/RoutineManager';
 import {
+  backupFileName,
+  exportBackupText,
+  importBackup,
   loadCustomCategories,
   loadCustomRoutines,
   loadProfile,
@@ -43,6 +46,9 @@ export default function SettingsPage() {
   const [categories, setCategories] = useState<string[]>([]);
   const [routines, setRoutines] = useState<string[]>([]);
   const [resetting, setResetting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setStock(loadStock());
@@ -57,6 +63,40 @@ export default function SettingsPage() {
       saveProfile(next);
       return next;
     });
+  }, []);
+
+  /**
+   * 書き出し。ダウンロードで端末に落とす。
+   * iOS はここで「ファイル」アプリに保存する挙動になり、共有もそこから行える。
+   */
+  const onExport = useCallback(() => {
+    const blob = new Blob([exportBackupText()], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = backupFileName();
+    a.click();
+    URL.revokeObjectURL(url);
+    setNotice({ ok: true, text: '書き出しました' });
+  }, []);
+
+  /** 読み込み。いまの内容は置き換わるので、先に確認を挟む（下の importing） */
+  const onImport = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    const result = importBackup(await file.text());
+    if (!result.ok) {
+      setNotice({ ok: false, text: result.reason });
+      return;
+    }
+    setStock(result.stock);
+    setProfile(loadProfile());
+    setCategories(loadCustomCategories());
+    setRoutines(loadCustomRoutines());
+    setImporting(false);
+    setNotice({ ok: true, text: `${result.count}件を読み込みました` });
   }, []);
 
   const onReset = useCallback(() => {
@@ -170,7 +210,72 @@ export default function SettingsPage() {
         <h2 className="px-1 text-xs font-semibold tracking-wide text-muted">データ</h2>
         <p className="mt-1 px-1 text-[12.5px] leading-relaxed text-faint">
           ストックはこの端末の中だけに保存されます。サーバーには送られません。
+          そのぶん、ブラウザのデータを消すと無くなります。ときどき書き出しておくと安心です。
         </p>
+
+        {/* 書き出し・読み込み — この端末にしか無いものを持ち出せるようにする */}
+        <div className="mt-2.5 grid grid-cols-2 gap-2">
+          <button
+            onClick={onExport}
+            className="flex items-center justify-center gap-2 rounded-2xl border border-line bg-surface px-3 py-3.5 shadow-e1 transition-transform active:scale-[0.98]"
+          >
+            <Download size={16} className="shrink-0 text-muted" strokeWidth={2} />
+            <span className="text-[14px] font-semibold text-ink">書き出す</span>
+          </button>
+          <button
+            onClick={() => {
+              setImporting(true);
+              setNotice(null);
+            }}
+            className="flex items-center justify-center gap-2 rounded-2xl border border-line bg-surface px-3 py-3.5 shadow-e1 transition-transform active:scale-[0.98]"
+          >
+            <Upload size={16} className="shrink-0 text-muted" strokeWidth={2} />
+            <span className="text-[14px] font-semibold text-ink">読み込む</span>
+          </button>
+        </div>
+
+        {importing && (
+          <div className="mt-2.5 rounded-2xl bg-amber-50 p-4">
+            <p className="text-[13.5px] font-semibold text-amber-900">
+              いま入っている内容は置き換わります
+            </p>
+            <p className="mt-1 text-[12.5px] leading-relaxed text-amber-800">
+              書き出したファイルの中身に丸ごと入れ替わります。合わせて残すことはできません。
+            </p>
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={() => setImporting(false)}
+                className="flex-1 rounded-xl bg-surface py-3 text-[14px] font-medium text-muted transition-transform active:scale-95"
+              >
+                やめる
+              </button>
+              <button
+                onClick={() => fileRef.current?.click()}
+                className="flex-1 rounded-xl bg-amber-600 py-3 text-[14px] font-semibold text-white transition-transform active:scale-95"
+              >
+                ファイルを選ぶ
+              </button>
+            </div>
+          </div>
+        )}
+
+        {notice && (
+          <p
+            className={`mt-2.5 px-1 text-[12.5px] leading-relaxed ${
+              notice.ok ? 'text-muted' : 'text-red-600'
+            }`}
+          >
+            {notice.text}
+          </p>
+        )}
+
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/json,.json"
+          onChange={onImport}
+          className="hidden"
+        />
 
         {resetting ? (
           <div className="mt-2.5 rounded-2xl bg-red-50 p-4">

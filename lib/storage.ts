@@ -280,3 +280,119 @@ export function moveRoutine(from: RoutineKind, to?: RoutineKind): StockItem[] {
   saveStock(next);
   return next;
 }
+
+// ── 書き出し・読み込み（バックアップ） ─────────────────────────────────
+
+/**
+ * 在庫はこの端末の localStorage にしか無い。
+ *
+ * iOS Safari は、7日間サイトを開かないと localStorage を消すことがある
+ * （Intelligent Tracking Prevention）。ホーム画面に追加した PWA でも、
+ * 端末を替えれば当然引き継がれない。**入れた在庫が黙って消える**というのは、
+ * 毎日使う道具として致命的なので、持ち出せる形を用意する。
+ *
+ * サーバーに置かない方針は変えていない（設計仕様書 §10.1）。
+ * 預かれば同期はできるが、薬の情報を他人の管理下に置くことになる。
+ * 持ち出しはユーザーの操作で、ユーザーの手元にだけ出す。
+ */
+
+/** 書き出しの形式。読み込み側が世代を見分けられるように version を持つ */
+export interface Backup {
+  app: 'overlai';
+  version: 1;
+  exportedAt: string;
+  stock: StockItem[];
+  profile: Profile;
+  categories: string[];
+  routines: string[];
+  doseLogs: DoseLog[];
+}
+
+export function exportBackup(): Backup {
+  return {
+    app: 'overlai',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    stock: loadStock(),
+    profile: loadProfile(),
+    categories: loadCustomCategories(),
+    routines: loadCustomRoutines(),
+    doseLogs: read<DoseLog[]>(DOSE_KEY, []),
+  };
+}
+
+export function exportBackupText(): string {
+  return JSON.stringify(exportBackup(), null, 2);
+}
+
+/** 書き出したファイルの名前。日付が入っていないと、複数あるとき見分けられない */
+export function backupFileName(d = new Date()): string {
+  return `overlai-backup-${todayKey(d)}.json`;
+}
+
+export type ImportResult =
+  | { ok: true; stock: StockItem[]; count: number }
+  | { ok: false; reason: string };
+
+/**
+ * 書き出したものを読み込む。**いまの内容は置き換わる。**
+ *
+ * 統合（マージ）にしないのは、同じ id のアイテムが両方にあったときに
+ * どちらを残すかをユーザーが判断できないため。置き換えなら結果が読める。
+ * 呼ぶ側で確認を取ること。
+ *
+ * 中身の検証は、他人が作った JSON でも壊れないところまでやる。
+ * 読めない形なら理由を返して、何も書き換えない。
+ */
+export function importBackup(text: string): ImportResult {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(text);
+  } catch {
+    return { ok: false, reason: 'ファイルの形式が読めませんでした' };
+  }
+  if (!raw || typeof raw !== 'object') {
+    return { ok: false, reason: 'ファイルの形式が読めませんでした' };
+  }
+
+  const backup = raw as Partial<Backup>;
+  if (backup.app !== 'overlai') {
+    return { ok: false, reason: 'Overlai から書き出したファイルではないようです' };
+  }
+  if (!Array.isArray(backup.stock)) {
+    return { ok: false, reason: 'ストックのデータが入っていません' };
+  }
+
+  const stock = backup.stock.filter(isStockItem);
+  if (stock.length === 0) {
+    return { ok: false, reason: '読み込めるストックがありませんでした' };
+  }
+
+  saveStock(stock);
+  saveProfile(backup.profile && typeof backup.profile === 'object' ? backup.profile : {});
+  saveCustomCategories(asNames(backup.categories));
+  saveCustomRoutines(asNames(backup.routines));
+  write(DOSE_KEY, Array.isArray(backup.doseLogs) ? backup.doseLogs.slice(-30) : []);
+  saveCollapsed([]);
+
+  return { ok: true, stock, count: stock.length };
+}
+
+function asNames(v: unknown): string[] {
+  return Array.isArray(v) ? v.filter((x) => typeof x === 'string') : [];
+}
+
+/** 表示と判定に最低限必要な項目が揃っているか。欠けているものは読み込まない */
+function isStockItem(v: unknown): v is StockItem {
+  if (!v || typeof v !== 'object') return false;
+  const i = v as Partial<StockItem>;
+  return (
+    typeof i.id === 'string' &&
+    i.id.length > 0 &&
+    typeof i.name === 'string' &&
+    i.name.length > 0 &&
+    typeof i.category === 'string' &&
+    typeof i.form === 'string' &&
+    Array.isArray(i.ingredients)
+  );
+}
