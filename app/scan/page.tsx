@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check, Images, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { JudgementCard } from '@/components/JudgementCard';
-import { toResizedDataUrl } from '@/lib/image';
+import { coverCrop, toResizedDataUrl } from '@/lib/image';
 import { loadProfile, loadStock } from '@/lib/storage';
 import { SEED_STOCK } from '@/lib/seed';
 import type { AnalyzeResponse, ApiErrorBody, Profile, StockItem } from '@/lib/types';
@@ -25,6 +25,7 @@ export default function ScanPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const guideRef = useRef<HTMLDivElement>(null);
 
   const [stock, setStock] = useState<StockItem[]>(SEED_STOCK);
   const [profile, setProfile] = useState<Profile>({});
@@ -101,13 +102,45 @@ export default function ScanPage() {
     [stock, demo],
   );
 
+  /**
+   * 撮影。**ガイド枠の中だけを切り出して送る。**
+   *
+   * これまでは全画面を送っていたので、枠に入れてもらった意味が無かった。
+   * 送る前に長辺 1568px へ縮めるため、成分表示が画面の一角にしか写っていないと
+   * その時点で文字が潰れる。枠で切ってから縮めれば、同じ 1568px に文字が大きく収まる。
+   * 枠の計算が取れなかったときは、これまでどおり全画面を送る。
+   */
   const shoot = useCallback(async () => {
     const video = videoRef.current;
     if (!video) return;
+
+    const guide = guideRef.current?.getBoundingClientRect();
+    const crop = guide
+      ? coverCrop(
+          { width: video.videoWidth, height: video.videoHeight },
+          video.getBoundingClientRect(),
+          guide,
+        )
+      : null;
+
+    const area = crop ?? { x: 0, y: 0, width: video.videoWidth, height: video.videoHeight };
     const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext('2d')?.drawImage(video, 0, 0);
+    canvas.width = area.width;
+    canvas.height = area.height;
+    canvas
+      .getContext('2d')
+      ?.drawImage(
+        video,
+        area.x,
+        area.y,
+        area.width,
+        area.height,
+        0,
+        0,
+        area.width,
+        area.height,
+      );
+
     const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/jpeg', 0.92));
     if (blob) await analyze(await toResizedDataUrl(blob));
   }, [analyze]);
@@ -143,10 +176,13 @@ export default function ScanPage() {
         </div>
       )}
 
-      {/* ガイド枠。四隅のコーナーマークで囲む */}
+      {/* ガイド枠。四隅のコーナーマークで囲む。**この中だけを送る**（shoot） */}
       {cameraReady && !busy && (
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <div className="relative h-56 w-[78%] rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.42)]">
+          <div
+            ref={guideRef}
+            className="relative h-[42vh] max-h-[380px] w-[86%] rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.42)]"
+          >
             {[
               'left-0 top-0 border-l-[3px] border-t-[3px] rounded-tl-2xl',
               'right-0 top-0 border-r-[3px] border-t-[3px] rounded-tr-2xl',
@@ -156,9 +192,14 @@ export default function ScanPage() {
               <span key={c} className={`absolute h-9 w-9 border-white/90 ${c}`} />
             ))}
           </div>
-          <p className="mt-6 text-[14px] font-medium text-white/95 drop-shadow">
-            成分表示をこの枠に入れてください
-          </p>
+          <div className="mt-6 px-8 text-center">
+            <p className="text-[14px] font-medium text-white/95 drop-shadow">
+              成分表示が枠いっぱいになるまで近づけてください
+            </p>
+            <p className="mt-1.5 text-[12px] leading-relaxed text-white/65">
+              送るのは枠の中だけです。文字が小さいと読み取れないことがあります
+            </p>
+          </div>
         </div>
       )}
 
