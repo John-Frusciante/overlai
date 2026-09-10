@@ -253,15 +253,32 @@ async function attempt<T>(run: () => Promise<T | null>, deadline: number): Promi
  *
  * どのエラーでも次に進む。レート制限とキー失効はもちろん、スキーマ違反や
  * 5xx でも「そのプロバイダでは結果が出なかった」ことに変わりはないため。
- * 全滅したときだけ最後の例外を投げ、route 側でユーザー向け文言に変換する。
+ *
+ * **例外を投げないが中身が使えない**応答も、同じように次へ落とす（`accept`）。
+ * 成分抽出で実際に起きた — 同じ画像を Gemini は全成分読めるのに Azure は空を返し、
+ * 空は「成功」として扱われていたので保険が働かないまま 422 になっていた。
+ *
+ * 全部が `accept` に届かなかったときは、いちばんましだったもの（`score` が最大）を返す。
+ * ここで例外を投げると、読めなかったという事実まで消えて 500 になってしまう。
  */
 async function withFallback<T>(
   label: string,
   run: (provider: Provider) => Promise<T | null>,
+  options: {
+    /** この結果を採用してよいか。false なら次のプロバイダを試す */
+    accept?: (value: T | null) => boolean;
+    /** 採用できなかったもの同士を比べるための点数。大きいほうを残す */
+    score?: (value: T | null) => number;
+  } = {},
 ): Promise<LlmResult<T>> {
+  const accept = options.accept ?? ((v: T | null) => v !== null);
+  const score = options.score ?? (() => 0);
+
   const chain = providerChain().filter((p) => p !== 'mock');
   const deadline = Date.now() + CHAIN_BUDGET_MS;
   let lastError: unknown = new Error('利用可能なAIプロバイダがありません');
+  /** accept に届かなかったが、応答自体は返ってきたもの */
+  let best: LlmResult<T> | null = null;
 
   for (const provider of chain) {
     // 残り時間が無いのに次を始めると、返す前に関数ごと打ち切られる
@@ -271,26 +288,49 @@ async function withFallback<T>(
     }
     try {
       const value = await attempt(() => run(provider), deadline);
-      if (provider !== chain[0]) {
-        console.warn(`[${label}] ${chain[0]} が失敗したため ${provider} で応答しました`);
-        return { value, provider, fellBackFrom: chain[0] };
+      const result: LlmResult<T> =
+        provider === chain[0] ? { value, provider } : { value, provider, fellBackFrom: chain[0] };
+
+      if (accept(value)) {
+        if (provider !== chain[0]) {
+          console.warn(`[${label}] ${chain[0]} が失敗したため ${provider} で応答しました`);
+        }
+        return result;
       }
-      return { value, provider };
+
+      console.warn(`[${label}] ${provider} の応答は使えないため次を試します`);
+      if (!best || score(value) > score(best.value)) best = result;
     } catch (err) {
       lastError = err;
       console.error(`[${label}] ${provider} 失敗 (${classifyError(err)})`, err);
     }
   }
 
+  if (best) return best;
   throw lastError;
 }
 
 // ── ステップ1: 成分抽出（Vision） ─────────────────────────────────────
 
+/**
+ * 成分表示を読む。
+ *
+ * **成分が1つも取れなかった応答を「成功」として扱わない。** Azure 経路は
+ * 小さい文字の画像に対して、エラーではなく空の結果を返すことがある（docs/STATUS.md）。
+ * これを成功と見なしていたため、同じ画像を読める Gemini があっても落ちていかず、
+ * ユーザーには「読み取れませんでした」だけが返っていた。
+ *
+ * `confidence: 'low'` も同じ扱いにする。読めた気がしないと自己申告している応答で
+ * 判定まで進むより、もう1社試したほうが結果がよい（+7秒程度）。
+ * 全社が空なら、いちばん多く読めたものを返して route 側で 422 にする。
+ */
 export async function extractIngredients(
   image: ImageInput,
 ): Promise<LlmResult<ExtractionResult>> {
-  return withFallback('extract', (provider) => extractWith(provider, image));
+  return withFallback('extract', (provider) => extractWith(provider, image), {
+    accept: (v) => v !== null && v.ingredients.length > 0 && v.confidence !== 'low',
+    score: (v) => v?.ingredients.length ?? -1,
+  });
 }
 
 async function extractWith(
