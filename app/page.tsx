@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, Clock, Plus, Settings } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
 import { StockList } from '@/components/StockList';
 import { ButtonLink } from '@/components/ui/Button';
+import { useIsClient, useStoredState } from '@/lib/client';
 import { collectAlerts, lowStock } from '@/lib/expiry';
 import {
   loadCollapsed,
@@ -16,38 +17,32 @@ import {
 } from '@/lib/storage';
 import { SEED_STOCK } from '@/lib/seed';
 import { overlaySymbolPath } from '@/lib/ui';
-import type { ExpiryAlert, StockItem } from '@/lib/types';
+import type { ExpiryAlert } from '@/lib/types';
 
 export default function MyStockPage() {
-  const [stock, setStock] = useState<StockItem[]>(SEED_STOCK);
-  // 撮影の流れを止めないよう、?demo= はスキャン画面へ引き継ぐ
-  const [scanHref, setScanHref] = useState('/scan');
-  /**
-   * 期限アラートは現在時刻に依存する。SSRで計算するとクライアントとの差でハイドレーションが壊れるため、
-   * マウント後にだけ求める。
-   */
-  const [alerts, setAlerts] = useState<ExpiryAlert[]>([]);
-  const [low, setLow] = useState<StockItem[]>([]);
+  const [stock, setStock] = useStoredState(loadStock, SEED_STOCK);
   /** 閉じているカテゴリ。件数が増えても一覧をたどれるようにする */
-  const [collapsed, setCollapsed] = useState<string[]>([]);
+  const [collapsed, setCollapsed] = useStoredState<string[]>(loadCollapsed, []);
   /** ユーザーが追加したカテゴリ */
-  const [customCategories, setCustomCategories] = useState<string[]>([]);
-
-  const refresh = useCallback((items: StockItem[]) => {
-    setStock(items);
-    setAlerts(collectAlerts(items));
-    setLow(lowStock(items));
-  }, []);
-
-  useEffect(() => {
-    refresh(loadStock());
-    setCollapsed(loadCollapsed());
-    setCustomCategories(loadCustomCategories());
+  const [customCategories] = useStoredState<string[]>(loadCustomCategories, []);
+  // 撮影の流れを止めないよう、?demo= はスキャン画面へ引き継ぐ
+  const [scanHref] = useStoredState(() => {
     const demo = new URLSearchParams(window.location.search).get('demo');
-    if (demo) setScanHref(`/scan?demo=${encodeURIComponent(demo)}`);
-  }, [refresh]);
+    return demo ? `/scan?demo=${encodeURIComponent(demo)}` : '/scan';
+  }, '/scan');
 
-  const onRemove = useCallback((id: string) => refresh(removeStock(id)), [refresh]);
+  /**
+   * 期限アラートは現在時刻に依存する。SSRで計算するとクライアントとの差で
+   * ハイドレーションが壊れるため、クライアントで描画されてからだけ求める。
+   */
+  const isClient = useIsClient();
+  const alerts: ExpiryAlert[] = useMemo(
+    () => (isClient ? collectAlerts(stock) : []),
+    [isClient, stock],
+  );
+  const low = useMemo(() => (isClient ? lowStock(stock) : []), [isClient, stock]);
+
+  const onRemove = useCallback((id: string) => setStock(removeStock(id)), [setStock]);
 
   const onToggleCategory = useCallback((category: string) => {
     setCollapsed((prev) => {
@@ -57,7 +52,7 @@ export default function MyStockPage() {
       saveCollapsed(next);
       return next;
     });
-  }, []);
+  }, [setCollapsed]);
 
   const symbol = overlaySymbolPath();
 

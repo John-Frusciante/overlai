@@ -1,10 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronRight, Download, RotateCcw, Sparkles, Upload } from 'lucide-react';
 import { CategoryManager } from '@/components/CategoryManager';
+import { useStoredState } from '@/lib/client';
 import { RoutineManager } from '@/components/RoutineManager';
 import {
   backupFileName,
@@ -41,21 +42,14 @@ const GENDERS: Gender[] = ['女性', '男性', 'その他', '答えない'];
 
 export default function SettingsPage() {
   const router = useRouter();
-  const [stock, setStock] = useState<StockItem[]>(SEED_STOCK);
-  const [profile, setProfile] = useState<Profile>({});
-  const [categories, setCategories] = useState<string[]>([]);
-  const [routines, setRoutines] = useState<string[]>([]);
+  const [stock, setStock] = useStoredState<StockItem[]>(loadStock, SEED_STOCK);
+  const [profile, setProfile] = useStoredState<Profile>(loadProfile, {});
+  const [categories, setCategories] = useStoredState<string[]>(loadCustomCategories, []);
+  const [routines, setRoutines] = useStoredState<string[]>(loadCustomRoutines, []);
   const [resetting, setResetting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    setStock(loadStock());
-    setProfile(loadProfile());
-    setCategories(loadCustomCategories());
-    setRoutines(loadCustomRoutines());
-  }, []);
 
   const update = useCallback((patch: Partial<Profile>) => {
     setProfile((prev) => {
@@ -63,7 +57,7 @@ export default function SettingsPage() {
       saveProfile(next);
       return next;
     });
-  }, []);
+  }, [setProfile]);
 
   /**
    * 書き出し。ダウンロードで端末に落とす。
@@ -97,7 +91,7 @@ export default function SettingsPage() {
     setRoutines(loadCustomRoutines());
     setImporting(false);
     setNotice({ ok: true, text: `${result.count}件を読み込みました` });
-  }, []);
+  }, [setStock, setProfile, setCategories, setRoutines]);
 
   const onReset = useCallback(() => {
     setStock(resetStock());
@@ -107,7 +101,7 @@ export default function SettingsPage() {
     setCategories([]);
     setRoutines([]);
     setResetting(false);
-  }, []);
+  }, [setStock, setCategories, setRoutines]);
 
   return (
     <main className="mx-auto min-h-dvh max-w-md px-4 pb-24 pt-safe">

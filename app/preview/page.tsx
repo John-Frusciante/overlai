@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { JudgementCard } from '@/components/JudgementCard';
+import { useStoredState } from '@/lib/client';
 import { loadProfile, loadStock } from '@/lib/storage';
 import { SEED_STOCK } from '@/lib/seed';
 import { MOCK_FIXTURES as FIXTURES } from '@/lib/mock';
@@ -16,17 +16,13 @@ import type { Profile, Signal, StockItem } from '@/lib/types';
  */
 
 export default function PreviewPage() {
-  const [stock, setStock] = useState<StockItem[]>(SEED_STOCK);
-  const [profile, setProfile] = useState<Profile>({});
-  const [signal, setSignal] = useState<Signal | null>(null);
-
-  useEffect(() => {
-    setStock(loadStock());
-    setProfile(loadProfile());
-    // ?open=red のように直接カードを開ける（スクリーンショット・デモ用）
+  const [stock] = useStoredState<StockItem[]>(loadStock, SEED_STOCK);
+  const [profile] = useStoredState<Profile>(loadProfile, {});
+  // ?open=red のように直接カードを開ける（スクリーンショット・デモ用）
+  const [signal, setSignal] = useStoredState<Signal | null>(() => {
     const open = new URLSearchParams(window.location.search).get('open');
-    if (open === 'yellow' || open === 'red' || open === 'blue') setSignal(open);
-  }, []);
+    return open === 'yellow' || open === 'red' || open === 'blue' ? open : null;
+  }, null);
 
   return (
     <main className="mx-auto min-h-dvh max-w-md px-5 pt-safe">

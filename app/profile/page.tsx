@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useStoredState } from '@/lib/client';
 import { loadProfile, saveProfile } from '@/lib/storage';
 import { MAX_PROFILE_NOTE } from '@/lib/request';
 import type { Profile, ScalpType, SkinType } from '@/lib/types';
@@ -17,11 +17,7 @@ const SCALPS: ScalpType[] = ['乾燥', '脂性', 'ふけ・かゆみ', '普通']
 
 export default function ProfilePage() {
   const router = useRouter();
-  const [profile, setProfile] = useState<Profile>({});
-
-  useEffect(() => {
-    setProfile(loadProfile());
-  }, []);
+  const [profile, setProfile] = useStoredState<Profile>(loadProfile, {});
 
   const update = (patch: Partial<Profile>) => {
     const next = { ...profile, ...patch };

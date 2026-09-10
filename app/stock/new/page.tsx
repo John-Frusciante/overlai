@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Camera, Check, Loader2, Plus, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useStoredState } from '@/lib/client';
 import { toResizedDataUrl } from '@/lib/image';
 import {
   addStock,
@@ -57,43 +58,111 @@ function takesDose(form: ItemForm, category: StockCategory): boolean {
   return category === '処方薬' || category === '市販薬・サプリ';
 }
 
+/**
+ * 入力欄の中身。**1つのまとまりで持つ。**
+ *
+ * `?id=` 付きで開かれたときは既存アイテムの値で始まる必要があるが、
+ * 端末の中身はサーバー側では読めない。欄ごとに state を置くと、
+ * 読み終えてから11個の setState を並べることになり、描画が何度も連鎖する。
+ * まとめて1つにしておけば、読み込みも1回で済む（lib/client.ts）。
+ */
+interface Draft {
+  name: string;
+  category: StockCategory;
+  form: ItemForm;
+  ingredients: string;
+  status: string;
+  openedAt: string;
+  routine: RoutineKind | '';
+  /** 空のタイミングは「今日のお薬に出さない」を意味する */
+  doseTimes: DoseTime[];
+  perTime: string;
+  remainingCount: string;
+  remainingUnit: string;
+}
+
+const EMPTY_DRAFT: Draft = {
+  name: '',
+  category: 'スキンケア',
+  form: '化粧水',
+  ingredients: '',
+  status: '',
+  openedAt: '',
+  routine: '',
+  doseTimes: [],
+  perTime: '1',
+  remainingCount: '',
+  remainingUnit: '錠',
+};
+
+/** `?id=` が付いていれば、そのアイテムの値から始める。無ければ空の入力欄 */
+function loadDraft(): { editId: string | null; draft: Draft } {
+  const id = new URLSearchParams(window.location.search).get('id');
+  const item = id ? loadStock().find((i) => i.id === id) : undefined;
+  if (!item) return { editId: null, draft: EMPTY_DRAFT };
+
+  return {
+    editId: item.id,
+    draft: {
+      name: item.name,
+      category: item.category,
+      form: item.form,
+      ingredients: item.ingredients.join('、'),
+      status: item.status,
+      openedAt: item.openedAt ?? '',
+      routine: item.routine ?? '',
+      doseTimes: item.dose?.times ?? [],
+      perTime: String(item.dose?.perTime ?? 1),
+      remainingCount: item.remaining ? String(item.remaining.count) : '',
+      remainingUnit: item.remaining?.unit ?? '錠',
+    },
+  };
+}
+
 export default function NewStockPage() {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState<StockCategory>('スキンケア');
-  const [form, setForm] = useState<ItemForm>('化粧水');
-  const [ingredients, setIngredients] = useState('');
-  const [status, setStatus] = useState('');
-  const [openedAt, setOpenedAt] = useState('');
-  const [routine, setRoutine] = useState<RoutineKind | ''>('');
+  const [{ editId, draft }, setDraftState] = useStoredState(loadDraft, {
+    editId: null as string | null,
+    draft: EMPTY_DRAFT,
+  });
+  const {
+    name,
+    category,
+    form,
+    ingredients,
+    status,
+    openedAt,
+    routine,
+    doseTimes,
+    perTime,
+    remainingCount,
+    remainingUnit,
+  } = draft;
 
-  /** 服薬設定。空のタイミングは「今日のお薬に出さない」を意味する */
-  const [doseTimes, setDoseTimes] = useState<DoseTime[]>([]);
-  const [perTime, setPerTime] = useState('1');
-  const [remainingCount, setRemainingCount] = useState('');
-  const [remainingUnit, setRemainingUnit] = useState('錠');
+  const setField = useCallback(
+    <K extends keyof Draft>(key: K, value: Draft[K]) => {
+      setDraftState((prev) => ({ ...prev, draft: { ...prev.draft, [key]: value } }));
+    },
+    [setDraftState],
+  );
 
   /** ユーザーが追加したカテゴリ。この画面から新規作成もできる */
-  const [customCategories, setCustomCategories] = useState<string[]>([]);
+  const [customCategories, setCustomCategories] = useStoredState<string[]>(
+    loadCustomCategories,
+    [],
+  );
   const [newCategory, setNewCategory] = useState<string | null>(null);
   const [categoryError, setCategoryError] = useState('');
 
   /** ユーザーが作ったルーティンの区分。カテゴリと同じ扱い */
-  const [customRoutines, setCustomRoutines] = useState<string[]>([]);
+  const [customRoutines, setCustomRoutines] = useStoredState<string[]>(loadCustomRoutines, []);
   const [newRoutine, setNewRoutine] = useState<string | null>(null);
   const [routineError, setRoutineError] = useState('');
 
   const [reading, setReading] = useState(false);
   const [readError, setReadError] = useState('');
-  /** 編集対象のid。null なら新規追加 */
-  const [editId, setEditId] = useState<string | null>(null);
-
-  useEffect(() => {
-    setCustomCategories(loadCustomCategories());
-    setCustomRoutines(loadCustomRoutines());
-  }, []);
 
   /** その場でカテゴリを作って、そのまま選択状態にする */
   const commitNewCategory = useCallback(() => {
@@ -105,10 +174,10 @@ export default function NewStockPage() {
     const next = [...customCategories, result.name];
     saveCustomCategories(next);
     setCustomCategories(next);
-    setCategory(result.name);
+    setField('category', result.name);
     setNewCategory(null);
     setCategoryError('');
-  }, [newCategory, customCategories]);
+  }, [newCategory, customCategories, setCustomCategories, setField]);
 
   /** その場でルーティンを作って、そのまま選択状態にする */
   const commitNewRoutine = useCallback(() => {
@@ -120,30 +189,10 @@ export default function NewStockPage() {
     const next = [...customRoutines, result.name];
     saveCustomRoutines(next);
     setCustomRoutines(next);
-    setRoutine(result.name);
+    setField('routine', result.name);
     setNewRoutine(null);
     setRoutineError('');
-  }, [newRoutine, customRoutines]);
-
-  // 既存アイテムの編集として開かれた場合は値を読み込む
-  useEffect(() => {
-    const id = new URLSearchParams(window.location.search).get('id');
-    if (!id) return;
-    const item = loadStock().find((i) => i.id === id);
-    if (!item) return;
-    setEditId(id);
-    setName(item.name);
-    setCategory(item.category);
-    setForm(item.form);
-    setIngredients(item.ingredients.join('、'));
-    setStatus(item.status);
-    setOpenedAt(item.openedAt ?? '');
-    setRoutine(item.routine ?? '');
-    setDoseTimes(item.dose?.times ?? []);
-    setPerTime(String(item.dose?.perTime ?? 1));
-    setRemainingCount(item.remaining ? String(item.remaining.count) : '');
-    setRemainingUnit(item.remaining?.unit ?? '錠');
-  }, []);
+  }, [newRoutine, customRoutines, setCustomRoutines, setField]);
 
   const readFromImage = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -164,16 +213,16 @@ export default function NewStockPage() {
         return;
       }
       const { extraction } = (await res.json()) as { extraction: ExtractionResult };
-      if (extraction.product_name) setName(extraction.product_name);
-      setCategory(toStockCategory(extraction.category));
-      setForm(toItemForm(extraction.form));
-      setIngredients(extraction.ingredients.join('、'));
+      if (extraction.product_name) setField('name', extraction.product_name);
+      setField('category', toStockCategory(extraction.category));
+      setField('form', toItemForm(extraction.form));
+      setField('ingredients', extraction.ingredients.join('、'));
     } catch {
       setReadError('通信に失敗しました');
     } finally {
       setReading(false);
     }
-  }, []);
+  }, [setField]);
 
   const save = useCallback(() => {
     if (!name.trim()) return;
@@ -274,7 +323,7 @@ export default function NewStockPage() {
         <Field label="商品名">
           <input
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => setField('name', e.target.value)}
             placeholder="例：しっとり化粧水"
             className="w-full rounded-2xl border border-line bg-surface px-3.5 py-3 text-[15px] shadow-e1 outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(30,42,69,0.07)]"
           />
@@ -286,7 +335,7 @@ export default function NewStockPage() {
               <button
                 key={o}
                 type="button"
-                onClick={() => setCategory(o)}
+                onClick={() => setField('category', o)}
                 className={`rounded-full px-3.5 py-2 text-[13.5px] font-medium transition-colors ${
                   category === o
                     ? 'bg-brand text-white'
@@ -363,7 +412,7 @@ export default function NewStockPage() {
         <Field label="剤形">
           <select
             value={form}
-            onChange={(e) => setForm(e.target.value as ItemForm)}
+            onChange={(e) => setField('form', e.target.value as ItemForm)}
             className="w-full rounded-2xl border border-line bg-surface px-3.5 py-3 text-[15px] shadow-e1 outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(30,42,69,0.07)]"
           >
             {FORMS.map((f) => (
@@ -375,7 +424,7 @@ export default function NewStockPage() {
         <Field label="成分（読点区切り）">
           <textarea
             value={ingredients}
-            onChange={(e) => setIngredients(e.target.value)}
+            onChange={(e) => setField('ingredients', e.target.value)}
             rows={3}
             placeholder="例：グリセリン、BG"
             className="w-full resize-none rounded-2xl border border-line bg-surface px-3.5 py-3 text-[15px] shadow-e1 outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(30,42,69,0.07)]"
@@ -385,7 +434,7 @@ export default function NewStockPage() {
         <Field label="状態（任意）">
           <input
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            onChange={(e) => setField('status', e.target.value)}
             placeholder="例：残12錠 / 使用中"
             className="w-full rounded-2xl border border-line bg-surface px-3.5 py-3 text-[15px] shadow-e1 outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(30,42,69,0.07)]"
           />
@@ -395,7 +444,7 @@ export default function NewStockPage() {
           <input
             type="date"
             value={openedAt}
-            onChange={(e) => setOpenedAt(e.target.value)}
+            onChange={(e) => setField('openedAt', e.target.value)}
             className="w-full rounded-2xl border border-line bg-surface px-3.5 py-3 text-[15px] shadow-e1 outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(30,42,69,0.07)]"
           />
         </Field>
@@ -406,7 +455,7 @@ export default function NewStockPage() {
               <button
                 key={o || 'none'}
                 type="button"
-                onClick={() => setRoutine(o)}
+                onClick={() => setField('routine', o)}
                 className={`rounded-full px-3.5 py-2 text-[13.5px] font-medium transition-colors ${
                   routine === o
                     ? 'bg-brand text-white'
@@ -492,7 +541,7 @@ export default function NewStockPage() {
                       key={t}
                       type="button"
                       onClick={() =>
-                        setDoseTimes(
+                        setField('doseTimes', 
                           on ? doseTimes.filter((x) => x !== t) : [...doseTimes, t],
                         )
                       }
@@ -520,7 +569,7 @@ export default function NewStockPage() {
                     inputMode="numeric"
                     min={1}
                     value={perTime}
-                    onChange={(e) => setPerTime(e.target.value)}
+                    onChange={(e) => setField('perTime', e.target.value)}
                     className="w-24 rounded-2xl border border-line bg-surface px-3.5 py-3 text-[15px] tabular-nums shadow-e1 outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(30,42,69,0.07)]"
                   />
                   <span className="text-[14px] text-muted">{remainingUnit.trim() || '錠'}</span>
@@ -535,13 +584,13 @@ export default function NewStockPage() {
                   inputMode="numeric"
                   min={0}
                   value={remainingCount}
-                  onChange={(e) => setRemainingCount(e.target.value)}
+                  onChange={(e) => setField('remainingCount', e.target.value)}
                   placeholder="28"
                   className="w-24 rounded-2xl border border-line bg-surface px-3.5 py-3 text-[15px] tabular-nums shadow-e1 outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(30,42,69,0.07)]"
                 />
                 <input
                   value={remainingUnit}
-                  onChange={(e) => setRemainingUnit(e.target.value)}
+                  onChange={(e) => setField('remainingUnit', e.target.value)}
                   aria-label="残量の単位"
                   className="w-20 rounded-2xl border border-line bg-surface px-3.5 py-3 text-[15px] shadow-e1 outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(30,42,69,0.07)]"
                 />

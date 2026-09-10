@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check, Images, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { JudgementCard } from '@/components/JudgementCard';
+import { useStoredState } from '@/lib/client';
 import { coverCrop, toResizedDataUrl } from '@/lib/image';
 import { loadProfile, loadStock } from '@/lib/storage';
 import { SEED_STOCK } from '@/lib/seed';
@@ -27,21 +28,18 @@ export default function ScanPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const guideRef = useRef<HTMLDivElement>(null);
 
-  const [stock, setStock] = useState<StockItem[]>(SEED_STOCK);
-  const [profile, setProfile] = useState<Profile>({});
+  const [stock] = useStoredState<StockItem[]>(loadStock, SEED_STOCK);
+  const [profile] = useStoredState<Profile>(loadProfile, {});
   // モックモードで判定シナリオを選ぶための指定（?demo=yellow|red|blue）
-  const [demo, setDemo] = useState<string | null>(null);
+  const [demo] = useStoredState<string | null>(
+    () => new URLSearchParams(window.location.search).get('demo'),
+    null,
+  );
   const [phase, setPhase] = useState<Phase>('idle');
   const [cameraReady, setCameraReady] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [emptyStock, setEmptyStock] = useState(false);
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
-
-  useEffect(() => {
-    setStock(loadStock());
-    setProfile(loadProfile());
-    setDemo(new URLSearchParams(window.location.search).get('demo'));
-  }, []);
 
   // カメラ起動（FR-03）。失敗しても画像選択で完走できるため致命的ではない
   useEffect(() => {

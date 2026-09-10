@@ -12,6 +12,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
+import { useIsClient, useStoredState } from '@/lib/client';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { CleanserMatchRow, ProfilePrompt } from '@/components/CleanserMatchCard';
 import {
@@ -62,28 +63,22 @@ import type {
 const TIMES: DoseTime[] = ['朝', '昼', '夜'];
 
 export default function RoutinePage() {
-  const [stock, setStock] = useState<StockItem[]>(SEED_STOCK);
-  const [log, setLog] = useState<DoseLog>({ date: todayKey(), taken: [] });
-  const [profile, setProfile] = useState<Profile>({});
-  const [history, setHistory] = useState<DoseLog[]>([]);
-  /** localStorage を読み終えたか。読む前にAIを呼ぶとシードの内容で生成してしまう */
-  const [loaded, setLoaded] = useState(false);
+  const [stock, setStock] = useStoredState<StockItem[]>(loadStock, SEED_STOCK);
+  const [log, setLog] = useStoredState<DoseLog>(() => loadDoseLog(), {
+    date: todayKey(),
+    taken: [],
+  });
+  const [profile] = useStoredState<Profile>(loadProfile, {});
+  const [history, setHistory] = useStoredState<DoseLog[]>(() => loadRecentDoseLogs(7), []);
+  /** 端末の中身を読めているか。読む前にAIを呼ぶとシードの内容で生成してしまう */
+  const loaded = useIsClient();
 
   const [advice, setAdvice] = useState<RoutineAdvice | null>(null);
   const [advising, setAdvising] = useState(false);
   /** 並べ替え中の区分。null なら通常表示 */
   const [reordering, setReordering] = useState<RoutineKind | null>(null);
   /** ユーザーが作った区分。組み込みの2つの後ろに並ぶ */
-  const [customRoutines, setCustomRoutines] = useState<string[]>([]);
-
-  useEffect(() => {
-    setStock(loadStock());
-    setLog(loadDoseLog());
-    setProfile(loadProfile());
-    setHistory(loadRecentDoseLogs(7));
-    setCustomRoutines(loadCustomRoutines());
-    setLoaded(true);
-  }, []);
+  const [customRoutines] = useStoredState<string[]>(loadCustomRoutines, []);
 
   /**
    * ステップを1つ上下に動かす。
@@ -97,18 +92,18 @@ export default function RoutinePage() {
     const [moved] = ids.splice(from, 1);
     ids.splice(to, 0, moved);
     setStock(reorderRoutine(ids));
-  }, []);
+  }, [setStock]);
 
   const onResetOrder = useCallback((kind: RoutineKind) => {
     setStock(resetRoutineOrder(kind));
-  }, []);
+  }, [setStock]);
 
   const onToggle = useCallback((item: StockItem, time: DoseTime) => {
     const { log: nextLog, stock: nextStock } = toggleDose(item, time);
     setLog(nextLog);
     setStock(nextStock);
     setHistory(loadRecentDoseLogs(7));
-  }, []);
+  }, [setLog, setStock, setHistory]);
 
   const meds = stock.filter((i) => i.dose && i.dose.times.length > 0);
 
@@ -135,23 +130,30 @@ export default function RoutinePage() {
 
     const signature = routineSignature(stock, profile);
     const cached = loadRoutineAdvice(signature);
-    if (cached) {
-      setAdvice(cached);
-      return;
-    }
-
     let aborted = false;
-    setAdvising(true);
-    fetch('/api/routine', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ stock, profile }),
-    })
-      .then((res) => (res.ok ? (res.json() as Promise<RoutineAdviceResponse>) : null))
-      .then((body) => {
-        if (aborted || !body?.advice) return;
-        setAdvice(body.advice);
-        saveRoutineAdvice(signature, body.advice);
+
+    // キャッシュがあってもなくても、受け取り方は同じにする。
+    // 待機の表示も含めて、状態の更新はすべて非同期の流れの中に置く。
+    // effect の本体で直に state を書くと、描画の連鎖になるため
+    const source: Promise<RoutineAdvice | null> = cached
+      ? Promise.resolve(cached)
+      : Promise.resolve().then(() => {
+          if (!aborted) setAdvising(true);
+          return fetch('/api/routine', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ stock, profile }),
+          })
+            .then((res) => (res.ok ? (res.json() as Promise<RoutineAdviceResponse>) : null))
+            .then((body) => {
+              if (body?.advice) saveRoutineAdvice(signature, body.advice);
+              return body?.advice ?? null;
+            });
+        });
+
+    source
+      .then((next) => {
+        if (!aborted && next) setAdvice(next);
       })
       .catch(() => {
         /* 解説が無くてもルーティンは読める */
