@@ -1,6 +1,9 @@
 # 作品概要書のソース
 
-提出用PDF → [`../Overlai_作品概要書.pdf`](../Overlai_作品概要書.pdf)（**A4・3ページ**）
+編集用PPTX → [`../Overlai_作品概要書.pptx`](../Overlai_作品概要書.pptx)（**A4縦・3ページ**）  
+提出用PDF → [`../Overlai_作品概要書.pdf`](../Overlai_作品概要書.pdf)（PowerPointから書き出し）
+
+現在の提出物はPPTXを原本とする。`overview.tpl.html` と `overview.html` は、再構成時の比較資料として残している。
 
 ## 構成
 
