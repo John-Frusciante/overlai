@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { Suspense, useCallback, useRef, useState } from 'react';
 import { Camera, Check, Loader2, Plus, X } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useStoredState } from '@/lib/client';
 import { toResizedDataUrl } from '@/lib/image';
 import {
@@ -96,8 +96,7 @@ const EMPTY_DRAFT: Draft = {
 };
 
 /** `?id=` が付いていれば、そのアイテムの値から始める。無ければ空の入力欄 */
-function loadDraft(): { editId: string | null; draft: Draft } {
-  const id = new URLSearchParams(window.location.search).get('id');
+function loadDraft(id: string | null): { editId: string | null; draft: Draft } {
   const item = id ? loadStock().find((i) => i.id === id) : undefined;
   if (!item) return { editId: null, draft: EMPTY_DRAFT };
 
@@ -119,11 +118,36 @@ function loadDraft(): { editId: string | null; draft: Draft } {
   };
 }
 
+/**
+ * `?id=` は**Next のルーターから受け取る**（`useSearchParams`）。
+ *
+ * `window.location.search` を描画中に読んではいけない。app-router は履歴の書き換えを
+ * `useInsertionEffect` で行う（`HistoryUpdater`）ため、クライアント遷移でその画面が
+ * 描画される時点では、URL はまだ**遷移前のもの**になっている。
+ * 一覧の鉛筆から開いても `id` が取れず、編集ではなく新規追加になっていた。
+ *
+ * `useSearchParams` は静的に書き出すページでは Suspense の内側に置く必要がある。
+ */
 export default function NewStockPage() {
+  return (
+    <Suspense fallback={<main className="mx-auto min-h-dvh max-w-md px-4 pt-safe" />}>
+      <NewStockRoute />
+    </Suspense>
+  );
+}
+
+function NewStockRoute() {
+  const id = useSearchParams().get('id');
+  // 編集対象が変わったら入力欄を作り直す。`?id=` だけが変わる遷移では
+  // このコンポーネントは作り直されないため、key で明示する
+  return <NewStockForm key={id ?? 'new'} id={id} />;
+}
+
+function NewStockForm({ id }: { id: string | null }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [{ editId, draft }, setDraftState] = useStoredState(loadDraft, {
+  const [{ editId, draft }, setDraftState] = useStoredState(() => loadDraft(id), {
     editId: null as string | null,
     draft: EMPTY_DRAFT,
   });

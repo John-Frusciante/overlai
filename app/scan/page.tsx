@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Check, Images, Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { JudgementCard } from '@/components/JudgementCard';
 import { useStoredState } from '@/lib/client';
 import { coverCrop, toResizedDataUrl } from '@/lib/image';
@@ -21,8 +21,23 @@ type Phase = 'idle' | 'extracting' | 'judging' | 'error' | 'done';
  */
 const JUDGING_SWITCH_MS = 4000;
 
+/**
+ * `?demo=` は Next のルーターから受け取る（`useSearchParams`）。
+ * `window.location.search` を描画中に読むと、クライアント遷移では遷移前のURLが返る
+ * （app-router は履歴を `useInsertionEffect` で書き換えるため）。
+ */
 export default function ScanPage() {
+  return (
+    <Suspense fallback={<main className="min-h-dvh bg-[#0b0d12]" />}>
+      <Scanner />
+    </Suspense>
+  );
+}
+
+function Scanner() {
   const router = useRouter();
+  // モックモードで判定シナリオを選ぶための指定（?demo=yellow|red|blue）
+  const demo = useSearchParams().get('demo');
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -30,11 +45,6 @@ export default function ScanPage() {
 
   const [stock] = useStoredState<StockItem[]>(loadStock, SEED_STOCK);
   const [profile] = useStoredState<Profile>(loadProfile, {});
-  // モックモードで判定シナリオを選ぶための指定（?demo=yellow|red|blue）
-  const [demo] = useStoredState<string | null>(
-    () => new URLSearchParams(window.location.search).get('demo'),
-    null,
-  );
   const [phase, setPhase] = useState<Phase>('idle');
   const [cameraReady, setCameraReady] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');

@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { Suspense, useCallback, useMemo } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { AlertTriangle, Clock, Plus, Settings } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
 import { StockList } from '@/components/StockList';
@@ -25,12 +26,6 @@ export default function MyStockPage() {
   const [collapsed, setCollapsed] = useStoredState<string[]>(loadCollapsed, []);
   /** ユーザーが追加したカテゴリ */
   const [customCategories] = useStoredState<string[]>(loadCustomCategories, []);
-  // 撮影の流れを止めないよう、?demo= はスキャン画面へ引き継ぐ
-  const [scanHref] = useStoredState(() => {
-    const demo = new URLSearchParams(window.location.search).get('demo');
-    return demo ? `/scan?demo=${encodeURIComponent(demo)}` : '/scan';
-  }, '/scan');
-
   /**
    * 期限アラートは現在時刻に依存する。SSRで計算するとクライアントとの差で
    * ハイドレーションが壊れるため、クライアントで描画されてからだけ求める。
@@ -128,7 +123,11 @@ export default function MyStockPage() {
         />
       </div>
 
-      <BottomNav scanHref={scanHref} />
+      {/* 撮影の流れを止めないよう、?demo= はスキャン画面へ引き継ぐ。
+          URL はルーターから受け取る — 描画中の window.location は遷移前のものを指す */}
+      <Suspense fallback={<BottomNav scanHref="/scan" />}>
+        <ScanNav />
+      </Suspense>
     </main>
   );
 }
@@ -184,4 +183,9 @@ function AlertRow({ alert, index }: { alert: ExpiryAlert; index: number }) {
       </div>
     </div>
   );
+}
+
+function ScanNav() {
+  const demo = useSearchParams().get('demo');
+  return <BottomNav scanHref={demo ? `/scan?demo=${encodeURIComponent(demo)}` : '/scan'} />;
 }

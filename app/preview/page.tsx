@@ -1,5 +1,7 @@
 'use client';
 
+import { Suspense, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { JudgementCard } from '@/components/JudgementCard';
 import { useStoredState } from '@/lib/client';
 import { loadProfile, loadStock } from '@/lib/storage';
@@ -16,13 +18,22 @@ import type { Profile, Signal, StockItem } from '@/lib/types';
  */
 
 export default function PreviewPage() {
+  return (
+    <Suspense fallback={null}>
+      <Preview />
+    </Suspense>
+  );
+}
+
+function Preview() {
   const [stock] = useStoredState<StockItem[]>(loadStock, SEED_STOCK);
   const [profile] = useStoredState<Profile>(loadProfile, {});
-  // ?open=red のように直接カードを開ける（スクリーンショット・デモ用）
-  const [signal, setSignal] = useStoredState<Signal | null>(() => {
-    const open = new URLSearchParams(window.location.search).get('open');
-    return open === 'yellow' || open === 'red' || open === 'blue' ? open : null;
-  }, null);
+  // ?open=red のように直接カードを開ける（スクリーンショット・デモ用）。
+  // URL はルーターから受け取る — 描画中の window.location は遷移前のものを指す
+  const open = useSearchParams().get('open');
+  const [signal, setSignal] = useState<Signal | null>(
+    open === 'yellow' || open === 'red' || open === 'blue' ? open : null,
+  );
 
   return (
     <main className="mx-auto min-h-dvh max-w-md px-5 pt-safe">
