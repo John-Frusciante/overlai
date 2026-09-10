@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, ExternalLink, Stethoscope, X } from 'lucide-react';
 import { matchCleanser } from '@/lib/cleanser';
 import { toItemForm } from '@/lib/mapping';
@@ -15,6 +15,13 @@ import type { AnalyzeResponse, Profile, StockItem } from '@/lib/types';
  * デモ映像の山場。3秒で色が判別できる視認性を最優先にする。
  * 構造は「グラデーションのヒーロー ＋ せり上がる白いシート」。
  * シグナルは絵文字ではなく、重なる2つの角丸矩形（プロダクト名 Overlay の由来）で表す。
+ *
+ * **画面全体が1つの巻物としてスクロールする。** 以前はヒーローを固定し、白いシートだけを
+ * スクロールさせていたが、上下が固定されたぶん読める幅が画面の半分ほどしか残らず、
+ * 根拠を開いたときに細い窓から覗くことになっていた。
+ *
+ * 色は判定そのものなので、ヒーローが流れたあとは細いヘッダーに残す。
+ * これは装飾ではなく、いま何色の話を読んでいるかを見失わせないための帯である。
  */
 export function JudgementCard({
   result,
@@ -28,6 +35,12 @@ export function JudgementCard({
   onClose: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  /** ヒーローが画面から出たか。出たら細いヘッダーに切り替える */
+  const [scrolled, setScrolled] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const heroEndRef = useRef<HTMLDivElement>(null);
+  const reasonsRef = useRef<HTMLElement>(null);
+
   const { extraction, judgement } = result;
   const style = SIGNAL_STYLE[judgement.signal];
   const symbol = overlaySymbolPath();
@@ -39,18 +52,82 @@ export function JudgementCard({
     profile,
   );
 
+  // ヒーローの末尾を見張る。スクロール量ではなく交差で見るので、
+  // 端末ごとの高さの違いに左右されない。
+  // 画面より背の高いヒーロー（横向きなど）では末尾が最初から画面外にあるため、
+  // 「上に抜けたか」まで見て、まだ届いていないだけの状態と区別する
+  useEffect(() => {
+    const sentinel = heroEndRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setScrolled(!entry.isIntersecting && entry.boundingClientRect.top < 0),
+      { root: scrollRef.current },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, []);
+
+  /**
+   * 根拠の開閉。**開いたら、その見出しが画面の先頭に来るまで送る。**
+   * 「根拠を見る」を押した人が見たいのは根拠であって、その上にある成分表ではない。
+   */
+  const toggleReasons = () => {
+    const next = !open;
+    setOpen(next);
+    if (next) {
+      requestAnimationFrame(() =>
+        reasonsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+      );
+    }
+  };
+
+  const gradient = `linear-gradient(142deg, ${style.base} 0%, ${style.deep} 100%)`;
+
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-surface">
+    <div
+      ref={scrollRef}
+      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-surface"
+    >
+      {/* 細いヘッダー — ヒーローが流れたら、色と見出しだけを残す */}
+      <div
+        aria-hidden={!scrolled}
+        className={`fixed inset-x-0 top-0 z-10 flex items-center gap-3 px-4 pb-3 pt-safe-bar text-white transition-opacity duration-200 ${
+          scrolled ? 'opacity-100' : 'pointer-events-none opacity-0'
+        }`}
+        style={{ background: gradient }}
+      >
+        <div className="flex shrink-0 items-center gap-1" aria-hidden>
+          {SIGNAL_ORDER.map((sig) => (
+            <span
+              key={sig}
+              className={`h-1.5 rounded-full bg-white transition-all duration-300 ${
+                sig === judgement.signal ? 'w-5 opacity-100' : 'w-1.5 opacity-35'
+              }`}
+            />
+          ))}
+        </div>
+        <span className="min-w-0 flex-1 truncate text-[15px] font-semibold">
+          {judgement.headline}
+        </span>
+        <button
+          onClick={onClose}
+          aria-label="閉じる"
+          tabIndex={scrolled ? 0 : -1}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 backdrop-blur-sm transition-transform active:scale-90"
+        >
+          <X size={17} strokeWidth={2.2} />
+        </button>
+      </div>
+
       {/* ヒーロー */}
       <div
         className="relative px-5 pt-safe pb-16 text-white"
-        style={{
-          background: `linear-gradient(142deg, ${style.base} 0%, ${style.deep} 100%)`,
-        }}
+        style={{ background: gradient }}
       >
         <button
           onClick={onClose}
           aria-label="閉じる"
+          tabIndex={scrolled ? -1 : 0}
           className="absolute right-4 top-safe flex h-9 w-9 items-center justify-center rounded-full bg-white/15 backdrop-blur-sm transition-transform active:scale-90"
         >
           <X size={17} strokeWidth={2.2} />
@@ -85,8 +162,11 @@ export function JudgementCard({
         </div>
       </div>
 
+      {/* ヒーローが画面から出たかを見張る */}
+      <div ref={heroEndRef} aria-hidden className="h-px" />
+
       {/* せり上がる白いシート */}
-      <div className="animate-sheet-up relative -mt-7 flex-1 overflow-y-auto rounded-t-[26px] bg-surface px-5 pb-36 pt-7 shadow-e4">
+      <div className="animate-sheet-up relative -mt-7 rounded-t-[26px] bg-surface px-5 pb-36 pt-7 shadow-e4">
         {/* 検出成分 */}
         <section>
           <SectionHeader title="この商品から検出された成分" />
@@ -179,9 +259,9 @@ export function JudgementCard({
 
         {/* 根拠を見る */}
         {judgement.reasons.length > 0 && (
-          <section className="mt-8">
+          <section ref={reasonsRef} className="mt-8 scroll-mt-bar">
             <button
-              onClick={() => setOpen((v) => !v)}
+              onClick={toggleReasons}
               aria-expanded={open}
               className="flex w-full items-center justify-between rounded-2xl border border-line bg-surface px-4 py-4 text-left shadow-e1 transition-transform active:scale-[0.99]"
             >

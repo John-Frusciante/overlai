@@ -87,6 +87,14 @@ video {
 .pt-safe {
   padding-top: max(3.5rem, calc(env(safe-area-inset-top) + 1.25rem));
 }
+/* 判定カードの細いヘッダー。ヒーローより浅く取る */
+.pt-safe-bar {
+  padding-top: max(3.25rem, calc(env(safe-area-inset-top) + 1rem));
+}
+/* 細いヘッダーの下に見出しが来るように送る */
+.scroll-mt-bar {
+  scroll-margin-top: calc(max(3.25rem, calc(env(safe-area-inset-top) + 1rem)) + 3.25rem);
+}
 .top-safe {
   top: max(3.25rem, calc(env(safe-area-inset-top) + 1rem));
 }
