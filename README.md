@@ -55,7 +55,8 @@
 | 何を作るべきか・なぜその仕様か | [docs/設計仕様書_Overlai_デモ版.md](docs/設計仕様書_Overlai_デモ版.md) |
 | なぜこれを作るのか（課題・競合・社会的インパクト） | [docs/企画書_Overlai_ユメカタリ2026.md](docs/企画書_Overlai_ユメカタリ2026.md) |
 | 用語の意味（医薬・化粧品・技術） | [docs/GLOSSARY.md](docs/GLOSSARY.md) |
-| 応募先の評価軸 | [docs/CONTEST.md](docs/CONTEST.md) |
+| 応募先の評価軸（ユメカタリ） | [docs/CONTEST.md](docs/CONTEST.md) |
+| DCON2027 の要件と応用方針 | [docs/DCON.md](docs/DCON.md) |
 
 | 何をテストすればいいか | [docs/TESTING.md](docs/TESTING.md) |
 

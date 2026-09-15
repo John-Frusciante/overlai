@@ -14,6 +14,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 **作業を始める前に [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) と [docs/STATUS.md](docs/STATUS.md) を読むこと。**
 
+**このブランチ（`dcon`）は DCON2027 の準備用。** 応募先の要件・応用方針・やることは [docs/DCON.md](docs/DCON.md) にある。
+`main` はユメカタリ本選向けに凍結しているので、DCON 向けの変更はここに積む。
+
 ## このプロジェクトの性質
 
 医薬品・化粧品に隣接するアプリであり、**安全設計に関わる決定がコードに埋め込まれている**。見た目は普通のCRUDに見えても、変更すると安全性が崩れる箇所がある。

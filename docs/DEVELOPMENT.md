@@ -312,5 +312,6 @@ Next の app-router は履歴の書き換えを `useInsertionEffect` で行う�
 | 何を作るべきか・なぜその仕様か | [設計仕様書](設計仕様書_Overlai_デモ版.md) |
 | なぜこれを作るのか | [企画書](企画書_Overlai_ユメカタリ2026.md) |
 | 用語の意味 | [GLOSSARY.md](GLOSSARY.md) |
-| 応募先の評価軸・本選で聞かれそうなこと | [CONTEST.md](CONTEST.md) |
+| 応募先の評価軸・本選で聞かれそうなこと（ユメカタリ） | [CONTEST.md](CONTEST.md) |
+| DCON2027 の要件・応用方針・やること | [DCON.md](DCON.md) |
 | 何をテストすればいいか | [TESTING.md](TESTING.md) |
