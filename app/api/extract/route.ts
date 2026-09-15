@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
+import { fail, upstreamFailure, warmUp } from '@/lib/api';
 import { guard } from '@/lib/guard';
 import { parseDataUrl } from '@/lib/request';
-import { classifyError, extractIngredients } from '@/lib/llm';
+import { extractIngredients } from '@/lib/llm';
 
 /**
  * 成分抽出のみを行うエンドポイント — 在庫登録用
@@ -12,14 +13,8 @@ import { classifyError, extractIngredients } from '@/lib/llm';
 
 export const maxDuration = 60;
 
-/**
- * ウォームアップ用。何もせず 204 を返す。
- * 画面を開いた時点でクライアントが1回叩き、関数の起動をユーザーの撮影より前に済ませる（lib/client.ts useWarmUp）。
- * AIは呼ばないので入口の検査も回数制限も通さない。
- */
-export function GET() {
-  return new Response(null, { status: 204, headers: { 'Cache-Control': 'no-store' } });
-}
+/** ウォームアップ（lib/api.ts） */
+export const GET = warmUp;
 
 export async function POST(req: Request) {
   const blocked = guard(req, 'extract');
@@ -29,18 +24,12 @@ export async function POST(req: Request) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json(
-      { error: { code: 'INVALID_IMAGE', message: 'リクエストの形式が正しくありません' } },
-      { status: 400 },
-    );
+    return fail('INVALID_IMAGE', 'リクエストの形式が正しくありません', 400);
   }
 
   const image = parseDataUrl(body.image);
   if (!image) {
-    return NextResponse.json(
-      { error: { code: 'INVALID_IMAGE', message: '画像を読み込めませんでした' } },
-      { status: 400 },
-    );
+    return fail('INVALID_IMAGE', '画像を読み込めませんでした。選び直してください', 400);
   }
 
   try {
@@ -48,14 +37,10 @@ export async function POST(req: Request) {
     const extracted = await extractIngredients(image);
     const extraction = extracted.value;
     if (!extraction || extraction.ingredients.length === 0) {
-      return NextResponse.json(
-        {
-          error: {
-            code: 'EXTRACTION_FAILED',
-            message: '成分表示を読み取れませんでした。成分表示に寄せて撮り直してください',
-          },
-        },
-        { status: 422 },
+      return fail(
+        'EXTRACTION_FAILED',
+        '成分表示を読み取れませんでした。成分表示に寄せて撮り直してください',
+        422,
       );
     }
     return NextResponse.json({
@@ -64,16 +49,6 @@ export async function POST(req: Request) {
       fell_back: Boolean(extracted.fellBackFrom),
     });
   } catch (err) {
-    if (classifyError(err) === 'rate_limited') {
-      return NextResponse.json(
-        { error: { code: 'RATE_LIMITED', message: '混み合っています。少し待って再試行してください' } },
-        { status: 429 },
-      );
-    }
-    console.error('[extract] error', err);
-    return NextResponse.json(
-      { error: { code: 'UPSTREAM_ERROR', message: '読み取りに失敗しました' } },
-      { status: 500 },
-    );
+    return upstreamFailure(err, 'extract', '読み取りに失敗しました');
   }
 }

@@ -83,6 +83,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 | ルールベースの判定 | `lib/routine.ts` `lib/expiry.ts` `lib/cleanser.ts` `lib/categories.ts` |
 | ルーティンの区分 | `lib/routine.ts`（組み込み2つ＋ユーザーが作る区分） |
 | リクエストの検証 | `lib/request.ts`（3つのAPIで共有） |
+| APIのエラー応答・ウォームアップ | `lib/api.ts`（`fail` / `upstreamFailure` / `warmUp`。route に文言を書かない） |
 | AIの呼び出し | `lib/llm.ts`（プロバイダ抽象。route から直接SDKを呼ばない） |
 
 ## 作業後にやること

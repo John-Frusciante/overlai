@@ -62,7 +62,7 @@
 **実装前に [docs/DEVELOPMENT.md §5「壊してはいけない制約」](docs/DEVELOPMENT.md) を読むこと。** 医療に隣接する領域のため、安全設計に関わる決定がいくつかある。
 
 ```bash
-npm run check   # 型・lint・自動テスト75件
+npm run check   # 型・lint・自動テスト82件
 ```
 
 ## セットアップ
@@ -134,7 +134,7 @@ Issue は [GitHub Issues](https://github.com/John-Frusciante/overlai/issues) で
 | マイルストーン | 期限 | 内容 |
 | :--- | :--- | :--- |
 | [デモ提出](https://github.com/John-Frusciante/overlai/milestone/1) | 2026-09-10 | **完了**。エントリーまでに必要なもの |
-| [本選](https://github.com/John-Frusciante/overlai/milestone/3) | 2026-10-01 | ブース展示と連続デモに耐えるための整備 |
+| [本選](https://github.com/John-Frusciante/overlai/milestone/3) | 2026-10-01 | ブース展示と連続デモに耐えるための整備。**#23 #24 #25 は 9/15 に完了**、残りは当日の準備 |
 | [将来構想](https://github.com/John-Frusciante/overlai/milestone/2) | — | 登録経路の追加、ネイティブ化、家族共有 |
 
 **本選はブース展示で来場者が実機を触る。** 会場のネットワークで動くこと、

@@ -3,7 +3,13 @@
 import { Suspense, useCallback, useRef, useState } from 'react';
 import { Camera, Check, Loader2, Plus, X } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useStoredState, useWarmUp } from '@/lib/client';
+import {
+  UNREADABLE_IMAGE,
+  describeFetchFailure,
+  describeHttpFailure,
+  useStoredState,
+  useWarmUp,
+} from '@/lib/client';
 import { toResizedDataUrl } from '@/lib/image';
 import {
   addStock,
@@ -228,15 +234,26 @@ function NewStockForm({ id }: { id: string | null }) {
 
     setReading(true);
     setReadError('');
+
+    // 画像が読めない失敗と通信の失敗は、次にどうすればよいかが違うので分けて伝える（スキャン画面と同じ）
+    let image: string;
+    try {
+      image = await toResizedDataUrl(file);
+    } catch {
+      setReadError(UNREADABLE_IMAGE);
+      setReading(false);
+      return;
+    }
+
     try {
       const res = await fetch('/api/extract', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: await toResizedDataUrl(file) }),
+        body: JSON.stringify({ image }),
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as ApiErrorBody | null;
-        setReadError(body?.error.message ?? '読み取りに失敗しました');
+        setReadError(body?.error.message ?? describeHttpFailure(res.status));
         return;
       }
       const { extraction } = (await res.json()) as { extraction: ExtractionResult };
@@ -244,8 +261,8 @@ function NewStockForm({ id }: { id: string | null }) {
       setField('category', toStockCategory(extraction.category));
       setField('form', toItemForm(extraction.form));
       setField('ingredients', extraction.ingredients.join('、'));
-    } catch {
-      setReadError('通信に失敗しました');
+    } catch (err) {
+      setReadError(describeFetchFailure(err));
     } finally {
       setReading(false);
     }

@@ -146,7 +146,7 @@
 
 | いつ | 何が起きるか | こちらがやること |
 | :--- | :--- | :--- |
-| 〜9月21日頃 | 書類審査の結果連絡 | 待つ間に本選の `must`（[#23](https://github.com/John-Frusciante/overlai/issues/23)）を片付けておく |
+| 〜9月21日頃 | 書類審査の結果連絡 | 本選向けの整備（#23 #24 #25）は 9/15 に済んだ。待つ間は DCON の準備に回す |
 | 通過した場合 | 本選まで10日前後 | §8 の表と [STATUS.md](STATUS.md) の順序表に沿って進める |
 | 通過しなかった場合 | ── | `main` の整備は止め、DCON2027（`dcon` ブランチ）に集中する |
 
@@ -159,10 +159,12 @@
 
 | 動画では問題にならないが、ブースでは問題になること | 対応 |
 | :--- | :---: |
-| 待ち時間9〜11秒（動画は編集でカットできる） | [#24](https://github.com/John-Frusciante/overlai/issues/24) |
-| 会場のネットワークでの 429・タイムアウト | [#23](https://github.com/John-Frusciante/overlai/issues/23) |
-| 前の来場者が触った在庫が残る | [#25](https://github.com/John-Frusciante/overlai/issues/25) |
-| 当日までの数週間で localStorage が消える | [#22](https://github.com/John-Frusciante/overlai/issues/22) |
+| 待ち時間9〜11秒（動画は編集でカットできる） | ✅ [#24](https://github.com/John-Frusciante/overlai/issues/24) 関数を先に起こす（抽出側の設定に下げる余地は無かった） |
+| 会場のネットワークでの 429・タイムアウト | ✅ [#23](https://github.com/John-Frusciante/overlai/issues/23) 全ケースで次にどうすればよいかを表示 |
+| 前の来場者が触った在庫が残る | ✅ [#25](https://github.com/John-Frusciante/overlai/issues/25) 見出しの長押しで初期化 |
+| 当日までの数週間で localStorage が消える | ✅ [#22](https://github.com/John-Frusciante/overlai/issues/22) 書き出し・読み込み |
+
+**4件とも 2026年9月15日までに対応済み。** 残りは当日の準備と実機での目視（[STATUS.md](STATUS.md)）。
 
 進捗は[本選マイルストーン](https://github.com/John-Frusciante/overlai/milestone/3)を見る。
 

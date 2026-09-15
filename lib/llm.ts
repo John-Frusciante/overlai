@@ -30,10 +30,8 @@ import type { ExtractionResult, Judgement, Provider, RoutineAdvice, StockItem } 
  * Anthropic 経路は 2026年9月15日に取り除いた。キーを持たず一度も動かしていなかった。
  */
 
-export type { Provider };
-
 /** 使用するプロバイダを優先順で返す。先頭が第一候補、以降がフォールバック先。空ならキー未設定 */
-export function providerChain(): Provider[] {
+function providerChain(): Provider[] {
   const chain: Provider[] = [];
   if (process.env.AZURE_PROXY_KEY) chain.push('azure');
   if (process.env.GEMINI_API_KEY) chain.push('gemini');

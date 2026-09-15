@@ -10,5 +10,5 @@
     "types": ["node"]
   },
   "include": ["lib/**/*.ts", "tests/**/*.ts"],
-  "exclude": ["node_modules", "lib/client.ts", "lib/llm.ts", "lib/ui.ts"]
+  "exclude": ["node_modules", "lib/api.ts", "lib/client.ts", "lib/llm.ts", "lib/ui.ts"]
 }

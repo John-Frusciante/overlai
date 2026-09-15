@@ -16,7 +16,7 @@ AIを呼ぶにはキーが要る（§3）。キー無しでは判定APIがエラ
 | コマンド | 用途 |
 | :--- | :--- |
 | `npm run dev` | 開発サーバー |
-| `npm run check` | 型・lint・テスト75件。**コミット前に必ず通す** |
+| `npm run check` | 型・lint・テスト82件。**コミット前に必ず通す** |
 | `npm test` | テストだけ（TypeScript を CommonJS に落として `node --test` に渡す） |
 | `npx next build` | 本番ビルド |
 | `vercel --prod --yes` | 本番デプロイ |
@@ -86,6 +86,7 @@ GEMINI_API_KEY=...
 | localStorage の読み書き | `lib/storage.ts`（**コンポーネントから直接呼ばない**） |
 | ルールベースの判定ロジック | `lib/routine.ts` `lib/expiry.ts` |
 | リクエストの検証 | `lib/request.ts`（3つのAPIで共有） |
+| APIのエラー応答・ウォームアップ | `lib/api.ts`（3つの route で共有。文言は route に書かない） |
 | AIの呼び出し | `lib/llm.ts`（route から直接SDKを呼ばない） |
 | 画面 | `app/*/page.tsx` |
 | 再利用するUI | `components/` |
@@ -270,7 +271,7 @@ Next の app-router は履歴の書き換えを `useInsertionEffect` で行う�
 
 1. `docs/STATUS.md` で現状を確認する
 2. 変更する（§5 の制約に触れていないか確認）
-3. **`npm run check` を通す**（型・lint・テスト75件）
+3. **`npm run check` を通す**（型・lint・テスト82件）
 4. ルールベースの判定を触ったら `tests/` にテストを足す
 5. 影響する画面を実際に開いて確認する
 6. `docs/STATUS.md` と `docs/ARCHITECTURE.md` を更新する

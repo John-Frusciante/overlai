@@ -78,3 +78,28 @@ export function useWarmUp(path: '/api/analyze' | '/api/extract'): void {
     fetch(path, { method: 'GET', cache: 'no-store', keepalive: true }).catch(() => {});
   }, [path]);
 }
+
+/**
+ * JSON の本文を伴わない失敗。サーバーの文言が無いので状態コードから組み立てる。
+ * 502〜504 は Vercel か会場の回線が途中で切った場合で、撮り直しても直らないことが多い。
+ */
+export function describeHttpFailure(status: number): string {
+  if (status === 502 || status === 503 || status === 504) {
+    return '応答が返ってきませんでした。少し時間をおいて、もう一度お試しください';
+  }
+  return '判定に失敗しました。もう一度お試しください';
+}
+
+/** fetch 自体が失敗したとき。オフラインと時間切れは、次にどうすればよいかが違う */
+export function describeFetchFailure(err: unknown): string {
+  if (err instanceof DOMException && err.name === 'AbortError') {
+    return '時間がかかりすぎたため中断しました。電波の良い場所で、もう一度お試しください';
+  }
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    return 'オフラインです。通信環境を確認してから、もう一度お試しください';
+  }
+  return '通信に失敗しました。電波の状況を確認してから、もう一度お試しください';
+}
+
+/** 選んだ画像をブラウザが読めなかったとき（壊れた画像・未対応の形式） */
+export const UNREADABLE_IMAGE = '画像を読み込めませんでした。別の画像を選ぶか、撮り直してください';

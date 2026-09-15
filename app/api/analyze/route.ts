@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
+import { fail, upstreamFailure, warmUp } from '@/lib/api';
 import { guard } from '@/lib/guard';
 import { MOCK_FIXTURES, isSignal } from '@/lib/mock';
 import { parseDataUrl, sanitizeStock } from '@/lib/request';
 import { verifyJudgement } from '@/lib/verify';
-import { classifyError, extractIngredients, judgeAgainstStock } from '@/lib/llm';
-import type { ApiErrorCode } from '@/lib/types';
+import { extractIngredients, judgeAgainstStock } from '@/lib/llm';
 
 /**
  * 判定API — 設計仕様書 §7・§8
@@ -19,18 +19,8 @@ import type { ApiErrorCode } from '@/lib/types';
 
 export const maxDuration = 60;
 
-/**
- * ウォームアップ用。何もせず 204 を返す。
- * 画面を開いた時点でクライアントが1回叩き、関数の起動をユーザーの撮影より前に済ませる（lib/client.ts useWarmUp）。
- * AIは呼ばないので入口の検査も回数制限も通さない。
- */
-export function GET() {
-  return new Response(null, { status: 204, headers: { 'Cache-Control': 'no-store' } });
-}
-
-function fail(code: ApiErrorCode, message: string, status: number) {
-  return NextResponse.json({ error: { code, message } }, { status });
-}
+/** ウォームアップ（lib/api.ts） */
+export const GET = warmUp;
 
 export async function POST(req: Request) {
   const started = Date.now();
@@ -125,18 +115,6 @@ export async function POST(req: Request) {
       fell_back: Boolean(extracted.fellBackFrom ?? judged.fellBackFrom),
     });
   } catch (err) {
-    switch (classifyError(err)) {
-      case 'rate_limited':
-        return fail('RATE_LIMITED', '混み合っています。少し待って再試行してください', 429);
-      case 'auth':
-        console.error('[analyze] 認証エラー: APIキーを確認してください');
-        return fail('UPSTREAM_ERROR', '解析サービスに接続できませんでした', 500);
-      case 'connection':
-        console.error('[analyze] 接続エラー', err);
-        return fail('UPSTREAM_ERROR', '通信に失敗しました', 500);
-      default:
-        console.error('[analyze] unexpected', err);
-        return fail('UPSTREAM_ERROR', '解析サービスでエラーが発生しました', 500);
-    }
+    return upstreamFailure(err, 'analyze', '解析サービスでエラーが発生しました');
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
+import { fail, upstreamFailure } from '@/lib/api';
 import { guard } from '@/lib/guard';
-import { adviseRoutine, classifyError } from '@/lib/llm';
+import { adviseRoutine } from '@/lib/llm';
 import { sanitizeProfile, sanitizeStock } from '@/lib/request';
 import { buildRoutine, orderedRoutines, routineTitle } from '@/lib/routine';
 import type { RoutineAdvice } from '@/lib/types';
@@ -28,18 +29,12 @@ export async function POST(req: Request) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json(
-      { error: { code: 'INVALID_IMAGE', message: 'リクエストの形式が正しくありません' } },
-      { status: 400 },
-    );
+    return fail('INVALID_IMAGE', 'リクエストの形式が正しくありません', 400);
   }
 
   const stock = sanitizeStock(body.stock);
   if (!stock) {
-    return NextResponse.json(
-      { error: { code: 'EMPTY_STOCK', message: 'ストックがありません' } },
-      { status: 400 },
-    );
+    return fail('EMPTY_STOCK', 'ストックがありません', 400);
   }
 
   const profile = sanitizeProfile(body.profile);
@@ -78,16 +73,6 @@ export async function POST(req: Request) {
       fell_back: Boolean(advised.fellBackFrom),
     });
   } catch (err) {
-    if (classifyError(err) === 'rate_limited') {
-      return NextResponse.json(
-        { error: { code: 'RATE_LIMITED', message: '混み合っています。少し待って再試行してください' } },
-        { status: 429 },
-      );
-    }
-    console.error('[routine] error', err);
-    return NextResponse.json(
-      { error: { code: 'UPSTREAM_ERROR', message: 'アドバイスを取得できませんでした' } },
-      { status: 500 },
-    );
+    return upstreamFailure(err, 'routine', 'アドバイスを取得できませんでした');
   }
 }

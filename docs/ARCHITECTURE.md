@@ -121,7 +121,7 @@ lib/
   knowledge.ts          薬の知識（同効薬・吸収阻害・相互作用・成分バッティング）を出典つきで集約
   verify.ts             判定理由の裏取りと出典の付与（サーバー側）
   guard.ts              APIの入口の検査（別オリジンの拒否・レート制限）
-  client.ts             端末の値を画面へ持ち込むフック（useStoredState）
+  client.ts             端末の値を画面へ持ち込むフック（useStoredState）と、失敗の文言・ウォームアップ
   seed.ts               デモ用シードデータ11件
   storage.ts            localStorage アクセスの集約点（在庫CRUD・服薬記録・カテゴリ・解説キャッシュ）
   categories.ts         カテゴリの並び順と名前の検証（ユーザー追加分を含む）
@@ -129,11 +129,13 @@ lib/
   cleanser.ts           洗浄基剤の分類と肌質・頭皮との相性（ルールベース）
   expiry.ts             使用期限・開封後の酸化目安
   request.ts            リクエスト入力の検証（3つのAPIで共有）
+  api.ts                APIの応答の形（エラー応答・ウォームアップ。3つのAPIで共有）
   mapping.ts            店頭商品の分類 → 自宅在庫の分類への変換
   image.ts              送信前リサイズ
   mock.ts               固定応答のフィクスチャ（`?demo=` と `/preview` 用）
 
-tests/                  自動テスト80件（node --test。追加の依存なし）
+tests/                  自動テスト82件（node --test。追加の依存なし）
+  storage.test.ts       初期化（resetAll）の漏れ。鍵を足したら STORAGE_KEYS にも足す
   knowledge.test.ts     出典の有無と引き当て
   verify.test.ts        辿れない理由を落とすか
   routine.test.ts       並び順・区分の検証・成分バッティング
@@ -878,7 +880,7 @@ Tailwind の `@theme` に定義し、全画面で共有する。ニュートラ�
 | APIの入口の検査 | **実装済み**（本番ビルドで 403／429／200。実機の PWA が通ることも確認） |
 | ストックの書き出し・読み込み | **実装済み・確認済み** |
 | 撮影時の切り抜き | **実装済み・実機で確認済み** |
-| 自動テスト | **75件**（`npm test`。ルールベースの部分とシードの決まりごと） |
+| 自動テスト | **82件**（`npm test`。ルールベースの部分・シードの決まりごと・入口の検査・初期化の漏れ） |
 | 在庫の追加・編集・削除 | **実装済み**（カメラ読み取り＋手入力。編集は `/stock/new?id=`、削除は編集モードから） |
 | カテゴリ別の折りたたみ | **実装済み**（開閉状態は localStorage に保存） |
 | JAHIS QR・レシート登録 | 未実装（登録経路としては優先度が低い） |
@@ -905,7 +907,7 @@ Tailwind の `@theme` に定義し、全画面で共有する。ニュートラ�
 ```bash
 npm install
 npm run dev              # .env.local のキーで起動（キー無しでは判定APIがエラーを返す）
-npm run check            # 型チェック + lint + テスト80件
+npm run check            # 型チェック + lint + テスト82件
 npm test                 # テストだけ
 npx next build           # 本番ビルド
 vercel --prod --yes      # デプロイ
