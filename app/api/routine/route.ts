@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { guard } from '@/lib/guard';
-import { activeProvider, adviseRoutine, classifyError } from '@/lib/llm';
-import { MOCK_ROUTINE_ADVICE } from '@/lib/mock';
+import { adviseRoutine, classifyError } from '@/lib/llm';
 import { sanitizeProfile, sanitizeStock } from '@/lib/request';
 import { buildRoutine, orderedRoutines, routineTitle } from '@/lib/routine';
 import type { RoutineAdvice } from '@/lib/types';
@@ -70,13 +69,6 @@ export async function POST(req: Request) {
       .filter((i) => i.dose && i.dose.times.length > 0)
       .map((i) => ({ name: i.name, times: i.dose!.times as string[], isPrescription: i.isPrescription })),
   };
-
-  const provider = activeProvider();
-
-  if (provider === 'mock') {
-    console.warn('[routine] モックモードで応答しています（APIキー未設定）');
-    return NextResponse.json({ advice: MOCK_ROUTINE_ADVICE, provider, mocked: true });
-  }
 
   try {
     const advised = await adviseRoutine(input);

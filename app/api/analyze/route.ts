@@ -3,12 +3,7 @@ import { guard } from '@/lib/guard';
 import { MOCK_FIXTURES, isSignal } from '@/lib/mock';
 import { parseDataUrl, sanitizeStock } from '@/lib/request';
 import { verifyJudgement } from '@/lib/verify';
-import {
-  activeProvider,
-  classifyError,
-  extractIngredients,
-  judgeAgainstStock,
-} from '@/lib/llm';
+import { classifyError, extractIngredients, judgeAgainstStock } from '@/lib/llm';
 import type { ApiErrorCode } from '@/lib/types';
 
 /**
@@ -61,28 +56,18 @@ export async function POST(req: Request) {
     return fail('INVALID_IMAGE', '在庫データが不正です', 400);
   }
 
-  const provider = activeProvider();
-
-  // ── モック応答 ──────────────────────────────────────────────────
-  // AIを呼ばない。デモ動画の撮影とUI確認のための経路。
-  //
-  // `?demo=` の指定は**キーがあっても**効かせる。展示中にどのAIも使えなくなったときの
-  // 最後の逃げ道であり、以前はモックモード（キー未設定）でしか効かなかったため、
-  // 本番URLで `?demo=red` を開いても実際にはAIが呼ばれていた（2026年9月15日に実測）。
-  // 固定応答であることはレスポンスの `mocked` で示し、判定カードにもそう表示する。
-  if (provider === 'mock' || isSignal(body.demo)) {
-    console.warn(
-      provider === 'mock'
-        ? '[analyze] モックモードで応答しています（APIキー未設定）'
-        : '[analyze] ?demo= の指定により固定応答を返しています（AIは呼んでいません）',
-    );
-    const scenario = isSignal(body.demo) ? body.demo : 'yellow';
+  // ── 固定応答（`?demo=yellow|red|blue`）────────────────────────────
+  // AIを呼ばない。展示中にどのAIも使えなくなったときの最後の逃げ道。
+  // 明示的に `?demo=` を付けたときだけ効く（キー未設定時に黙って固定応答を返すモックモードは
+  // 2026年9月15日に廃止した）。固定応答であることはレスポンスの `mocked` で示し、
+  // 判定カードにもそう表示する。
+  if (isSignal(body.demo)) {
+    console.warn('[analyze] ?demo= の指定により固定応答を返しています（AIは呼んでいません）');
     // 2段階ローディングが映る程度の待ち時間を入れる
     await new Promise((r) => setTimeout(r, 5200));
     return NextResponse.json({
-      ...MOCK_FIXTURES[scenario],
+      ...MOCK_FIXTURES[body.demo],
       elapsed_ms: Date.now() - started,
-      provider,
       mocked: true,
     });
   }

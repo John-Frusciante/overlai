@@ -1,5 +1,3 @@
-import Anthropic from '@anthropic-ai/sdk';
-import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import OpenAI from 'openai';
 import { zodResponseFormat } from 'openai/helpers/zod';
 import { ApiError, GoogleGenAI, type Part } from '@google/genai';
@@ -22,30 +20,24 @@ import type { ExtractionResult, Judgement, Provider, RoutineAdvice, StockItem } 
  * ここで差し替えるのは呼び出し方だけであり、2段階パイプラインの構造は変わらない。
  *
  * 優先順位（キーがあるものを上から順に使い、失敗したら次に落ちる）:
- *   OVERLAI_MOCK=1        → モック（AIを呼ばない。以降は評価しない）
- *   ANTHROPIC_API_KEY     → Anthropic Claude
  *   AZURE_PROXY_KEY       → Azure OpenAI 互換プロキシ（学校配布）
  *   GEMINI_API_KEY        → Google Gemini
- *   いずれも無し           → モック
+ *   いずれも無し           → 呼び出しは失敗する（キーは必須。モックモードは廃止した）
  *
  * 本番は学校配布のプロキシ1本で動いており、その停止・失効がそのまま機能停止になる。
  * Gemini はそのための保険であり、独立した事業者のクォータに乗ることに意味がある。
+ *
+ * Anthropic 経路は 2026年9月15日に取り除いた。キーを持たず一度も動かしていなかった。
  */
 
 export type { Provider };
 
-/** 使用するプロバイダを優先順で返す。先頭が第一候補、以降がフォールバック先。 */
+/** 使用するプロバイダを優先順で返す。先頭が第一候補、以降がフォールバック先。空ならキー未設定 */
 export function providerChain(): Provider[] {
-  if (process.env.OVERLAI_MOCK === '1') return ['mock'];
   const chain: Provider[] = [];
-  if (process.env.ANTHROPIC_API_KEY) chain.push('anthropic');
   if (process.env.AZURE_PROXY_KEY) chain.push('azure');
   if (process.env.GEMINI_API_KEY) chain.push('gemini');
-  return chain.length > 0 ? chain : ['mock'];
-}
-
-export function activeProvider(): Provider {
-  return providerChain()[0] ?? 'mock';
+  return chain;
 }
 
 /**
@@ -66,8 +58,6 @@ export interface ImageInput {
 }
 
 // ── クライアント（遅延生成。キーが無くてもアプリが起動できるように） ──────────
-
-const ANTHROPIC_MODEL = 'claude-opus-5';
 
 /**
  * Azure プロキシで使うモデル。
@@ -96,7 +86,7 @@ const CHAIN_BUDGET_MS = 24_000;
 /**
  * SDK 側の自動再試行は切る（`maxRetries: 0`）。
  *
- * OpenAI / Anthropic の SDK は既定で2回やり直す。**タイムアウトも再試行の対象**なので、
+ * OpenAI の SDK は既定で2回やり直す。**タイムアウトも再試行の対象**なので、
  * 上流が応答しない障害では 20秒 × 3回 = 60秒 待ってから例外になる。
  * 2026年9月15日の実測で、応答しない上流に対して 61.5秒 かかって 500 が返った。
  * これは `maxDuration` と同時に尽きる長さで、Gemini への保険が一度も動かない。
@@ -104,15 +94,6 @@ const CHAIN_BUDGET_MS = 24_000;
  * Gemini SDK は `retryOptions` を渡さない限り再試行しない（実装を読んで確認）ので、そのまま。
  */
 const SDK_MAX_RETRIES = 0;
-
-let _anthropic: Anthropic | null = null;
-function anthropic(): Anthropic {
-  // SDK はミリ秒指定。effort `high` の思考時間もこの中に収める必要がある
-  if (!_anthropic) {
-    _anthropic = new Anthropic({ timeout: PROVIDER_TIMEOUT_MS, maxRetries: SDK_MAX_RETRIES });
-  }
-  return _anthropic;
-}
 
 let _azure: OpenAI | null = null;
 function azure(): OpenAI {
@@ -163,7 +144,7 @@ function gemini(): GoogleGenAI {
 /**
  * Zod スキーマを Gemini の responseJsonSchema に変換する。
  *
- * Anthropic の zodOutputFormat / OpenAI の zodResponseFormat にあたるヘルパーが
+ * OpenAI の zodResponseFormat にあたるヘルパーが
  * Gemini SDK には無いので、ここで JSON Schema に落として使えない語彙を削る。
  * Gemini が受け付けるのは JSON Schema のサブセットであり、
  *   - $schema         … 未対応キーワード。送ると拒否される
@@ -194,8 +175,8 @@ function pruneForGemini(node: unknown): unknown {
  * Gemini を1回呼んで構造化出力を得る。
  *
  * maxOutputTokens は指定しない（出力上限を切り詰めない — §7.5）。
- * thinking も明示的に無効化しない。Anthropic 経路で本文にツール呼び出しが混入した
- * 既知の失敗モードと同じ理由で、モデル既定の思考を止めにいかない。
+ * thinking も明示的に無効化しない。思考を止めると構造化出力が崩れる失敗モードが
+ * 知られているため、モデル既定の思考を止めにいかない。
  */
 async function callGemini<T>(
   model: string,
@@ -236,9 +217,7 @@ async function callGemini<T>(
  */
 function isTransient(err: unknown): boolean {
   if (err instanceof ApiError) return err.status >= 500;
-  return (
-    err instanceof Anthropic.InternalServerError || err instanceof OpenAI.InternalServerError
-  );
+  return err instanceof OpenAI.InternalServerError;
 }
 
 const TRANSIENT_RETRY_DELAY_MS = 1500;
@@ -281,9 +260,11 @@ async function withFallback<T>(
   const accept = options.accept ?? ((v: T | null) => v !== null);
   const score = options.score ?? (() => 0);
 
-  const chain = providerChain().filter((p) => p !== 'mock');
+  const chain = providerChain();
   const deadline = Date.now() + CHAIN_BUDGET_MS;
-  let lastError: unknown = new Error('利用可能なAIプロバイダがありません');
+  let lastError: unknown = new Error(
+    'AIプロバイダのキーが設定されていません（AZURE_PROXY_KEY か GEMINI_API_KEY）',
+  );
   /** accept に届かなかったが、応答自体は返ってきたもの */
   let best: LlmResult<T> | null = null;
 
@@ -356,28 +337,6 @@ async function extractWith(
     );
   }
 
-  if (provider === 'anthropic') {
-    // thinking は明示的に無効化しない（既定の adaptive のまま）。§7.5
-    const res = await anthropic().messages.parse({
-      model: ANTHROPIC_MODEL,
-      max_tokens: 16000, // thinking トークンもここから消費されるため切り詰めない
-      output_config: { format: zodOutputFormat(ExtractionSchema), effort: 'medium' },
-      system: EXTRACTION_SYSTEM_PROMPT,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: { type: 'base64', media_type: image.mediaType, data: image.data },
-            },
-            { type: 'text', text: EXTRACTION_USER_TEXT },
-          ],
-        },
-      ],
-    });
-    return (res.parsed_output as ExtractionResult | null) ?? null;
-  }
 
   const res = await azure().chat.completions.parse({
     model: AZURE_MODEL_EXTRACT,
@@ -426,17 +385,6 @@ async function judgeWith(
     );
   }
 
-  if (provider === 'anthropic') {
-    // effort はここでは下げない。判定品質がそのまま評価対象になるため（§7.5）
-    const res = await anthropic().messages.parse({
-      model: ANTHROPIC_MODEL,
-      max_tokens: 16000,
-      output_config: { format: zodOutputFormat(JudgementSchema), effort: 'high' },
-      system: JUDGEMENT_SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: userMessage }],
-    });
-    return (res.parsed_output as Judgement | null) ?? null;
-  }
 
   const res = await azure().chat.completions.parse({
     model: AZURE_MODEL_JUDGE,
@@ -483,16 +431,6 @@ async function adviseWith(
     );
   }
 
-  if (provider === 'anthropic') {
-    const res = await anthropic().messages.parse({
-      model: ANTHROPIC_MODEL,
-      max_tokens: 16000,
-      output_config: { format: zodOutputFormat(RoutineAdviceSchema), effort: 'medium' },
-      system: ROUTINE_ADVICE_SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: userMessage }],
-    });
-    return (res.parsed_output as RoutineAdvice | null) ?? null;
-  }
 
   const res = await azure().chat.completions.parse({
     model: AZURE_MODEL_EXTRACT,
@@ -511,23 +449,15 @@ async function adviseWith(
 export type LlmFailure = 'rate_limited' | 'auth' | 'connection' | 'upstream';
 
 export function classifyError(err: unknown): LlmFailure {
-  if (err instanceof Anthropic.RateLimitError || err instanceof OpenAI.RateLimitError) {
-    return 'rate_limited';
-  }
+  if (err instanceof OpenAI.RateLimitError) return 'rate_limited';
   if (
-    err instanceof Anthropic.AuthenticationError ||
     err instanceof OpenAI.AuthenticationError ||
     // 学校配布プロキシは無効なキーに 401 ではなく 403 を返す（実測）
     err instanceof OpenAI.PermissionDeniedError
   ) {
     return 'auth';
   }
-  if (
-    err instanceof Anthropic.APIConnectionError ||
-    err instanceof OpenAI.APIConnectionError
-  ) {
-    return 'connection';
-  }
+  if (err instanceof OpenAI.APIConnectionError) return 'connection';
   // Gemini SDK は種類ごとの例外クラスを持たず、ApiError.status で判別する。
   // キー失効は 401/403 ではなく 400 + API_KEY_INVALID で返ってくる（実測）ため、
   // ここだけはメッセージを見る。会場でキーが切れたときログから原因を追えるようにする。

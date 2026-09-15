@@ -42,7 +42,7 @@ export default function ScanPage() {
 
 function Scanner() {
   const router = useRouter();
-  // モックモードで判定シナリオを選ぶための指定（?demo=yellow|red|blue）
+  // 固定応答のシナリオ指定（?demo=yellow|red|blue）。展示中にAIが使えなくなったときの逃げ道
   const demo = useSearchParams().get('demo');
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);

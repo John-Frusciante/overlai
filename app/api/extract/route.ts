@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { guard } from '@/lib/guard';
-import { MOCK_EXTRACTION } from '@/lib/mock';
 import { parseDataUrl } from '@/lib/request';
-import { activeProvider, classifyError, extractIngredients } from '@/lib/llm';
+import { classifyError, extractIngredients } from '@/lib/llm';
 
 /**
  * 成分抽出のみを行うエンドポイント — 在庫登録用
@@ -33,14 +32,6 @@ export async function POST(req: Request) {
       { error: { code: 'INVALID_IMAGE', message: '画像を読み込めませんでした' } },
       { status: 400 },
     );
-  }
-
-  const provider = activeProvider();
-
-  if (provider === 'mock') {
-    console.warn('[extract] モックモードで応答しています（APIキー未設定）');
-    await new Promise((r) => setTimeout(r, 2600));
-    return NextResponse.json({ extraction: MOCK_EXTRACTION, provider, mocked: true });
   }
 
   try {

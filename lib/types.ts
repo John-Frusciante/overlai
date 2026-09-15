@@ -128,7 +128,7 @@ export interface Judgement {
 }
 
 /** AIプロバイダの識別子。優先順と切り替えは lib/llm.ts が持つ */
-export type Provider = 'anthropic' | 'azure' | 'gemini' | 'mock';
+export type Provider = 'azure' | 'gemini';
 
 export interface AnalyzeResponse {
   extraction: ExtractionResult;

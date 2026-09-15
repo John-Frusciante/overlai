@@ -167,7 +167,7 @@ export function JudgementCard({
 
       {/* せり上がる白いシート */}
       <div className="animate-sheet-up relative -mt-7 rounded-t-[26px] bg-surface px-5 pb-36 pt-7 shadow-e4">
-        {/* 固定応答（`?demo=` かモックモード）。AIの判定に見せかけない */}
+        {/* 固定応答（`?demo=`）。AIの判定に見せかけない */}
         {result.mocked && (
           <p className="mb-5 rounded-xl bg-amber-50 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-amber-800">
             これはデモ用の固定応答です。撮影した商品をAIが読み取った結果ではありません。

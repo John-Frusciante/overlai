@@ -13,7 +13,7 @@
 > ### AIは実際に動いている
 >
 > 学校配布の **Azure OpenAI プロキシ（`gpt-5.1`）** で2段階パイプラインが本番稼働している（実測 約9秒）。
-> `lib/llm.ts` が環境変数からプロバイダを決めるため、**Anthropic Claude / Azure OpenAI / Google Gemini / モック**を
+> `lib/llm.ts` が環境変数からプロバイダを決めるため、**Azure OpenAI / Google Gemini** を
 > コード変更なしで切り替えられる。さらに**先頭が失敗したら次に落ちる**ので、
 > 配布キーが止まってもAI機能ごと停止しない。詳細 → [docs/STATUS.md](docs/STATUS.md)
 
@@ -72,7 +72,7 @@ npm install
 npm run dev          # http://localhost:3000
 ```
 
-APIキーは**なくても動く**（モックモードで起動する）。実際のAIを使うには `.env.local` にいずれかを置く。
+AIを呼ぶには `.env.local` にキーが要る（**キー無しではAPIがエラーを返す**。キー未設定時のモックモードは廃止した）。
 
 ```bash
 # Azure OpenAI 互換プロキシを使う場合
@@ -80,12 +80,11 @@ AZURE_PROXY_KEY=...
 AZURE_PROXY_ENDPOINT=https://.../
 AZURE_PROXY_API_VERSION=2025-04-01-preview
 
-# Anthropic を使う場合
-ANTHROPIC_API_KEY=sk-ant-...
-
 # Google Gemini を使う場合（他のキーと併記すると保険として働く）
 GEMINI_API_KEY=...
 ```
+
+判定カードの見た目だけ確認するなら `/preview?open=red`、AIを呼ばずに撮影の流れを通すなら `/?demo=red` を使う（固定応答）。
 
 **コード変更は不要**。`lib/llm.ts` が環境変数を見て優先順を決め、複数あるときは失敗した順に次へ落ちる。
 
@@ -95,7 +94,7 @@ GEMINI_API_KEY=...
 | :--- | :--- |
 | フレームワーク | Next.js 16（App Router）+ TypeScript |
 | UI | React 19 + Tailwind CSS 4 |
-| AI | Azure OpenAI プロキシ（`gpt-5.1`）／ Anthropic（`claude-opus-5`）／ Google Gemini（`gemini-3.5-flash` / `gemini-3.6-flash`）。Vision + 構造化出力、失敗時は自動フォールバック |
+| AI | Azure OpenAI プロキシ（`gpt-5.1`）／ Google Gemini（`gemini-3.5-flash` / `gemini-3.6-flash`）。Vision + 構造化出力、失敗時は自動フォールバック |
 | データ | シードJSON + localStorage（**DB不使用**） |
 | デプロイ | Vercel |
 
@@ -110,7 +109,7 @@ app/
   api/analyze/route.ts  判定API（抽出 → 照合）
   api/extract/route.ts  成分抽出のみ（在庫登録用）
   api/routine/route.ts  ルーティンの解説（順序はルール、言葉だけAI）
-lib/llm.ts              AIプロバイダの抽象とフォールバック（Anthropic / Azure / Gemini / モック）
+lib/llm.ts              AIプロバイダの抽象とフォールバック（Azure / Gemini）
 components/             BottomNav / StockList / CategoryManager / RoutineManager / JudgementCard / CleanserMatchCard
 components/ui/          Button / SectionHeader
 lib/                    types・schemas・prompts・storage・routine・expiry・cleanser ほか

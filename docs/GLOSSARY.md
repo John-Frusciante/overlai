@@ -16,8 +16,8 @@
 | **ステップ2 / 照合** | 抽出結果＋在庫 → 判定。`Judgement` |
 | **インバス** | 風呂の中で使うもの。シャンプー・トリートメント・洗顔・ボディソープ |
 | **アウトバス** | 風呂上がりに使うもの。化粧水・美容液・乳液・クリーム・外用薬 |
-| **モックモード** | APIキーなしで固定応答を返す動作モード。**AIは動いていない**。現在は使っていないが、デモ当日の障害時の保険として残してある |
-| **プロバイダ** | どのAIを使うか。Anthropic Claude / Azure OpenAI / Google Gemini / モックの4つ。`lib/llm.ts` が環境変数から決める |
+| **固定応答（`?demo=`）** | AIを呼ばずに `lib/mock.ts` の決まった判定を返す逃げ道。**AIは動いていない**。明示的に `?demo=` を付けたときだけ効き、カードにその旨が出る。キー未設定時に黙って固定応答を返す「モックモード」は 2026年9月15日に廃止した |
+| **プロバイダ** | どのAIを使うか。Azure OpenAI / Google Gemini の2つ。`lib/llm.ts` が環境変数から決める |
 | **フォールバック** | 先頭のプロバイダが失敗したとき、次のプロバイダで同じ処理をやり直すこと。本番が学校配布のキー1本に依存しているために置いている（DEVELOPMENT.md §5.8） |
 
 ---
@@ -70,14 +70,13 @@
 
 | 用語 | 意味 |
 | :--- | :--- |
-| **構造化出力** | スキーマを渡してAIの出力形式を強制する仕組み。JSONパース失敗が原理的に起こらない。Anthropic は `output_config.format`、OpenAI は `response_format`、Gemini は `responseJsonSchema` |
-| **adaptive thinking** | Claude が必要に応じて思考する既定の動作。**無効化しない**（DEVELOPMENT.md §5.4）。Anthropic 経路でのみ関係する |
-| **effort** | 思考の深さとトークン消費のつまみ。`low`〜`max`。既定は `high` |
+| **構造化出力** | スキーマを渡してAIの出力形式を強制する仕組み。JSONパース失敗が原理的に起こらない。OpenAI は `response_format`、Gemini は `responseJsonSchema` |
+| **thinking** | モデルが答える前に考える既定の動作。**無効化しない**（DEVELOPMENT.md §5.4）。止めると構造化出力が崩れる失敗モードがある |
 | **Route Handler** | Next.js App Router のサーバー側エンドポイント。**APIキーを保持できる唯一の場所** |
 | **Vision** | 画像を入力として受け取るAIの機能 |
 | **PWA** | ホーム画面に追加して全画面起動できるWebアプリの仕組み |
 | **Azure OpenAI 互換プロキシ** | 学校配布のエンドポイント。標準の `openai` SDK に `baseURL` を渡して使う。現在の稼働環境 |
-| **`max_completion_tokens`** | 出力トークンの上限。**gpt-5 系は `max_tokens` を受け付けず、これを使う**。Anthropic は `max_tokens` |
+| **`max_completion_tokens`** | 出力トークンの上限。**gpt-5 系は `max_tokens` を受け付けず、これを使う** |
 | **json_schema (strict)** | OpenAI の構造化出力。zod スキーマから生成し、出力形式を強制する。プロキシでも通ることを実測で確認済み |
 | **`responseJsonSchema`** | Gemini の構造化出力。**zod から変換するヘルパーが SDK に無い**ので `geminiJsonSchema()` が自前で変換し、Gemini が受け付けない語彙（`$schema`、`type: [A, null]`）を削っている |
 | **`finishReason`** | Gemini が生成を終えた理由。`STOP` 以外（安全フィルタ・出力上限など）は途中で切れた応答なので、成功として扱わない（DEVELOPMENT.md §5.11） |
