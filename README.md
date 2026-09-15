@@ -111,8 +111,8 @@ app/
   api/extract/route.ts  成分抽出のみ（在庫登録用）
   api/routine/route.ts  ルーティンの解説（順序はルール、言葉だけAI）
 lib/llm.ts              AIプロバイダの抽象とフォールバック（Anthropic / Azure / Gemini / モック）
-components/             BottomNav / StockList / StockActionSheet / JudgementCard / CleanserMatchCard
-components/ui/          Card / Chip / Button / SectionHeader
+components/             BottomNav / StockList / CategoryManager / RoutineManager / JudgementCard / CleanserMatchCard
+components/ui/          Button / SectionHeader
 lib/                    types・schemas・prompts・storage・routine・expiry・cleanser ほか
 docs/                   全ドキュメント
 ```

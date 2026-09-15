@@ -1,4 +1,4 @@
-import type { CleanserBase, CleanserMatch, ItemForm, Profile, StockItem } from './types';
+import type { CleanserBase, CleanserMatch, ItemForm, Profile } from './types';
 
 /**
  * 洗浄基剤 × 肌質・頭皮の相性判定 — 企画書 §6 機能一覧13番
@@ -227,15 +227,4 @@ export function matchCleanser(
   }
 
   return { base, ingredient, ...judged };
-}
-
-/** 在庫のうち洗浄料だけを相性つきで返す */
-export function cleansersWithMatch(
-  stock: StockItem[],
-  profile: Profile,
-): Array<{ item: StockItem; match: CleanserMatch }> {
-  return stock
-    .filter(isCleanser)
-    .map((item) => ({ item, match: matchCleanser(item, profile) }))
-    .filter((x): x is { item: StockItem; match: CleanserMatch } => x.match !== null);
 }

@@ -157,13 +157,3 @@ export const SEED_STOCK: StockItem[] = [
     openedAt: daysAgo(95),
   },
 ];
-
-/** マイストック画面の表示順 — §9.2 */
-export const CATEGORY_ORDER = [
-  '処方薬',
-  '処方薬(外用)',
-  '市販薬・サプリ',
-  'スキンケア',
-  'ヘアケア',
-  'ボディケア',
-] as const;

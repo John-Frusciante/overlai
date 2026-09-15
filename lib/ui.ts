@@ -1,7 +1,6 @@
 import {
   Bandage,
   Bath,
-  Droplets,
   Pill,
   ShowerHead,
   Sparkles,
@@ -17,7 +16,7 @@ import { isBuiltin } from './categories';
  * Tailwind の JIT が拾えるよう、クラス名は完全な文字列で持つ（動的生成しない）。
  */
 
-export const CATEGORY_STYLE: Record<
+const CATEGORY_STYLE: Record<
   BuiltinCategory,
   { icon: LucideIcon; text: string; bg: string; ring: string; label: string }
 > = {
@@ -64,9 +63,6 @@ export const CATEGORY_STYLE: Record<
     label: 'ボディケア',
   },
 };
-
-/** 剤形が不明なときのフォールバック */
-export const FALLBACK_ICON = Droplets;
 
 /**
  * ユーザーが追加したカテゴリの配色。

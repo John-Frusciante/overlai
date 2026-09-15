@@ -134,7 +134,7 @@ lib/
   image.ts              送信前リサイズ
   mock.ts               モック応答のフィクスチャ
 
-tests/                  自動テスト75件（node --test。追加の依存なし）
+tests/                  自動テスト80件（node --test。追加の依存なし）
   knowledge.test.ts     出典の有無と引き当て
   verify.test.ts        辿れない理由を落とすか
   routine.test.ts       並び順・区分の検証・成分バッティング

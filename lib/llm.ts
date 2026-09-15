@@ -48,14 +48,6 @@ export function activeProvider(): Provider {
   return providerChain()[0] ?? 'mock';
 }
 
-/** 現在どのAIで動いているかを人が読める形で返す（ログ・ドキュメント用） */
-export function providerLabel(p: Provider = activeProvider()): string {
-  if (p === 'anthropic') return `Anthropic Claude (${ANTHROPIC_MODEL})`;
-  if (p === 'azure') return `Azure OpenAI proxy (${AZURE_MODEL_EXTRACT} / ${AZURE_MODEL_JUDGE})`;
-  if (p === 'gemini') return `Google Gemini (${GEMINI_MODEL_EXTRACT} / ${GEMINI_MODEL_JUDGE})`;
-  return 'モック（AIを呼んでいません）';
-}
-
 /**
  * AI呼び出しの結果。どのプロバイダが実際に答えたかを一緒に返す。
  * フォールバックが起きたとき、レスポンスの provider が実態とズレると
