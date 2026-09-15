@@ -2,7 +2,7 @@
 
 **このファイルは実装の現在地を1枚で示す。** 機能の有無を判断するときは、企画書ではなくここを見る。
 
-| 更新日 | 2026年9月15日（エントリー完了。#23 障害時のUI・#25 長押し初期化が完了。Anthropic 経路とモックモードを廃止） |
+| 更新日 | 2026年9月15日（エントリー完了。本選向けの #23 #24 #25 がすべて完了。Anthropic 経路とモックモードを廃止） |
 | :--- | :--- |
 | 公開URL | https://overlai-delta.vercel.app |
 | **稼働モード** | **Azure OpenAI プロキシ（gpt-5.1）で実稼働** |
@@ -145,7 +145,7 @@ GEMINI_API_KEY     → Google Gemini (gemini-3.5-flash / gemini-3.6-flash)
 | 1 | `must` | ~~通信エラー時のUIを実際に確認する~~ **✅ 9/15 完了** | 429／500／無応答／オフライン／時間切れ／504 を起こして確認（TESTING.md §K）。残りは実機の機内モードだけ | — | [#23](https://github.com/John-Frusciante/overlai/issues/23) |
 | 2 | `must` | ~~Gemini 無料枠の 5 RPM をどう扱うか決める~~ **✅ 9/15 決定：課金しない** | 本番は Azure 主体で、Gemini は Azure が止まったときの保険にとどめる。フォールバック中に並んで 429 になったら「混み合っています」で待ってもらい、続くようなら `?demo=` の固定応答に切り替える | — | — |
 | 3 | `should` | ~~ブース展示用のワンタップ初期化~~ **✅ 9/15 完了** | マイストックの見出しを1.2秒長押し → 確認 → 「戻す」。在庫・服薬記録・肌質・開閉・カテゴリ・区分・解説キャッシュをすべて消す（`resetAll`）。設定画面の「見本のデータに戻す」も同じ関数に寄せた。WebKit で通しを確認（TESTING.md §L） | — | [#25](https://github.com/John-Frusciante/overlai/issues/25) |
-| 4 | `should` | 判定レイテンシの短縮（抽出側のみ） | 実測 8.6〜10.6秒。ブースでは来場者が実際に待つ。判定側は下げない（AGENTS.md §4） | 通過が決まってから〜9/28 | [#24](https://github.com/John-Frusciante/overlai/issues/24) |
+| 4 | `should` | ~~判定レイテンシの短縮（抽出側のみ）~~ **✅ 9/15 完了（できる範囲で）** | 抽出側の設定には下げる余地が無かった（`gpt-5.1` の既定は reasoning なし、`low` は逆に遅い、画像を小さくしても時間は変わらない）。**削れたのは関数の起動時間だけ**：画面を開いた時点で空の GET を投げ、撮影より前に関数を起こす（本番実測 1.7秒 → 0.4秒）。TESTING.md §M | — | [#24](https://github.com/John-Frusciante/overlai/issues/24) |
 
 **当日の準備（Issue にしないもの）**
 
@@ -197,7 +197,7 @@ GEMINI_API_KEY     → Google Gemini (gemini-3.5-flash / gemini-3.6-flash)
 | マイルストーン | 期限 | 状態 | 内容 |
 | :--- | :--- | :---: | :--- |
 | [デモ提出](https://github.com/John-Frusciante/overlai/milestone/1) | 2026-09-10 | **完了** | 開発・全テスト項目（TESTING.md §A〜§J）・デモ動画の撮影まで完了 |
-| [本選](https://github.com/John-Frusciante/overlai/milestone/3) | 2026-10-01 | 進行中 | エントリー完了（9/15）・結果連絡は9/21頃。残りは #24 のみ — ブース展示と連続デモに耐えるための整備（#23 #25 は完了、#20 は Anthropic 廃止で閉じた） |
+| [本選](https://github.com/John-Frusciante/overlai/milestone/3) | 2026-10-01 | 進行中 | エントリー完了（9/15）・結果連絡は9/21頃。#23 #24 #25 すべて完了（#20 は Anthropic 廃止で閉じた）。残りは当日の準備と実機での目視のみ |
 | [将来構想](https://github.com/John-Frusciante/overlai/milestone/2) | — | — | #18 #19 #26 #27 — 登録経路の追加、ネイティブ化、家族共有 |
 
 **本選の期限を 10/1（名古屋）にしている。** 東京は10/11だが、どちらの会場になるか分からないうちは早い方に合わせる。

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useSyncExternalStore } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 
 /**
  * 端末に保存された値を React に持ち込むためのフック
@@ -63,4 +63,18 @@ export function useStoredState<T>(
 export function useIsClient(): boolean {
   const [store] = useState(() => createStore(() => true, false));
   return useSyncExternalStore(store.subscribe, store.get, store.getServer);
+}
+
+/**
+ * 判定APIの関数を先に起こしておく（#24）。
+ *
+ * Vercel の関数は呼ばれずにいると眠り、次の1回目だけ起動に時間がかかる
+ * （2026年9月15日の実測: 本番で 1.7秒 → 2回目 0.4秒）。撮影の構図を決めている数秒のあいだに
+ * 空の GET を1回投げておけば、撮ったときには起きている。結果は使わないので失敗も無視する。
+ * 呼ぶ先は `GET` を持つ Route Handler だけ（app/api/analyze・app/api/extract）。
+ */
+export function useWarmUp(path: '/api/analyze' | '/api/extract'): void {
+  useEffect(() => {
+    fetch(path, { method: 'GET', cache: 'no-store', keepalive: true }).catch(() => {});
+  }, [path]);
 }

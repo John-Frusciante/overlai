@@ -12,6 +12,15 @@ import { classifyError, extractIngredients } from '@/lib/llm';
 
 export const maxDuration = 60;
 
+/**
+ * ウォームアップ用。何もせず 204 を返す。
+ * 画面を開いた時点でクライアントが1回叩き、関数の起動をユーザーの撮影より前に済ませる（lib/client.ts useWarmUp）。
+ * AIは呼ばないので入口の検査も回数制限も通さない。
+ */
+export function GET() {
+  return new Response(null, { status: 204, headers: { 'Cache-Control': 'no-store' } });
+}
+
 export async function POST(req: Request) {
   const blocked = guard(req, 'extract');
   if (blocked) return blocked;

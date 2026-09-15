@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useRef, useState } from 'react';
 import { Camera, Check, Loader2, Plus, X } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useStoredState } from '@/lib/client';
+import { useStoredState, useWarmUp } from '@/lib/client';
 import { toResizedDataUrl } from '@/lib/image';
 import {
   addStock,
@@ -146,6 +146,9 @@ function NewStockRoute() {
 function NewStockForm({ id }: { id: string | null }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // 写真を選んでいるあいだに抽出APIの関数を起こしておく（#24）
+  useWarmUp('/api/extract');
 
   const [{ editId, draft }, setDraftState] = useStoredState(() => loadDraft(id), {
     editId: null as string | null,

@@ -4,7 +4,7 @@ import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Check, Images, Loader2 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { JudgementCard } from '@/components/JudgementCard';
-import { useStoredState } from '@/lib/client';
+import { useStoredState, useWarmUp } from '@/lib/client';
 import { coverCrop, toResizedDataUrl } from '@/lib/image';
 import { loadProfile, loadStock } from '@/lib/storage';
 import { SEED_STOCK } from '@/lib/seed';
@@ -56,6 +56,9 @@ function Scanner() {
   const [errorMsg, setErrorMsg] = useState('');
   const [emptyStock, setEmptyStock] = useState(false);
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
+
+  // 構図を決めているあいだに判定APIの関数を起こしておく（#24）
+  useWarmUp('/api/analyze');
 
   // カメラ起動（FR-03）。失敗しても画像選択で完走できるため致命的ではない
   useEffect(() => {
