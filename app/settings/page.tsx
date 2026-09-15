@@ -17,8 +17,7 @@ import {
   loadStock,
   moveCategory,
   moveRoutine,
-  resetStock,
-  saveCollapsed,
+  resetAll,
   saveCustomCategories,
   saveCustomRoutines,
   saveProfile,
@@ -94,14 +93,13 @@ export default function SettingsPage() {
   }, [setStock, setProfile, setCategories, setRoutines]);
 
   const onReset = useCallback(() => {
-    setStock(resetStock());
-    saveCollapsed([]);
-    saveCustomCategories([]);
-    saveCustomRoutines([]);
+    // 端末の中身はすべて lib/storage.ts の resetAll が消す。ここでは画面の状態を追従させるだけ
+    setStock(resetAll());
+    setProfile({});
     setCategories([]);
     setRoutines([]);
     setResetting(false);
-  }, [setStock, setCategories, setRoutines]);
+  }, [setStock, setProfile, setCategories, setRoutines]);
 
   return (
     <main className="mx-auto min-h-dvh max-w-md px-4 pb-24 pt-safe">
@@ -279,7 +277,7 @@ export default function SettingsPage() {
             <p className="mt-1 text-[12.5px] leading-relaxed text-red-600">
               いま入っているストック
               <span className="tabular-nums"> {stock.length} </span>
-              件と、自分で作ったカテゴリ・ルーティンが消えて、見本のデータに戻ります。
+              件と、服薬記録・肌質・自分で作ったカテゴリ・ルーティンがすべて消えて、見本のデータに戻ります。
               元には戻せません。
             </p>
             <div className="mt-3 flex gap-2">

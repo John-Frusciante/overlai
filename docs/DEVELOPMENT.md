@@ -299,7 +299,7 @@ Next の app-router は履歴の書き換えを `useInsertionEffect` で行う�
 | カメラが起動しない | HTTPSでないと `getUserMedia` は動かない。`localhost` は例外的に可 |
 | 判定が毎回同じ | URLに `?demo=` が残っている。カードに「デモ用の固定応答です」と出ていればこれ |
 | 出力が途中で切れる | `max_tokens` を絞りすぎ。thinking トークンの分を見込む |
-| 在庫が増えない | `lib/seed.ts` はシードであり、実データは localStorage にある。設定 → データ → 「見本のデータに戻す」で戻せる |
+| 在庫が増えない | `lib/seed.ts` はシードであり、実データは localStorage にある。設定 → データ → 「見本のデータに戻す」か、マイストックの見出しを1.2秒長押しで戻せる |
 | 本番で API が 403 になる | `lib/guard.ts` が別オリジンと判断している。`ALLOWED_ORIGINS` に足すか、独自ドメインの設定を見直す |
 | 遷移してきたときだけクエリが取れない | 描画中に `window.location` を読んでいる。`useSearchParams()` に替える（§5.17） |
 | 型エラー `form が無い` | `StockItem` に `form`（剤形）は必須。順序ソートのキーになる |

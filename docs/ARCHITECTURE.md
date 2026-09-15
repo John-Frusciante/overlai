@@ -576,7 +576,7 @@ Vision（`image_url`）と Structured Outputs（`json_schema` の strict モー�
 ```ts
 loadStock()   キーが無ければシードで初期化。読み取り失敗時もシードで継続
 saveStock()   保存失敗を握りつぶす（プライベートモード等）
-resetStock()  シードへ戻す（服薬記録・プロフィール・開閉状態もあわせて消す）
+resetAll()    見本へ戻す（在庫・服薬記録・肌質・開閉・カテゴリ・区分・解説キャッシュのすべて。鍵の一覧は STORAGE_KEYS）
 ```
 
 | キー | 内容 |

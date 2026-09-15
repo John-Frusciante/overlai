@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useCallback, useMemo } from 'react';
+import { Suspense, useCallback, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { AlertTriangle, Clock, Plus, Settings } from 'lucide-react';
@@ -14,18 +14,33 @@ import {
   loadCustomCategories,
   loadStock,
   removeStock,
+  resetAll,
   saveCollapsed,
 } from '@/lib/storage';
 import { SEED_STOCK } from '@/lib/seed';
 import { overlaySymbolPath } from '@/lib/ui';
 import type { ExpiryAlert } from '@/lib/types';
 
+/**
+ * 見出しの長押しで初期化の確認を出すまでの時間。
+ * ブース展示では説明しながら片手で操作するので、設定画面まで潜らずに戻せる導線が要る（#25）。
+ * 普通に使っている人が偶然押し続ける長さではなく、確認もはさむので誤操作では消えない。
+ */
+const HOLD_TO_RESET_MS = 1200;
+
 export default function MyStockPage() {
   const [stock, setStock] = useStoredState(loadStock, SEED_STOCK);
   /** 閉じているカテゴリ。件数が増えても一覧をたどれるようにする */
   const [collapsed, setCollapsed] = useStoredState<string[]>(loadCollapsed, []);
   /** ユーザーが追加したカテゴリ */
-  const [customCategories] = useStoredState<string[]>(loadCustomCategories, []);
+  const [customCategories, setCustomCategories] = useStoredState<string[]>(
+    loadCustomCategories,
+    [],
+  );
+  /** 初期化の確認シートを出しているか */
+  const [resetting, setResetting] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
+  const holdTimer = useRef<number | null>(null);
   /**
    * 期限アラートは現在時刻に依存する。SSRで計算するとクライアントとの差で
    * ハイドレーションが壊れるため、クライアントで描画されてからだけ求める。
@@ -51,10 +66,45 @@ export default function MyStockPage() {
 
   const symbol = overlaySymbolPath();
 
+  const startHold = useCallback(() => {
+    if (holdTimer.current !== null) return;
+    holdTimer.current = window.setTimeout(() => {
+      holdTimer.current = null;
+      navigator.vibrate?.(20);
+      setResetting(true);
+    }, HOLD_TO_RESET_MS);
+  }, []);
+  const cancelHold = useCallback(() => {
+    if (holdTimer.current !== null) {
+      window.clearTimeout(holdTimer.current);
+      holdTimer.current = null;
+    }
+  }, []);
+
+  /** 端末の中身をすべて見本に戻し、この画面の状態も追従させる */
+  const onReset = useCallback(() => {
+    setStock(resetAll());
+    setCollapsed([]);
+    setCustomCategories([]);
+    setResetting(false);
+    setResetDone(true);
+    window.setTimeout(() => setResetDone(false), 2200);
+  }, [setStock, setCollapsed, setCustomCategories]);
+
   return (
     <main className="mx-auto min-h-dvh max-w-md px-4 pb-32 pt-safe">
       <header className="flex items-start justify-between px-1">
-        <div>
+        {/* 見出しの長押しで初期化の確認を出す（#25）。テキスト選択やコンテキストメニューが
+            先に出ると長押しが成立しないので、この塊だけ止める */}
+        <div
+          onPointerDown={startHold}
+          onPointerUp={cancelHold}
+          onPointerLeave={cancelHold}
+          onPointerCancel={cancelHold}
+          onContextMenu={(e) => e.preventDefault()}
+          className="select-none"
+          style={{ WebkitTouchCallout: 'none' }}
+        >
           <div className="flex items-center gap-1.5">
             <svg viewBox="0 0 90 90" className="h-4 w-4" aria-hidden>
               <path d={symbol.a} fill="currentColor" fillOpacity="0.45" className="text-brand" />
@@ -122,6 +172,57 @@ export default function MyStockPage() {
           onRemove={onRemove}
         />
       </div>
+
+      {/* 初期化の確認 — 展示の合間に、説明役以外でも迷わず押せる形にする */}
+      {resetting && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-[2px]"
+          onClick={() => setResetting(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reset-title"
+            onClick={(e) => e.stopPropagation()}
+            className="animate-sheet-up w-full max-w-md rounded-t-[26px] bg-surface px-5 pb-safe pt-6 shadow-e4"
+          >
+            <h2 id="reset-title" className="text-[17px] font-bold text-ink">
+              見本のデータに戻しますか？
+            </h2>
+            <p className="mt-2 text-[13.5px] leading-relaxed text-muted">
+              いま入っているストック
+              <span className="font-semibold tabular-nums text-ink"> {stock.length} </span>
+              件と、服薬記録・肌質・自分で作ったカテゴリとルーティン区分がすべて消えて、
+              最初の状態に戻ります。元には戻せません。
+            </p>
+            <div className="mt-5 flex gap-2.5 pb-4">
+              <button
+                onClick={() => setResetting(false)}
+                className="flex-1 rounded-2xl bg-surface-sunken py-3.5 text-[15px] font-medium text-muted transition-transform active:scale-[0.98]"
+              >
+                やめる
+              </button>
+              <button
+                onClick={onReset}
+                className="flex-1 rounded-2xl bg-red-600 py-3.5 text-[15px] font-semibold text-white transition-transform active:scale-[0.98]"
+              >
+                戻す
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {resetDone && (
+        <div
+          role="status"
+          className="animate-fade-up pointer-events-none fixed inset-x-0 bottom-28 z-40 flex justify-center"
+        >
+          <span className="rounded-full bg-ink px-4 py-2 text-[13px] font-medium text-white shadow-e3">
+            見本のデータに戻しました
+          </span>
+        </div>
+      )}
 
       {/* 撮影の流れを止めないよう、?demo= はスキャン画面へ引き継ぐ。
           URL はルーターから受け取る — 描画中の window.location は遷移前のものを指す */}

@@ -35,6 +35,15 @@ function write(key: string, value: unknown): void {
   }
 }
 
+function remove(key: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    /* 消せなくても致命的ではない */
+  }
+}
+
 // ── 在庫 ────────────────────────────────────────────────────────────
 
 export function loadStock(): StockItem[] {
@@ -79,14 +88,35 @@ export function removeStock(id: string): StockItem[] {
   return next;
 }
 
-export function resetStock(): StockItem[] {
+/**
+ * 端末の中身をすべて見本の状態に戻す。
+ *
+ * ブース展示で来場者が次々に触るとき、前の人の在庫・服薬記録・肌質が残っていると
+ * 次の人に見せる判定が変わる（このアプリは在庫で判定が変わる）。
+ * 「在庫だけ戻す」では足りず、**このファイルが持つ鍵をすべて**初期化する。
+ * 鍵を増やしたらここにも足すこと（tests/storage.test.ts が見張っている）。
+ */
+export function resetAll(): StockItem[] {
   saveStock(SEED_STOCK);
   write(DOSE_KEY, []);
   write(PROFILE_KEY, {});
   write(COLLAPSED_KEY, []);
   write(CATEGORY_KEY, []);
+  write(ROUTINE_KEY, []);
+  remove(ADVICE_KEY);
   return SEED_STOCK;
 }
+
+/** このファイルが管理している鍵。初期化の漏れをテストで確かめるために公開する */
+export const STORAGE_KEYS = () => [
+  STOCK_KEY,
+  DOSE_KEY,
+  PROFILE_KEY,
+  COLLAPSED_KEY,
+  CATEGORY_KEY,
+  ROUTINE_KEY,
+  ADVICE_KEY,
+];
 
 // ── ユーザーが追加したカテゴリ ───────────────────────
 
