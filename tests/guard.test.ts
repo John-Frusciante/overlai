@@ -1,6 +1,6 @@
 import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
-import { isSameSite } from '../lib/guard';
+import { isSameSite, maxRequests } from '../lib/guard';
 
 /**
  * APIの入口 — 自分のサイトからの呼び出しだけを通す
@@ -62,5 +62,33 @@ describe('呼び出し元の検査', () => {
 
   it('開発中は素通りさせる', () => {
     assert.equal(isSameSite(request({ host: HOST })), true);
+  });
+});
+
+describe('回数の上限', () => {
+  function withEnv<T>(value: string | undefined, run: () => T): T {
+    const before = process.env.GUARD_MAX_REQUESTS;
+    if (value === undefined) delete process.env.GUARD_MAX_REQUESTS;
+    else process.env.GUARD_MAX_REQUESTS = value;
+    try {
+      return run();
+    } finally {
+      if (before === undefined) delete process.env.GUARD_MAX_REQUESTS;
+      else process.env.GUARD_MAX_REQUESTS = before;
+    }
+  }
+
+  it('既定は 30回/10分', () => {
+    assert.equal(withEnv(undefined, maxRequests), 30);
+  });
+
+  it('展示のあいだは環境変数で広げられる', () => {
+    assert.equal(withEnv('120', maxRequests), 120);
+  });
+
+  it('壊れた値は既定に戻す（0・負数・文字列）', () => {
+    assert.equal(withEnv('0', maxRequests), 30);
+    assert.equal(withEnv('-5', maxRequests), 30);
+    assert.equal(withEnv('many', maxRequests), 30);
   });
 });

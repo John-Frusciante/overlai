@@ -65,8 +65,17 @@ export async function POST(req: Request) {
 
   // ── モック応答 ──────────────────────────────────────────────────
   // AIを呼ばない。デモ動画の撮影とUI確認のための経路。
-  if (provider === 'mock') {
-    console.warn('[analyze] モックモードで応答しています（APIキー未設定）');
+  //
+  // `?demo=` の指定は**キーがあっても**効かせる。展示中にどのAIも使えなくなったときの
+  // 最後の逃げ道であり、以前はモックモード（キー未設定）でしか効かなかったため、
+  // 本番URLで `?demo=red` を開いても実際にはAIが呼ばれていた（2026年9月15日に実測）。
+  // 固定応答であることはレスポンスの `mocked` で示し、判定カードにもそう表示する。
+  if (provider === 'mock' || isSignal(body.demo)) {
+    console.warn(
+      provider === 'mock'
+        ? '[analyze] モックモードで応答しています（APIキー未設定）'
+        : '[analyze] ?demo= の指定により固定応答を返しています（AIは呼んでいません）',
+    );
     const scenario = isSignal(body.demo) ? body.demo : 'yellow';
     // 2段階ローディングが映る程度の待ち時間を入れる
     await new Promise((r) => setTimeout(r, 5200));

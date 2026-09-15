@@ -32,7 +32,19 @@ const EXTRA_ORIGINS = (process.env.ALLOWED_ORIGINS ?? '')
 
 /** 同じ相手から、この時間内に、この回数まで */
 const WINDOW_MS = 10 * 60 * 1000;
-const MAX_REQUESTS = 30;
+const DEFAULT_MAX_REQUESTS = 30;
+
+/**
+ * 10分あたりの上限。`GUARD_MAX_REQUESTS` で上書きできる。
+ *
+ * 相手の識別は IP なので、会場の Wi-Fi やテザリングでは**展示用の端末が全部同じ相手**になる。
+ * 判定と解説を合わせて2台で触り続けると 30回/10分 に届きうるため、
+ * 展示のあいだだけ Vercel の環境変数で広げる（例: 120）。既定は変えない。
+ */
+export function maxRequests(): number {
+  const n = Number(process.env.GUARD_MAX_REQUESTS);
+  return Number.isInteger(n) && n > 0 ? n : DEFAULT_MAX_REQUESTS;
+}
 
 /**
  * 直近のアクセス記録。プロセス内にしか無い。
@@ -114,5 +126,5 @@ function isTooMany(key: string): boolean {
     }
   }
 
-  return recent.length > MAX_REQUESTS;
+  return recent.length > maxRequests();
 }

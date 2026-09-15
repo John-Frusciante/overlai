@@ -101,10 +101,24 @@ const AZURE_MODEL_JUDGE = process.env.AZURE_MODEL_JUDGE ?? 'gpt-5.1';
 const PROVIDER_TIMEOUT_MS = 20_000;
 const CHAIN_BUDGET_MS = 24_000;
 
+/**
+ * SDK 側の自動再試行は切る（`maxRetries: 0`）。
+ *
+ * OpenAI / Anthropic の SDK は既定で2回やり直す。**タイムアウトも再試行の対象**なので、
+ * 上流が応答しない障害では 20秒 × 3回 = 60秒 待ってから例外になる。
+ * 2026年9月15日の実測で、応答しない上流に対して 61.5秒 かかって 500 が返った。
+ * これは `maxDuration` と同時に尽きる長さで、Gemini への保険が一度も動かない。
+ * 再試行の判断は `attempt()`（5xx に1回だけ）に集約してあるので、SDK 側では持たない。
+ * Gemini SDK は `retryOptions` を渡さない限り再試行しない（実装を読んで確認）ので、そのまま。
+ */
+const SDK_MAX_RETRIES = 0;
+
 let _anthropic: Anthropic | null = null;
 function anthropic(): Anthropic {
   // SDK はミリ秒指定。effort `high` の思考時間もこの中に収める必要がある
-  if (!_anthropic) _anthropic = new Anthropic({ timeout: PROVIDER_TIMEOUT_MS });
+  if (!_anthropic) {
+    _anthropic = new Anthropic({ timeout: PROVIDER_TIMEOUT_MS, maxRetries: SDK_MAX_RETRIES });
+  }
   return _anthropic;
 }
 
@@ -123,6 +137,7 @@ function azure(): OpenAI {
       defaultHeaders: { 'api-key': key },
       defaultQuery: { 'api-version': process.env.AZURE_PROXY_API_VERSION ?? '2025-04-01-preview' },
       timeout: PROVIDER_TIMEOUT_MS,
+      maxRetries: SDK_MAX_RETRIES,
     });
   }
   return _azure;

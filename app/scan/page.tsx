@@ -22,6 +22,12 @@ type Phase = 'idle' | 'extracting' | 'judging' | 'error' | 'done';
 const JUDGING_SWITCH_MS = 4000;
 
 /**
+ * サーバーは60秒（`maxDuration`）で打ち切られるので、それより後まで待っても何も来ない。
+ * 会場の回線で接続だけが宙に浮いたとき、読み込み画面のまま固まらないための上限。
+ */
+const CLIENT_TIMEOUT_MS = 70_000;
+
+/**
  * `?demo=` は Next のルーターから受け取る（`useSearchParams`）。
  * `window.location.search` を描画中に読むと、クライアント遷移では遷移前のURLが返る
  * （app-router は履歴を `useInsertionEffect` で書き換えるため）。
@@ -84,30 +90,57 @@ function Scanner() {
     async (dataUrl: string) => {
       setPhase('extracting');
       const timer = setTimeout(() => setPhase('judging'), JUDGING_SWITCH_MS);
+      const controller = new AbortController();
+      const abortTimer = setTimeout(() => controller.abort(), CLIENT_TIMEOUT_MS);
       try {
         const res = await fetch('/api/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ image: dataUrl, stock, demo }),
+          signal: controller.signal,
         });
 
         if (!res.ok) {
+          // サーバーの文言があればそれを出す。無いのは Vercel が関数ごと打ち切った 504 など
           const body = (await res.json().catch(() => null)) as ApiErrorBody | null;
-          setErrorMsg(body?.error.message ?? '判定に失敗しました');
+          setErrorMsg(body?.error.message ?? describeStatus(res.status));
           setEmptyStock(body?.error.code === 'EMPTY_STOCK');
           setPhase('error');
           return;
         }
         setResult((await res.json()) as AnalyzeResponse);
         setPhase('done');
-      } catch {
-        setErrorMsg('通信に失敗しました');
+      } catch (err) {
+        setEmptyStock(false);
+        setErrorMsg(describeFailure(err));
         setPhase('error');
       } finally {
         clearTimeout(timer);
+        clearTimeout(abortTimer);
       }
     },
     [stock, demo],
+  );
+
+  /**
+   * 縮小して送る。**画像が読めなかったときに、何も起きないまま止まらない。**
+   * `createImageBitmap` は壊れた画像や未対応の形式で例外を投げる。以前はそれが
+   * 未処理のまま消え、押しても反応しない画面になっていた（2026年9月15日に WebKit で再現）。
+   */
+  const submit = useCallback(
+    async (source: Blob) => {
+      let dataUrl: string;
+      try {
+        dataUrl = await toResizedDataUrl(source);
+      } catch {
+        setEmptyStock(false);
+        setErrorMsg('画像を読み込めませんでした。別の画像を選ぶか、撮り直してください');
+        setPhase('error');
+        return;
+      }
+      await analyze(dataUrl);
+    },
+    [analyze],
   );
 
   /**
@@ -150,16 +183,16 @@ function Scanner() {
       );
 
     const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/jpeg', 0.92));
-    if (blob) await analyze(await toResizedDataUrl(blob));
-  }, [analyze]);
+    if (blob) await submit(blob);
+  }, [submit]);
 
   const pickFile = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       e.target.value = '';
-      if (file) await analyze(await toResizedDataUrl(file));
+      if (file) await submit(file);
     },
-    [analyze],
+    [submit],
   );
 
   const busy = phase === 'extracting' || phase === 'judging';
@@ -345,4 +378,26 @@ function PipelineStep({
       </span>
     </li>
   );
+}
+
+/**
+ * JSON の本文を伴わない失敗。サーバーの文言が無いので状態コードから組み立てる。
+ * 502〜504 は Vercel か会場の回線が途中で切った場合で、撮り直しても直らないことが多い。
+ */
+function describeStatus(status: number): string {
+  if (status === 502 || status === 503 || status === 504) {
+    return '応答が返ってきませんでした。少し時間をおいて、もう一度お試しください';
+  }
+  return '判定に失敗しました。もう一度お試しください';
+}
+
+/** fetch 自体が失敗したとき。オフラインと時間切れは、次にどうすればよいかが違う */
+function describeFailure(err: unknown): string {
+  if (err instanceof DOMException && err.name === 'AbortError') {
+    return '時間がかかりすぎたため中断しました。電波の良い場所で、もう一度お試しください';
+  }
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    return 'オフラインです。通信環境を確認してから、もう一度お試しください';
+  }
+  return '通信に失敗しました。電波の状況を確認してから、もう一度お試しください';
 }
