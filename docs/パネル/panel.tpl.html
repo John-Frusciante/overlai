@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Overlai ブースパネル</title>
+<style>
+  /* A4縦で組み、運営がA1（約2.83倍）に拡大して掲出する。
+     A4での 7pt は A1で約20pt。これより小さい文字は置かない */
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy:#1B2A4A; --ink:#0F172A; --muted:#475569; --faint:#94A3B8; --pale:#CBD5E1;
+    --canvas:#F5F7FA; --line:#E2E8F0;
+    --blue:#2563EB; --blue-bg:#EFF6FF; --blue-bd:#BFDBFE;
+    --amber:#C2410C; --amber-bg:#FFF7ED; --amber-bd:#FED7AA;
+    --red:#DC2626;
+  }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN",sans-serif;
+    color:var(--ink); font-size:8pt; line-height:1.6; letter-spacing:.01em; background:#fff;
+  }
+  .page { width:210mm; height:297mm; padding:8mm 10mm 6mm; overflow:hidden;
+          display:flex; flex-direction:column; gap:2.4mm; }
+
+  /* ── ヘッダー ── */
+  .hd { display:flex; align-items:flex-start; gap:6mm; padding-bottom:3mm; border-bottom:1.2pt solid var(--navy); }
+  .hd-l { flex:1; }
+  .contest { font-size:7pt; color:var(--muted); letter-spacing:.04em; }
+  .brand { display:flex; align-items:center; gap:3mm; margin-top:1.6mm; }
+  .brand svg { width:11.5mm; height:11.5mm; }
+  .brand .wm { font-size:30pt; line-height:1; color:var(--navy); font-weight:400; letter-spacing:.01em;
+               font-family:"Helvetica Neue","Hiragino Sans",sans-serif; }
+  .brand .ro { font-size:7.5pt; color:var(--muted); margin-left:1mm; align-self:flex-end; padding-bottom:1.4mm; }
+  h1 { margin-top:1.6mm; font-size:19pt; line-height:1.3; font-weight:700; color:var(--navy); letter-spacing:.02em; }
+  .lead { margin-top:1.6mm; font-size:9pt; color:var(--muted); line-height:1.6; }
+  .lead b { color:var(--ink); }
+  .qr { width:30mm; text-align:center; padding-top:.5mm; }
+  .qr svg { display:block; width:25mm; height:25mm; margin:0 auto; }
+  .qr b { display:block; margin-top:1.2mm; font-size:8.5pt; color:var(--navy); }
+  .qr span { display:block; font-size:6.5pt; color:var(--faint); letter-spacing:0; }
+
+  /* ── セクション見出し ── */
+  h2 { display:flex; align-items:baseline; gap:2.4mm; font-size:12pt; font-weight:700; color:var(--navy);
+       letter-spacing:.02em; margin-bottom:2mm; }
+  h2 .n { font-size:8pt; font-weight:700; color:var(--blue); letter-spacing:.1em; }
+  h2 .sub { font-size:7.5pt; font-weight:400; color:var(--muted); letter-spacing:.01em; }
+
+  /* ── 01 エピソード ── */
+  .eps { display:grid; grid-template-columns:1fr 1fr; gap:4mm; }
+  .ep { border:.6pt solid var(--line); border-radius:3.4mm; padding:3.4mm 4.4mm 3.6mm; position:relative; overflow:hidden; }
+  .ep::before { content:""; position:absolute; left:0; top:0; bottom:0; width:1.4mm; background:var(--c); }
+  .ep .lb { font-size:8.5pt; font-weight:700; color:var(--c); }
+  .ep .who { font-size:7pt; color:var(--muted); margin-top:.4mm; }
+  .ep .scene { font-size:8.5pt; font-weight:700; color:var(--muted); margin-top:1.8mm; }
+  .ep .big { font-size:16.5pt; font-weight:700; color:var(--navy); line-height:1.35; margin-top:.8mm; letter-spacing:.01em; }
+  .chips { display:flex; flex-wrap:nowrap; gap:1.4mm; margin-top:2.4mm; }
+  .chip { font-size:7.3pt; font-weight:700; color:var(--c); background:var(--bg); border:.6pt solid var(--bd);
+          border-radius:10mm; padding:1mm 2.6mm; white-space:nowrap; }
+  .ep.a { --c:var(--blue); --bg:var(--blue-bg); --bd:var(--blue-bd); }
+  .ep.b { --c:var(--amber); --bg:var(--amber-bg); --bd:var(--amber-bd); }
+
+  .band { background:var(--navy); border-radius:3.4mm; padding:2.8mm 5mm 3mm; margin-top:2.4mm; }
+  .band .q { font-size:8pt; color:var(--faint); }
+  .band .q b { color:var(--pale); font-weight:700; }
+  .band .a { font-size:15.5pt; font-weight:700; color:#fff; line-height:1.35; margin-top:1mm; letter-spacing:.01em; }
+
+  /* ── 02 しくみ ── */
+  .steps { display:grid; grid-template-columns:1fr auto 1fr auto 1fr; align-items:start; gap:2mm; }
+  .step { background:var(--canvas); border-radius:3mm; padding:2.6mm 3.2mm; height:100%; }
+  .step .h { display:flex; align-items:center; gap:1.8mm; font-size:9.5pt; font-weight:700; }
+  .step .no { flex:none; width:5.6mm; height:5.6mm; border-radius:50%; background:var(--navy); color:#fff;
+              font-size:8pt; display:flex; align-items:center; justify-content:center; }
+  .step .ai { font-size:6.5pt; font-weight:700; color:var(--blue); background:var(--blue-bg); border:.6pt solid var(--blue-bd);
+              border-radius:10mm; padding:.2mm 1.8mm; margin-left:1mm; white-space:nowrap; }
+  .step p { font-size:7pt; color:var(--muted); margin-top:1.2mm; line-height:1.55; }
+  .arrow { color:var(--faint); font-size:11pt; align-self:center; }
+
+  .answers { display:grid; grid-template-columns:repeat(3, 1fr); gap:4mm; margin-top:2.4mm; }
+  .ans { display:flex; flex-direction:column; align-items:center; }
+  .ans .shot { height:40mm; display:block; border:.6pt solid var(--line); border-radius:3.4mm; padding:1mm; background:#fff; }
+  .ans .shot img { height:100%; display:block; border-radius:2.6mm; }
+  .ans .cap { font-size:6.5pt; color:var(--faint); margin-top:1mm; }
+  .ans .txt { align-self:stretch; margin-top:1.6mm; }
+  .ans .lb { font-size:7pt; font-weight:700; color:var(--c); }
+  .ans .h { font-size:9.5pt; font-weight:700; line-height:1.4; margin-top:.4mm; }
+  .ans p { font-size:7pt; color:var(--muted); margin-top:.8mm; line-height:1.55; }
+  .ans.a { --c:var(--blue); }
+  .ans.b { --c:var(--amber); }
+
+  /* ── 03 設計 ── */
+  .design { display:grid; grid-template-columns:repeat(3, 1fr); gap:2mm; }
+  .d { border:.6pt solid var(--line); border-radius:2.6mm; padding:1.6mm 2.8mm 1.8mm; }
+  .d .h { font-size:8.5pt; font-weight:700; color:var(--navy); }
+  .d p { font-size:7pt; color:var(--muted); margin-top:.2mm; line-height:1.5; }
+  .stats { display:grid; grid-template-columns:repeat(4, 1fr); margin-top:2mm; background:var(--canvas); border-radius:2.6mm; }
+  .st { padding:1.4mm 3mm; text-align:center; }
+  .st + .st { border-left:.6pt solid var(--line); }
+  .st b { display:block; font-size:12pt; color:var(--navy); line-height:1.25; }
+  .st span { font-size:7pt; color:var(--muted); }
+
+  /* ── フッター ── */
+  .ft { margin-top:auto; display:flex; justify-content:space-between; align-items:baseline;
+        border-top:.6pt solid var(--line); padding-top:1.6mm; font-size:7pt; color:var(--muted); }
+  .ft b { color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ヘッダー -->
+  <header class="hd">
+    <div class="hd-l">
+      <div class="contest">ユメカタリ 学生生成AIコンテスト 2026｜開発部門</div>
+      <div class="brand">
+        <svg viewBox="0 0 90 90" aria-hidden="true">
+          <path d="M14 14 h30 a10 10 0 0 1 10 10 v30 a10 10 0 0 1 -10 10 h-30 a10 10 0 0 1 -10 -10 v-30 a10 10 0 0 1 10 -10 z" fill="#1B2A4A" fill-opacity=".38"/>
+          <path d="M36 36 h30 a10 10 0 0 1 10 10 v30 a10 10 0 0 1 -10 10 h-30 a10 10 0 0 1 -10 -10 v-30 a10 10 0 0 1 10 -10 z" fill="#1B2A4A" fill-opacity=".72"/>
+        </svg>
+        <span class="wm">Overlai</span>
+        <span class="ro">Overlay（重ねる）＋ AI</span>
+      </div>
+      <h1>買う前に、家の棚を重ねて見る。</h1>
+      <p class="lead">家にある薬と化粧品を登録しておけば、店頭で商品の成分表示を撮るだけで、<br>
+        生成AIが家にあるものと重ねて、<b>「組み合わせ」</b>と<b>「重複」</b>を判定するアプリです。</p>
+    </div>
+    <div class="qr">
+      {{QR}}
+      <b>その場で試せます</b>
+      <span>ブースの端末でも、<br>このQRからでも</span>
+    </div>
+  </header>
+
+  <!-- 01 迷い -->
+  <section>
+    <h2><span class="n">01</span>私たちの迷い<span class="sub">チームの3人が、実際に困っていたこと</span></h2>
+    <div class="eps">
+      <div class="ep a">
+        <div class="lb">エピソード 1｜組み合わせの迷い</div>
+        <div class="who">濱田・杉本｜肌が弱く、ステロイドの塗り薬を使っている</div>
+        <div class="scene">ある日、ドラッグストアで――</div>
+        <div class="big">化粧水を手に取って、<br>手が止まった。</div>
+        <div class="chips"><span class="chip">薬を塗った肌に使っていい？</span><span class="chip">薬と化粧品、どっちが先？</span></div>
+      </div>
+      <div class="ep b">
+        <div class="lb">エピソード 2｜重複の迷い</div>
+        <div class="who">井上｜店頭では、家にある薬を思い出せない</div>
+        <div class="scene">風邪薬を買って、家に帰ると――</div>
+        <div class="big">似たような薬が、<br>もう家にあった。</div>
+        <div class="chips"><span class="chip">もう家にある？</span><span class="chip">名前は違うけど、中身は同じ？</span></div>
+      </div>
+    </div>
+    <div class="band">
+      <div class="q">使っていい？　どっちが先？　もう家にある？ ――　<b>どの迷いも、答えは「家にあるもの」次第。</b></div>
+      <div class="a">なのに、店頭で家にあるものと重ねて確かめる方法がなかった。</div>
+    </div>
+  </section>
+
+  <!-- 02 しくみ -->
+  <section>
+    <h2><span class="n">02</span>だから作った、Overlai のしくみ</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="h"><span class="no">1</span>家のものを登録</div>
+        <p>処方薬も市販薬も化粧品も一つの在庫に。<br>撮影でも手入力でも。残量や期限も管理。</p>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step">
+        <div class="h"><span class="no">2</span>店頭で撮る<span class="ai">生成AI</span></div>
+        <p>商品の成分表示を撮ると、<br>書式がばらばらでも成分を読み取る。</p>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step">
+        <div class="h"><span class="no">3</span>重ねて判定<span class="ai">生成AI</span></div>
+        <p>家の在庫と重ねて、青・黄・赤の3色と<br>成分名つきの理由で示す。</p>
+      </div>
+    </div>
+
+    <div class="answers">
+      <div class="ans a">
+        <div class="shot"><img src="../ピッチ/assets/red-real.png" alt=""></div>
+        <div class="cap">実際の判定画面（市販の薬用化粧水）</div>
+        <div class="txt">
+          <div class="lb">エピソード 1 への答え</div>
+          <div class="h">合わない組み合わせは、<br>理由つきで知らせる</div>
+          <p>家に顔用のステロイド軟膏があるから「注意」。商品の良し悪しではなく、組み合わせで判定する。</p>
+        </div>
+      </div>
+      <div class="ans a">
+        <div class="shot"><img src="../ピッチ/assets/routine-crop.jpg" alt=""></div>
+        <div class="cap">実際のルーティン画面</div>
+        <div class="txt">
+          <div class="lb">エピソード 1 への答え</div>
+          <div class="h">塗る順番も、<br>家にあるもので組み立てる</div>
+          <p>化粧水→美容液→処方ローション→処方軟膏の順に、剤形からルールで並べる。医師の指示が優先。</p>
+        </div>
+      </div>
+      <div class="ans b">
+        <div class="shot"><img src="../ピッチ/assets/yellow-real.png" alt=""></div>
+        <div class="cap">実際の判定画面（市販の解熱鎮痛薬）</div>
+        <div class="txt">
+          <div class="lb">エピソード 2 への答え</div>
+          <div class="h">商品名が違っても、<br>成分で重なりに気づく</div>
+          <p>店頭の解熱鎮痛薬と家の「イブA錠」は、同じイブプロフェン。家の薬で足りると伝える。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 設計 -->
+  <section>
+    <h2><span class="n">03</span>AIに任せすぎない設計<span class="sub">薬に関わるアプリだから、AIの得意なところだけをAIに任せる</span></h2>
+    <div class="design">
+      <div class="d"><div class="h">「読む」と「判断する」を分ける</div><p>読み間違いと判断の誤りを切り分けられる</p></div>
+      <div class="d"><div class="h">決められることはルールで</div><p>塗る順番・期限・赤判定の相談案内は固定</p></div>
+      <div class="d"><div class="h">薬の知識は出典つき</div><p>出典を書けない組み合わせは使わない</p></div>
+      <div class="d"><div class="h">理由の裏取り</div><p>商品にも在庫にもない成分の理由は出さない</p></div>
+      <div class="d"><div class="h">AIの提供元を二重化</div><p>一方が止まっても、もう一方で判定を続ける</p></div>
+      <div class="d"><div class="h">在庫はサーバーに残さない</div><p>端末に保存し、判定のときだけ送る</p></div>
+    </div>
+    <div class="stats">
+      <div class="st"><b>約10秒</b><span>撮影から判定まで</span></div>
+      <div class="st"><b>9回 / 9回</b><span>同じ画像での判定が一致</span></div>
+      <div class="st"><b>実商品 5点</b><span>市販薬・化粧品で実機確認</span></div>
+      <div class="st"><b>82件</b><span>自動テスト</span></div>
+    </div>
+  </section>
+
+  <footer class="ft">
+    <span><b>鈴鹿工業高等専門学校</b>　井上 高志・濱田 圭太郎・杉本 隼都</span>
+    <span>判定は目安です。最後は薬剤師・皮膚科にご相談ください。</span>
+  </footer>
+
+</div>
+</body>
+</html>
