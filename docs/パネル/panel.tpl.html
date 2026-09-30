@@ -33,13 +33,13 @@
                font-family:"Helvetica Neue","Hiragino Sans",sans-serif; }
   .brand .ro { font-size:7.5pt; color:var(--muted); margin-left:1mm; align-self:flex-end; padding-bottom:1.4mm; }
   h1 { margin-top:1.6mm; font-size:19pt; line-height:1.3; font-weight:700; color:var(--navy); letter-spacing:.02em; }
-  .pillars { margin-top:1mm; font-size:10pt; font-weight:700; color:var(--blue); letter-spacing:.02em; }
-  .lead { margin-top:1.2mm; font-size:9pt; color:var(--muted); line-height:1.6; }
+  .lead { margin-top:1.2mm; font-size:11.5pt; font-weight:700; color:var(--ink); line-height:1.5; }
+  .pillars { margin-top:1mm; font-size:8.5pt; font-weight:700; color:var(--blue); letter-spacing:.02em; }
   .lead b { color:var(--ink); }
   .qr { width:30mm; text-align:center; padding-top:.5mm; }
   .qr svg { display:block; width:25mm; height:25mm; margin:0 auto; }
   .qr b { display:block; margin-top:1.2mm; font-size:8.5pt; color:var(--navy); }
-  .qr span { display:block; font-size:6.5pt; color:var(--faint); letter-spacing:0; }
+  .qr span { display:block; font-size:7pt; color:var(--muted); letter-spacing:0; line-height:1.45; }
 
   /* ── セクション見出し ── */
   /* 段落の切れ目が離れても分かるよう、見出しは番号の札＋太い下線にする */
@@ -62,7 +62,7 @@
   .bubble::after { content:""; position:absolute; right:-2.2mm; bottom:3.4mm; width:3.4mm; height:3.4mm; background:var(--bg);
                    border-right:.8pt solid var(--bd); border-top:.8pt solid var(--bd); transform:rotate(45deg) skew(8deg, 8deg); }
   .bubble p { font-size:11.5pt; font-weight:700; color:var(--navy); line-height:1.5; letter-spacing:.01em; white-space:nowrap; }
-  .ep .ppl { height:15mm; display:block; flex:none; }
+  .ep .ppl { height:14mm; display:block; flex:none; }
   .ep.a { --c:var(--blue); --bg:var(--blue-bg); --bd:var(--blue-bd); }
   .ep.b { --c:var(--amber); --bg:var(--amber-bg); --bd:var(--amber-bd); }
 
@@ -84,12 +84,17 @@
   .legend { display:flex; justify-content:flex-end; gap:4mm; margin-top:1.2mm; font-size:7.5pt; font-weight:700; color:var(--muted); }
   .legend i { display:inline-block; width:2.6mm; height:2.6mm; border-radius:50%; margin-right:1.2mm; vertical-align:-.3mm; }
 
-  .answers { display:grid; grid-template-columns:repeat(3, 1fr); gap:4mm; margin-top:1.4mm; }
-  .ans { display:flex; flex-direction:column; align-items:center; }
-  .ans .shot { height:27mm; display:block; border:.6pt solid var(--line); border-radius:3.4mm; padding:1mm; background:#fff; }
+  .answers { display:grid; grid-template-columns:repeat(3, 1fr); gap:4mm; margin-top:1.4mm; align-items:start; }
+  .ans { display:flex; flex-direction:column; }
+  .ans .pair { display:flex; gap:2.4mm; align-items:stretch; }
+  .ans .shot { height:31mm; flex:none; display:block; border:.6pt solid var(--line); border-radius:3.4mm; padding:1mm; background:#fff; }
   .ans .shot img { height:100%; display:block; border-radius:2.6mm; }
-  .ans .cap { font-size:6.5pt; color:var(--faint); margin-top:1mm; }
-  .ans .txt { align-self:stretch; margin-top:1.6mm; }
+  .ans .out { flex:1; background:var(--canvas); border-radius:2.6mm; padding:2.2mm 2.6mm; display:flex; flex-direction:column; }
+  .ans .out .k { font-size:6.5pt; font-weight:700; color:var(--muted); letter-spacing:.04em; }
+  .ans .out .v { font-size:9.5pt; white-space:nowrap; font-weight:700; color:var(--sig); margin-top:.6mm; line-height:1.3; }
+  .ans .out q { display:block; font-size:6.8pt; color:var(--ink); margin-top:1mm; line-height:1.5; quotes:"「" "」"; }
+  .ans .out .src { margin-top:auto; font-size:6.5pt; color:var(--faint); padding-top:1mm; }
+  .ans .txt { margin-top:1.6mm; }
   .ans .lb { font-size:7pt; font-weight:700; color:var(--c); }
   .ans .h { font-size:9.5pt; font-weight:700; line-height:1.4; margin-top:.4mm; }
   .ans p { font-size:7pt; color:var(--muted); margin-top:.8mm; line-height:1.55; }
@@ -106,7 +111,7 @@
   .st + .st { border-left:.6pt solid var(--line); }
   .st b { display:block; font-size:12pt; color:var(--navy); line-height:1.25; }
   .st span { font-size:7pt; color:var(--muted); }
-  .vision { margin-top:1.4mm; text-align:center; font-size:11pt; font-weight:700; color:var(--navy); letter-spacing:.02em; }
+  .vision { margin-top:1.2mm; text-align:center; font-size:11pt; font-weight:700; color:var(--navy); letter-spacing:.02em; }
 
   /* ── フッター ── */
   .ft { margin-top:auto; display:flex; justify-content:space-between; align-items:baseline;
@@ -130,14 +135,13 @@
         <span class="ro">Overlay（重ねる）＋ AI</span>
       </div>
       <h1>重ねる前に、重ねて見る。</h1>
-      <div class="pillars">買い重ねる前に。塗り重ねる前に。一緒に飲む前に。</div>
-      <p class="lead">家にある薬と化粧品を登録しておけば、店頭で商品の成分表示を撮るだけで、<br>
-        生成AIが家にあるものと重ねて、<b>「組み合わせ」</b>と<b>「重複」</b>から買うべきかを判定するアプリです。</p>
+      <p class="lead">店で成分表示を撮るだけで、家にある薬・化粧品と重ねて<br>「買うべきか」がわかるアプリ。</p>
+      <div class="pillars">買い重ねる前に。塗り重ねる前に。一緒に飲む前に。　――「重複」と「組み合わせ」の両方を判定する</div>
     </div>
     <div class="qr">
       {{QR}}
-      <b>その場で試せます</b>
-      <span>ブースの端末でも、<br>このQRからでも</span>
+      <b>実機で試せます</b>
+      <span>見本の在庫入りで開きます</span>
     </div>
   </header>
 
@@ -165,7 +169,7 @@
       </div>
     </div>
     <div class="band">
-      <div class="q">使っていい？　どっちが先？　もう家にある？ ――　<b>どの迷いも、家にある薬と見比べないと答えが出ない。</b></div>
+      <div class="q"><b>どの迷いも、家にある薬と見比べないと答えが出ない。</b>　店の人も、あなたの家の薬までは知らない。</div>
       <div class="a">でも、店の棚の前では、家の薬と見比べられない。</div>
     </div>
   </section>
@@ -176,7 +180,7 @@
     <div class="steps">
       <div class="step">
         <div class="h"><span class="no">1</span>家のものを登録</div>
-        <p>薬も化粧品も、撮れば成分まで入る。<br>これが判定の基準。残量や期限も管理。</p>
+        <p>薬も化粧品も、撮るだけで成分まで登録。<br>これが判定の基準。残量・期限も管理。</p>
       </div>
       <div class="arrow">→</div>
       <div class="step">
@@ -189,34 +193,46 @@
         <p>重複も組み合わせも考え、買うべきかを<br>3色と出典つきの理由で伝える。</p>
       </div>
     </div>
-    <div class="legend"><span>判定の3色：</span><span><i style="background:#2563EB"></i>買っても問題なさそう</span><span><i style="background:#D97706"></i>買わなくて大丈夫</span><span><i style="background:#DC2626"></i>注意が必要</span></div>
+    <div class="legend"><span>判定の3色：</span><span><i style="background:#2563EB"></i>買っても問題なさそう</span><span><i style="background:#D97706"></i>家にあるもので足りそう</span><span><i style="background:#DC2626"></i>注意が必要</span></div>
 
     <div class="answers">
-      <div class="ans a">
-        <div class="shot"><img src="../ピッチ/assets/red-real.png" alt=""></div>
-        <div class="cap">実際の判定画面（市販の薬用化粧水）</div>
+      <div class="ans a" style="--sig:#DC2626">
+        <div class="pair">
+          <div class="shot"><img src="../ピッチ/assets/red-real.png" alt=""></div>
+          <div class="out"><div class="k">AIの実際の出力</div><div class="v">注意が必要です</div>
+            <q>…エタノールを含む化粧水を重ねることで刺激が強くなる可能性があります。</q>
+            <div class="src">市販の薬用化粧水を撮影</div></div>
+        </div>
         <div class="txt">
           <div class="lb">エピソード 1 への答え</div>
           <div class="h">「使っていい？」の目安が、<br>その場でわかる</div>
-          <p>薬を塗っている肌に刺激になりうる化粧品は、理由つきで教えてくれる。商品の良し悪しではなく、家の薬との組み合わせで判定する。</p>
+          <p>薬を塗った肌に刺激になりうる化粧品を、理由つきで知らせる。※医師・薬剤師の指示が優先</p>
         </div>
       </div>
-      <div class="ans a">
-        <div class="shot"><img src="../ピッチ/assets/routine-crop.jpg" alt=""></div>
-        <div class="cap">実際の塗る順番の画面</div>
+      <div class="ans a" style="--sig:#1B2A4A">
+        <div class="pair">
+          <div class="shot"><img src="../ピッチ/assets/routine-crop.jpg" alt=""></div>
+          <div class="out"><div class="k">実際の画面</div><div class="v">お風呂上がりに<br>塗る順番</div>
+            <q>水分の多いものから、油分で蓋をするものへ並べています</q>
+            <div class="src">家にあるものから自動で並ぶ</div></div>
+        </div>
         <div class="txt">
           <div class="lb">エピソード 1 への答え</div>
-          <div class="h">今ある薬と化粧品の<br>塗る順番が、ひと目でわかる</div>
-          <p>化粧水から処方の軟膏まで、家にあるものを塗る順に並べて見せる。※医師・薬剤師の指示が優先</p>
+          <div class="h">家にある薬と化粧品を塗る<br>順番が、ひと目でわかる</div>
+          <p>化粧水から処方の軟膏まで、家にあるものを塗る順に並べて見せる。</p>
         </div>
       </div>
-      <div class="ans b">
-        <div class="shot"><img src="../ピッチ/assets/yellow-real.png" alt=""></div>
-        <div class="cap">実際の判定画面（市販の解熱鎮痛薬）</div>
+      <div class="ans b" style="--sig:#B45309">
+        <div class="pair">
+          <div class="shot"><img src="../ピッチ/assets/yellow-real.png" alt=""></div>
+          <div class="out"><div class="k">AIの実際の出力</div><div class="v">買わなくて大丈夫です</div>
+            <q>イブプロフェン・アセトアミノフェンの解熱鎮痛作用が、在庫のイブA錠と同じ用途で重なる可能性があります。</q>
+            <div class="src">市販の解熱鎮痛薬を撮影</div></div>
+        </div>
         <div class="txt">
           <div class="lb">エピソード 2 への答え</div>
           <div class="h">名前が違っても、同じ成分が<br>入っていれば気づける</div>
-          <p>店頭の解熱鎮痛薬と家の「イブA錠」には、どちらもイブプロフェン。家の薬で足りるなら買わずに済み、同じ成分の重ね飲みも防ぎやすくなる。</p>
+          <p>風邪薬と痛み止めに同じ成分が入ることもある。重ね飲みに気づけ、家の薬で足りれば買わずに済む。</p>
         </div>
       </div>
     </div>
@@ -226,25 +242,25 @@
   <section>
     <h2><span class="n">03</span>AIに任せすぎない設計<span class="sub">薬に関わるアプリだから、AIの得意なところだけをAIに任せる</span></h2>
     <div class="design">
-      <div class="d"><div class="h">「読む」と「判断する」を分ける</div><p>読み間違いと判断の誤りを切り分けられる</p></div>
-      <div class="d"><div class="h">決められることはルールで</div><p>塗る順番・期限・赤判定の相談案内は固定</p></div>
+      <div class="d"><div class="h">「読む」と「判断する」を分ける</div><p>成分を読むAIと、判断するAIを分けている</p></div>
+      <div class="d"><div class="h">決められることはルールで</div><p>塗る順番・期限・相談の案内はAIに任せない</p></div>
       <div class="d"><div class="h">薬の知識は出典つき</div><p>出典を書けない組み合わせは使わない</p></div>
-      <div class="d"><div class="h">理由の裏取り</div><p>商品にも在庫にもない成分の理由は出さない</p></div>
-      <div class="d"><div class="h">AIの提供元を二重化</div><p>一方が止まっても、もう一方で判定を続ける</p></div>
-      <div class="d"><div class="h">在庫はサーバーに残さない</div><p>端末に保存し、判定のときだけ送る</p></div>
+      <div class="d"><div class="h">理由の裏取り</div><p>商品にも家の薬にもない成分の話は出さない</p></div>
+      <div class="d"><div class="h">予備のAIを用意</div><p>一方が止まっても、もう一方で判定を続ける</p></div>
+      <div class="d"><div class="h">登録した薬はサーバーに残さない</div><p>スマホに保存し、判定のときだけ送る</p></div>
     </div>
     <div class="stats">
       <div class="st"><b>約10秒</b><span>撮影から判定まで</span></div>
-      <div class="st"><b>9回 / 9回</b><span>同じ画像での判定が一致</span></div>
+      <div class="st"><b>9回中9回</b><span>同じ画像で、同じ判定</span></div>
       <div class="st"><b>実商品 5点</b><span>市販薬・化粧品で実機確認</span></div>
-      <div class="st"><b>82件</b><span>自動テスト</span></div>
+      <div class="st"><b>82件</b><span>動作を確かめる自動テスト</span></div>
     </div>
     <div class="vision">肌の治療を続ける人も、家族の薬を買う人も、店頭で迷わない毎日へ。</div>
   </section>
 
   <footer class="ft">
     <span><b>鈴鹿工業高等専門学校</b>　井上 高志・濱田 圭太郎・杉本 隼都</span>
-    <span>判定は目安です。最後は薬剤師・皮膚科にご相談ください。</span>
+    <span>判定は目安です。最後は医師・薬剤師にご相談ください。</span>
   </footer>
 
 </div>

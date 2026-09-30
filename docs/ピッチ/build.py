@@ -171,7 +171,7 @@ def step(n, y, head, sub, ai=False):
 def legend(x, y):
     """3色の意味。アプリの判定の見出しと同じ言葉を使う"""
     out = []
-    for c, lb in [('2563EB', '買っても問題なさそう'), ('D97706', '買わなくて大丈夫'), ('DC2626', '注意が必要')]:
+    for c, lb in [('2563EB', '買っても問題なさそう'), ('D97706', '家にあるもので足りそう'), ('DC2626', '注意が必要')]:
         out += [rect(x, y + 0.1, 0.2, 0.2, c, radius=0.1), text(x + 0.28, y, 2.3, 0.4, lb, 14, MUTED, bold=True)]
         x += 0.28 + len(lb) * 14 / 72 + 0.35
     return out
