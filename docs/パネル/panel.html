@@ -16,7 +16,7 @@
   :root {
     --navy:#1B2A4A; --ink:#0F172A; --muted:#475569; --pale:#C9D0DB; --line:#D9DFE7; --mist:#F2F4F7;
     --blue:#2563EB; --amber:#D97706; --red:#DC2626;
-    --phone:71mm;
+    --phone:65mm;
   }
   html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body {
@@ -60,7 +60,7 @@
   .legend i { display:inline-block; width:2.6mm; height:2.6mm; border-radius:50%; margin:0 1mm 0 3.4mm; vertical-align:-.2mm; }
 
   /* ── できること：実機の画面を大きく並べる ── */
-  .cases { display:grid; grid-template-columns:repeat(3, 1fr); gap:9mm; }
+  .cases { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:7mm; } /* しくみの列とそろえる */
   .case h3 { font-size:12pt; line-height:1.45; font-weight:700; white-space:nowrap; }
   .case p { color:var(--muted); margin-top:.6mm; white-space:nowrap; }
   .shot { display:inline-block; height:var(--phone); margin-top:3mm; border:.6pt solid var(--line); border-radius:3mm;
@@ -73,13 +73,18 @@
              line-height:1.3; color:#fff; background:var(--sig); border-radius:.8mm; padding:0 1.2mm; white-space:nowrap; }
 
   /* ── しくみ ── */
-  .flow { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr); gap:2.4mm; align-items:stretch; }
-  .node { border:.6pt solid var(--line); border-radius:3mm; padding:2.2mm 3mm 2.4mm; }
-  .node.ai { background:var(--mist); border-color:var(--mist); }
-  .node .t { color:var(--muted); line-height:1.4; }
-  .node .h { font-size:10.5pt; font-weight:700; color:var(--navy); line-height:1.4; white-space:nowrap; }
-  .flow .arrow { align-self:center; color:var(--muted); font-size:11pt; }
-  .points { display:grid; grid-template-columns:repeat(3, 1fr); gap:9mm; margin-top:4mm; }
+  /* 使う人の動きで3段に分け、AIが何をするかは下の小さい行に書く */
+  /* 下の3つの説明と列をそろえるため、矢印は列の間に絵で置く */
+  .flow, .points { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:7mm; }
+  .step { position:relative; border:.6pt solid var(--line); border-radius:3mm; padding:2.4mm 3mm 2.6mm; }
+  .step + .step::before { content:"›"; position:absolute; left:-7mm; width:7mm; top:50%; transform:translateY(-50%);
+                          text-align:center; color:var(--muted); font-size:14pt; line-height:1; }
+  .step .t { display:flex; align-items:center; gap:1.6mm; color:var(--muted); font-weight:700; line-height:1.4; }
+  .step .t i { font-style:normal; display:inline-flex; align-items:center; justify-content:center; width:4.6mm; height:4.6mm;
+               border-radius:50%; background:var(--navy); color:#fff; line-height:1; }
+  .step .h { margin-top:1mm; font-size:10.5pt; font-weight:700; color:var(--navy); line-height:1.4; white-space:nowrap; }
+  .step p { color:var(--muted); line-height:1.5; white-space:nowrap; }
+  .points { margin-top:4mm; }
   .pt .h { font-size:10.5pt; font-weight:700; color:var(--navy); line-height:1.45; white-space:nowrap; }
   .pt p { color:var(--muted); margin-top:1mm; white-space:nowrap; } /* 改行は <br> で意味の切れ目に置く */
 
@@ -109,7 +114,7 @@
         <span class="ro">Overlay（重ねる）＋ AI</span>
       </div>
       <h1>重ねる前に、<br>重ねて見る。</h1>
-      <p class="lead">店で成分表示を撮るだけで、家の薬・化粧品と重ねて<br>「買うべきか」の目安がわかるアプリ。</p>
+      <p class="lead">店で成分表示を撮るだけで、家の薬・化粧品と比べて<br>「買うべきか」の目安がわかるアプリ。</p>
     </div>
     <div class="venn" role="img" aria-label="店で撮った商品と、撮って登録した家の薬・化粧品を重ねて判定する">
       <div class="sq a"></div>
@@ -121,45 +126,41 @@
   </header>
 
   <section>
-    <h2>できること<span class="sub">画面はすべて実機。判定の文と✦印のひと言は生成AIの出力、塗る順番はルールで決める</span></h2>
+    <h2>できること</h2>
     <div class="cases">
       <div class="case" style="--sig:#B45309">
         <h3>名前が違っても、<br>同じ働きの薬に気づける</h3>
-        <p>家の薬で足りれば、買わずに済む</p>
-        <div class="shot"><div class="pic"><img src="../ピッチ/assets/yellow-real.png" alt="「買わなくて大丈夫です」の判定画面"><b class="ring" style="left:5%;top:51.3%;width:29%;height:4.3%"><em>店の商品</em></b><b class="ring" style="left:3.5%;top:67%;width:93%;height:12.2%"><em>家の薬</em></b></div></div>
+        <p>同じ成分の薬を、二重に買わずに済む</p>
+        <div class="shot"><div class="pic"><img src="../ピッチ/assets/yellow-real.png" alt="「買わなくて大丈夫です」の判定画面"><b class="ring" style="left:5%;top:51.3%;width:29%;height:4.3%"><em>重複する成分</em></b><b class="ring" style="left:3.5%;top:67%;width:93%;height:12.2%"><em>家の薬</em></b></div></div>
       </div>
       <div class="case" style="--sig:#DC2626">
-        <h3>化粧品を薬と重ねていいか、<br>目安がその場でわかる</h3>
-        <p>※医師・薬剤師の指示が優先</p>
+        <h3>いまの薬との組み合わせの<br>注意が、店でわかる</h3>
+        <p>飲み薬も塗り薬も、化粧品も見られる</p>
         <div class="shot"><div class="pic"><img src="../ピッチ/assets/red-real.png" alt="「注意が必要です」の判定画面"><b class="ring" style="left:3.5%;top:50.4%;width:42%;height:4.4%"><em>店の商品</em></b><b class="ring" style="left:3.5%;top:79.6%;width:93%;height:9.4%"><em>家の薬</em></b></div></div>
       </div>
-      <div class="case">
-        <h3>薬と化粧品を塗る順番が、<br>ひと目でわかる</h3>
-        <p>※処方薬は医師・薬剤師の指示が優先</p>
-        <div class="shot"><div class="pic"><img src="../ピッチ/assets/routine-crop.jpg" alt="お風呂上がりに塗る順番の画面"></div></div>
+      <div class="case" style="--sig:var(--navy)">
+        <h3>薬や化粧品を使う順番や、<br>詳しい使い方がわかる</h3>
+        <p>もう使い方に迷わない</p>
+        <div class="shot"><div class="pic"><img src="../ピッチ/assets/routine-crop.jpg" alt="お風呂上がりに塗る順番の画面"><b class="ring" style="left:1.8%;top:9.6%;width:13%;height:73.4%"><em>塗る順番</em></b></div></div>
       </div>
     </div>
-    <p class="legend"><span>判定は3色</span><i style="background:var(--blue)"></i>買っても問題なさそう<i style="background:var(--amber)"></i>買わなくてよさそう<i style="background:var(--red)"></i>注意が必要</p>
+    <p class="legend"><span>判定は3色</span><i style="background:var(--blue)"></i>買っても問題なさそう<i style="background:var(--amber)"></i>買わなくて大丈夫<i style="background:var(--red)"></i>注意が必要</p>
   </section>
 
   <section>
-    <h2>しくみ<span class="sub">商品データベースは使わず、成分表示を生成AIが直接読む</span></h2>
+    <h2>しくみ</h2>
     <div class="flow">
-      <div class="node"><div class="t">スマホ</div><div class="h">成分表示を撮る</div></div>
-      <div class="arrow">→</div>
-      <div class="node ai"><div class="t">生成AI</div><div class="h">成分を読み取る</div></div>
-      <div class="arrow">→</div>
-      <div class="node ai"><div class="t">生成AI</div><div class="h">家のものと比べる</div></div>
-      <div class="arrow">→</div>
-      <div class="node"><div class="t">サーバー</div><div class="h">理由を裏取りする</div></div>
+      <div class="step"><div class="t"><i>1</i>家で</div><div class="h">薬・化粧品を撮って登録</div><p>AIが成分表示を読み取る</p></div>
+      <div class="step"><div class="t"><i>2</i>店で</div><div class="h">気になる商品を撮る</div><p>AIが家のものと照らし合わせる</p></div>
+      <div class="step"><div class="t"><i>3</i>その場で</div><div class="h">買うべきかの目安が出る</div><p>3色の判定と、成分名つきの理由</p></div>
     </div>
     <div class="points">
-      <div class="pt"><div class="h">工夫① 薬の知識は、出典つき</div>
-        <p>薬の組み合わせの知識を、<br>添付文書などの出典つきでAIに渡す。</p></div>
-      <div class="pt"><div class="h">工夫② AIの理由を、裏取りする</div>
-        <p>店にも家にもない成分の理由は消し、<br>残った理由に出典や調べ先を添える。</p></div>
-      <div class="pt"><div class="h">安全のために</div>
-        <p>判定は目安。年齢や持病までは見ない。<br>どの色でも医師・薬剤師に相談を促す。</p></div>
+      <div class="pt"><div class="h">理由には、根拠と出典を添える</div>
+        <p>AIが挙げた理由を、プログラムが確かめ、<br>薬の説明書をたどれるリンクを添える。</p></div>
+      <div class="pt"><div class="h">根拠のない警告は出さない</div>
+        <p>出典のない組み合わせは推測しない。<br>必ず医師・薬剤師への相談も案内する。</p></div>
+      <div class="pt"><div class="h">自分の体質に合わせられる</div>
+        <p>肌質や年代、悩みを登録すると、<br>使い方の助言が自分向けになる。</p></div>
     </div>
   </section>
 
