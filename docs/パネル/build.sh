@@ -15,3 +15,5 @@ CHROME="$HOME/.cache/puppeteer/chrome/mac_arm-148.0.7778.97/chrome-mac-arm64/Goo
   --window-size=794,1123 --force-device-scale-factor=2 \
   --screenshot="$PWD/preview.png" "file://$PWD/panel.html" 2>/dev/null
 echo "書き出し: Overlai_ブースパネル.pdf / preview.png"
+# 印刷PDFは overflow:hidden で静かに切れるので、はみ出しと文字の大きさを毎回確かめる
+node check.mjs

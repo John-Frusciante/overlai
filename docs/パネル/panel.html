@@ -5,145 +5,99 @@
 <title>Overlai ブースパネル</title>
 <style>
   /* A4縦で組み、運営がA1（約2.83倍）に拡大して掲出する。
-     A4での 7pt は A1で約20pt。これより小さい文字は置かない。
-     見せ場はひとつ：ロゴと同じ「重なる四角」とスローガン。ほかは箱を減らし、余白と細線で区切る */
+     A1の本文は24pt以上にするため、A4で 8.5pt 未満の文字は置かない。
+     1枚で伝えることは「店で撮るだけで、家の薬と重ねて買うべきかがわかる」の一つ。
+     エピソードはブースで口頭で話すので載せない。載せるのは、アプリの説明・実機の画面・しくみだけ。
+     色は紺と灰色だけで組み、塗りつぶした紺は「重なり」の図と、最後の「試せます」の帯の2か所に絞る。
+     判定の3色（青・黄・赤）は、凡例と実機の画面の中にだけ出す */
   @page { size: A4; margin: 0; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --navy:#1B2A4A; --ink:#0F172A; --muted:#475569; --faint:#8A97AB; --pale:#CBD5E1;
-    --mist:#F3F5F9; --line:#DCE2EA;
-    --blue:#2563EB; --blue-bg:#EFF6FF; --blue-bd:#BFDBFE;
-    --amber:#C2410C; --amber-bg:#FFF7ED; --amber-bd:#FED7AA;
-    --red:#DC2626;
+    --navy:#1B2A4A; --ink:#0F172A; --muted:#475569; --pale:#C9D0DB; --line:#D9DFE7; --mist:#F2F4F7;
+    --blue:#2563EB; --amber:#D97706; --red:#DC2626;
+    --phone:71mm;
   }
   html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body {
     font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN",sans-serif;
-    color:var(--ink); font-size:8pt; line-height:1.6; letter-spacing:.01em; background:#fff;
+    color:var(--ink); font-size:8.5pt; line-height:1.6; letter-spacing:.01em; background:#fff;
   }
-  .page { position:relative; width:210mm; height:297mm; padding:7.5mm 11mm 5mm; overflow:hidden;
-          display:flex; flex-direction:column; }
+  .page { width:210mm; height:297mm; padding:11mm 12mm 9mm; overflow:hidden; display:flex; flex-direction:column; }
 
-  /* ── ヘッダー：重なる四角を右上から大きく敷く ── */
-  .motif { position:absolute; right:-30mm; top:-44mm; width:110mm; height:110mm; pointer-events:none; }
-  .hd { position:relative; display:flex; align-items:flex-end; gap:6mm; }
-  .hd-l { flex:1; min-width:0; }
-  .meta { font-size:7pt; color:var(--muted); letter-spacing:.03em; }
-  .meta b { color:var(--ink); }
-  .brand { display:flex; align-items:center; gap:2.6mm; margin-top:3mm; }
-  .brand svg { width:9mm; height:9mm; }
-  .brand .wm { font-size:21pt; line-height:1; color:var(--navy); letter-spacing:.01em;
+  /* ── 見出し：左に名前と一文、右に「重なり」の図 ── */
+  .hd { display:grid; grid-template-columns:1fr 60mm; gap:8mm; align-items:center; }
+  .brand { display:flex; align-items:center; gap:2.6mm; }
+  .brand svg { width:10mm; height:10mm; }
+  .brand .wm { font-size:24pt; line-height:1; color:var(--navy); letter-spacing:.01em;
                font-family:"Helvetica Neue","Hiragino Sans",sans-serif; }
-  .brand .ro { font-size:7.5pt; color:var(--muted); align-self:flex-end; padding-bottom:.6mm; }
-  h1 { margin-top:1.4mm; font-size:33pt; white-space:nowrap; line-height:1.18; font-weight:800; color:var(--navy); letter-spacing:.01em; }
-  .lead { margin-top:1.8mm; font-size:12.5pt; font-weight:700; line-height:1.55; }
-  .pillars { margin-top:1.6mm; font-size:8.5pt; font-weight:700; color:var(--muted); }
-  .pillars span { color:var(--navy); }
-  .qr { flex:none; width:37mm; background:#fff; border:.8pt solid var(--navy); border-radius:3mm;
-        padding:2.6mm 2.6mm 2.2mm; text-align:center; }
-  .qr svg { display:block; width:27mm; height:27mm; margin:0 auto; }
-  .qr b { display:block; margin-top:1.4mm; font-size:9pt; color:var(--navy); line-height:1.3; }
-  .qr span { display:block; white-space:nowrap; font-size:7pt; color:var(--muted); line-height:1.4; margin-top:.4mm; }
+  .brand .ro { color:var(--muted); align-self:flex-end; }
+  h1 { margin-top:3mm; font-size:40pt; line-height:1.15; font-weight:800; color:var(--navy); letter-spacing:.02em; }
+  .lead { margin-top:3.5mm; font-size:13pt; font-weight:700; line-height:1.6; }
 
-  /* ── 段落見出し：話の順に 1→2→3 と読む ── */
-  section { margin-top:3.8mm; }
-  h2 { display:flex; align-items:baseline; gap:3mm; font-size:15.5pt; line-height:1.25; font-weight:800; color:var(--navy);
-       padding-bottom:1.2mm; border-bottom:1.4pt solid var(--navy); margin-bottom:2.6mm; }
-  h2 .n { flex:none; align-self:center; width:6.6mm; height:6.6mm; border-radius:1.6mm; background:var(--navy); color:#fff;
-          font-size:10pt; font-weight:700; display:flex; align-items:center; justify-content:center; }
-  h2 .sub { margin-left:auto; font-size:8pt; font-weight:400; color:var(--muted); }
-  .legend i { display:inline-block; width:2.4mm; height:2.4mm; border-radius:50%; margin:0 1mm 0 3mm; vertical-align:-.2mm; }
+  /* ロゴと同じ二つの四角を重ね、重なった所が判定になることを図で見せる */
+  .venn { position:relative; width:60mm; height:60mm; }
+  .venn .sq { position:absolute; width:40mm; height:40mm; border-radius:7mm; }
+  .venn .a { left:0; top:0; background:#E4E7EC; }
+  .venn .b { left:20mm; top:20mm; background:#BCC3CE; }
+  .venn .ov { position:absolute; left:20mm; top:20mm; width:20mm; height:20mm; border-radius:7mm 0 7mm 0; background:var(--navy);
+              color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.4mm; }
+  .venn .ov b { font-size:10pt; line-height:1.2; }
+  .venn .ov i { display:inline-block; width:2.4mm; height:2.4mm; border-radius:50%; margin:0 .5mm; }
+  .venn .la, .venn .lb { position:absolute; font-size:10pt; font-weight:700; color:var(--navy); line-height:1.35; }
+  .venn .la { left:4mm; top:4mm; }
+  .venn .lb { right:4mm; bottom:4mm; text-align:right; }
 
-  /* ── 1 迷い：箱に入れず、2人の話を細線で分ける ── */
-  .eps { display:grid; grid-template-columns:1fr 1fr; }
-  .ep { padding:0 5mm; }
-  .ep:first-child { padding-left:0; border-right:.6pt solid var(--line); }
-  .ep:last-child { padding-right:0; }
-  .ep .lb { font-size:9pt; font-weight:700; color:var(--c); }
-  .ep .who { font-size:7.5pt; color:var(--muted); }
-  .ep .scene { font-size:8.5pt; font-weight:700; margin-top:1mm; white-space:nowrap; }
-  .ep .row { display:flex; align-items:flex-end; gap:2.6mm; margin-top:1.6mm; }
-  .bubble { flex:1; min-width:0; background:var(--bg); border:.8pt solid var(--bd); border-radius:4mm; padding:2.2mm 3.2mm; position:relative; }
-  .bubble::after { content:""; position:absolute; right:-2.2mm; bottom:3.4mm; width:3.4mm; height:3.4mm; background:var(--bg);
-                   border-right:.8pt solid var(--bd); border-top:.8pt solid var(--bd); transform:rotate(45deg) skew(8deg, 8deg); }
-  .bubble p { font-size:11.5pt; font-weight:700; color:var(--navy); line-height:1.45; white-space:nowrap; }
-  .ep .ppl { height:15mm; display:block; flex:none; }
-  .ep.a { --c:var(--blue); --bg:var(--blue-bg); --bd:var(--blue-bd); }
-  .ep.b { --c:var(--amber); --bg:var(--amber-bg); --bd:var(--amber-bd); }
+  /* ── 段落見出し ── */
+  section { margin-top:6.5mm; }
+  section:last-of-type { margin-bottom:6mm; } /* 最後の帯との間を必ず空ける */
+  h2 { display:flex; align-items:baseline; gap:4mm; font-size:17pt; line-height:1.25; font-weight:800; color:var(--navy);
+       padding-bottom:1.4mm; border-bottom:1.4pt solid var(--navy); margin-bottom:3.5mm; }
+  h2 .sub { margin-left:auto; font-size:8.5pt; font-weight:400; color:var(--muted); }
+  .legend { font-weight:700; color:var(--ink); }
+  .legend i { display:inline-block; width:2.6mm; height:2.6mm; border-radius:50%; margin:0 1mm 0 3.4mm; vertical-align:-.2mm; }
 
-  .band { background:var(--navy); border-radius:3mm; padding:2.4mm 5mm 2.6mm; margin-top:3mm; color:#fff; }
-  .band .q { font-size:8.5pt; color:var(--pale); }
-  .band .a { font-size:15.5pt; font-weight:800; line-height:1.35; margin-top:.6mm; }
+  /* ── できること：実機の画面を大きく並べる ── */
+  .cases { display:grid; grid-template-columns:repeat(3, 1fr); gap:9mm; }
+  .case h3 { font-size:11.5pt; line-height:1.45; font-weight:700; white-space:nowrap; }
+  .case p { color:var(--muted); margin-top:.6mm; white-space:nowrap; }
+  .shot { display:inline-block; height:var(--phone); margin-top:3mm; border:.6pt solid var(--line); border-radius:4mm;
+          padding:1.2mm; background:#fff; }
+  .pic { position:relative; height:100%; }
+  .pic img { height:100%; display:block; border-radius:3mm; }
+  /* 画面のどこを重ねたかを、店の商品と家の薬に枠をつけて示す */
+  .ring { position:absolute; border:1.2pt solid var(--sig); border-radius:1.6mm; }
+  .ring em { position:absolute; left:-.6mm; bottom:100%; margin-bottom:.5mm; font-style:normal; font-weight:700;
+             line-height:1.3; color:#fff; background:var(--sig); border-radius:.8mm; padding:0 1.2mm; white-space:nowrap; }
+  .real { margin-top:1.2mm; text-align:right; color:var(--muted); }
 
-  /* ── 2 しくみ：手順は一行で、主役は実機の画面 ── */
-  .steps { display:grid; grid-template-columns:1fr auto 1fr auto 1fr; gap:2.4mm; align-items:start; }
-  .step .h { display:flex; align-items:center; gap:1.8mm; font-size:10.5pt; font-weight:700; line-height:1.3; }
-  .step .no { flex:none; width:5.6mm; height:5.6mm; border-radius:50%; background:var(--navy); color:#fff;
-              font-size:8pt; display:flex; align-items:center; justify-content:center; }
-  .step .ai { font-size:7pt; font-weight:700; color:var(--blue); border:.6pt solid var(--blue-bd); background:var(--blue-bg);
-              border-radius:10mm; padding:0 1.6mm; }
-  .step p { font-size:7.5pt; color:var(--muted); margin-top:1mm; padding-left:7.4mm; line-height:1.55; }
-  .legend { display:flex; justify-content:flex-end; align-items:center; margin-top:.8mm; font-size:7.5pt; font-weight:700; }
-  .legend span { color:var(--muted); }
-  .steps .arrow { color:var(--faint); font-size:12pt; line-height:1; padding-top:.6mm; }
+  /* ── しくみ ── */
+  .flow { display:grid; grid-template-columns:1fr auto 1fr auto 1fr auto 1fr; gap:2.4mm; align-items:stretch; }
+  .node { border:.6pt solid var(--line); border-radius:2.6mm; padding:2.2mm 3mm 2.4mm; }
+  .node.ai { background:var(--mist); border-color:var(--mist); }
+  .node .t { color:var(--muted); line-height:1.4; }
+  .node .h { font-size:10.5pt; font-weight:700; color:var(--navy); line-height:1.4; white-space:nowrap; }
+  .flow .arrow { align-self:center; color:var(--muted); font-size:11pt; }
+  .points { display:grid; grid-template-columns:repeat(3, 1fr); gap:9mm; margin-top:4mm; }
+  .pt .h { font-size:10.5pt; font-weight:700; color:var(--navy); line-height:1.45; white-space:nowrap; }
+  .pt p { color:var(--muted); margin-top:1mm; }
 
-  .answers { display:grid; grid-template-columns:repeat(3, 1fr); gap:6mm; margin-top:2.4mm; }
-  .ans .lb { font-size:7.5pt; font-weight:700; color:var(--c); }
-  .ans .h { font-size:10.5pt; font-weight:700; line-height:1.4; margin-top:.4mm; white-space:nowrap; }
-  /* 画面の上に、AIの出力を重ねて読ませる */
-  .ans .stage { position:relative; margin-top:2mm; height:50mm; }
-  .ans .side { position:absolute; left:29mm; right:0; top:0; bottom:0; display:flex; flex-direction:column; }
-  .ans .shot { position:absolute; left:0; top:0; height:100%; border:.6pt solid var(--line); border-radius:3.6mm;
-               padding:1mm; background:#fff; }
-  .ans .shot img { height:100%; display:block; border-radius:2.8mm; }
-  /* 画面のどこを「重ねて」いるかを、店の商品と家の薬に丸をつけて示す */
-  .ans .pic { position:relative; height:100%; }
-  .ans .ring { position:absolute; border:1.1pt solid var(--sig); border-radius:1.6mm; }
-  .ans .ring em { position:absolute; left:-.6mm; bottom:100%; margin-bottom:.4mm; font-style:normal; font-size:7pt; font-weight:700;
-                  line-height:1.25; color:#fff; background:var(--sig); border-radius:.8mm; padding:0 1mm; white-space:nowrap; }
-  .ans .out { margin:auto 0 2mm -6mm; background:#fff; border:.8pt solid var(--sig);
-              border-radius:2.6mm; padding:2mm 2.4mm 2.2mm; box-shadow:0 1.2mm 3mm rgba(27,42,74,.14); }
-  .ans .out .k { font-size:7pt; font-weight:700; color:var(--muted); }
-  .ans .out .v { font-size:9.5pt; font-weight:800; color:var(--sig); line-height:1.3; margin-top:.3mm; }
-  .ans .out q { display:block; font-size:7pt; margin-top:.8mm; line-height:1.5; quotes:"「" "」"; }
-  .ans p { font-size:7.5pt; color:var(--muted); line-height:1.5; }
-  .ans.a { --c:var(--blue); }
-  .ans.b { --c:var(--amber); }
-
-  /* ── 3 しくみの中身 ── */
-  .flow { display:grid; grid-template-columns:1fr auto 1fr auto 1fr auto 1fr; gap:1.8mm; align-items:stretch; }
-  .node { border:.6pt solid var(--line); border-radius:2.6mm; padding:2mm 2.6mm; }
-  .node.ai { background:var(--blue-bg); border-color:var(--blue-bd); }
-  .node.key { background:var(--navy); border-color:var(--navy); }
-  .node .t { font-size:7pt; font-weight:700; color:var(--muted); }
-  .node.ai .t { color:var(--blue); }
-  .node.key .t { color:var(--pale); }
-  .node .h { font-size:9.5pt; font-weight:700; color:var(--navy); line-height:1.35; margin-top:.2mm; }
-  .node.key .h { color:#fff; }
-  .node p { font-size:7pt; color:var(--muted); margin-top:.6mm; line-height:1.45; }
-  .node.key p { color:var(--pale); }
-  .flow .arrow { color:var(--faint); font-size:11pt; align-self:center; }
-  .points { display:grid; grid-template-columns:1fr 1fr; gap:6mm; margin-top:2.4mm; }
-  .pt .h { font-size:10.5pt; font-weight:700; color:var(--navy); }
-  .pt p { font-size:7.5pt; color:var(--muted); margin-top:.6mm; line-height:1.6; }
-  .safety { margin-top:2mm; padding-top:1.6mm; border-top:.6pt solid var(--line); font-size:7.5pt; color:var(--muted); }
-  .safety b { color:var(--ink); }
-
-  .vision { margin-top:auto; padding-top:2mm; text-align:center; font-size:12pt; font-weight:800; color:var(--navy); }
+  /* ── 試せます：読みの終わり（右下）に置く ── */
+  .cta { margin-top:auto; display:flex; align-items:center; gap:6mm; background:var(--navy); color:#fff;
+         border-radius:3.4mm; padding:3mm 3mm 3mm 7mm; }
+  .credit { margin-top:3.4mm; padding-top:2.4mm; border-top:.6pt solid rgba(255,255,255,.22); color:var(--pale); line-height:1.5; }
+  .credit b { color:#fff; font-weight:700; }
+  .cta-t { flex:1; }
+  .cta-t > b { display:block; font-size:15pt; line-height:1.4; }
+  .cta-t > span { display:block; margin-top:1mm; color:var(--pale); font-size:9.5pt; }
+  .qr { flex:none; background:#fff; border-radius:2mm; padding:1.6mm; }
+  .qr svg { display:block; width:24mm; height:24mm; }
 </style>
 </head>
 <body>
 <div class="page">
 
-  <svg class="motif" viewBox="0 0 90 90" aria-hidden="true">
-    <path d="M14 14 h30 a10 10 0 0 1 10 10 v30 a10 10 0 0 1 -10 10 h-30 a10 10 0 0 1 -10 -10 v-30 a10 10 0 0 1 10 -10 z" fill="#1B2A4A" fill-opacity=".05"/>
-    <path d="M36 36 h30 a10 10 0 0 1 10 10 v30 a10 10 0 0 1 -10 10 h-30 a10 10 0 0 1 -10 -10 v-30 a10 10 0 0 1 10 -10 z" fill="#1B2A4A" fill-opacity=".08"/>
-  </svg>
-
-  <!-- ヘッダー -->
   <header class="hd">
-    <div class="hd-l">
-      <div class="meta">ユメカタリ 学生生成AIコンテスト 2026｜開発部門　　<b>鈴鹿工業高等専門学校</b>　井上 高志・濱田 圭太郎・杉本 隼都</div>
+    <div>
       <div class="brand">
         <svg viewBox="0 0 90 90" aria-hidden="true">
           <path d="M14 14 h30 a10 10 0 0 1 10 10 v30 a10 10 0 0 1 -10 10 h-30 a10 10 0 0 1 -10 -10 v-30 a10 10 0 0 1 10 -10 z" fill="#1B2A4A" fill-opacity=".38"/>
@@ -152,127 +106,69 @@
         <span class="wm">Overlai</span>
         <span class="ro">Overlay（重ねる）＋ AI</span>
       </div>
-      <h1>重ねる前に、重ねて見る。</h1>
-      <p class="lead">店で成分表示を撮るだけで、家にある薬・化粧品と重ねて<br>「買うべきか」がわかるアプリ。</p>
-      <div class="pillars"><span>買い重ねる前に。塗り重ねる前に。一緒に飲む前に。</span>　「重複」と「組み合わせ」の両方を判定する</div>
+      <h1>重ねる前に、<br>重ねて見る。</h1>
+      <p class="lead">店で成分表示を撮るだけで、家にある薬・化粧品と<br>重ねて「買うべきか」がわかるアプリ。</p>
     </div>
-    <div class="qr">
-      <svg viewBox="0 0 33 33" shape-rendering="crispEdges" aria-label="https://overlai-delta.vercel.app のQRコード"><rect width="33" height="33" fill="#fff"/><path d="M2 2h1v1h-1zM3 2h1v1h-1zM4 2h1v1h-1zM5 2h1v1h-1zM6 2h1v1h-1zM7 2h1v1h-1zM8 2h1v1h-1zM12 2h1v1h-1zM13 2h1v1h-1zM14 2h1v1h-1zM16 2h1v1h-1zM20 2h1v1h-1zM24 2h1v1h-1zM25 2h1v1h-1zM26 2h1v1h-1zM27 2h1v1h-1zM28 2h1v1h-1zM29 2h1v1h-1zM30 2h1v1h-1zM2 3h1v1h-1zM8 3h1v1h-1zM11 3h1v1h-1zM14 3h1v1h-1zM18 3h1v1h-1zM21 3h1v1h-1zM24 3h1v1h-1zM30 3h1v1h-1zM2 4h1v1h-1zM4 4h1v1h-1zM5 4h1v1h-1zM6 4h1v1h-1zM8 4h1v1h-1zM10 4h1v1h-1zM11 4h1v1h-1zM14 4h1v1h-1zM17 4h1v1h-1zM19 4h1v1h-1zM20 4h1v1h-1zM22 4h1v1h-1zM24 4h1v1h-1zM26 4h1v1h-1zM27 4h1v1h-1zM28 4h1v1h-1zM30 4h1v1h-1zM2 5h1v1h-1zM4 5h1v1h-1zM5 5h1v1h-1zM6 5h1v1h-1zM8 5h1v1h-1zM11 5h1v1h-1zM12 5h1v1h-1zM16 5h1v1h-1zM17 5h1v1h-1zM20 5h1v1h-1zM24 5h1v1h-1zM26 5h1v1h-1zM27 5h1v1h-1zM28 5h1v1h-1zM30 5h1v1h-1zM2 6h1v1h-1zM4 6h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1zM8 6h1v1h-1zM10 6h1v1h-1zM11 6h1v1h-1zM12 6h1v1h-1zM16 6h1v1h-1zM17 6h1v1h-1zM18 6h1v1h-1zM19 6h1v1h-1zM24 6h1v1h-1zM26 6h1v1h-1zM27 6h1v1h-1zM28 6h1v1h-1zM30 6h1v1h-1zM2 7h1v1h-1zM8 7h1v1h-1zM10 7h1v1h-1zM12 7h1v1h-1zM18 7h1v1h-1zM21 7h1v1h-1zM22 7h1v1h-1zM24 7h1v1h-1zM30 7h1v1h-1zM2 8h1v1h-1zM3 8h1v1h-1zM4 8h1v1h-1zM5 8h1v1h-1zM6 8h1v1h-1zM7 8h1v1h-1zM8 8h1v1h-1zM10 8h1v1h-1zM12 8h1v1h-1zM14 8h1v1h-1zM16 8h1v1h-1zM18 8h1v1h-1zM20 8h1v1h-1zM22 8h1v1h-1zM24 8h1v1h-1zM25 8h1v1h-1zM26 8h1v1h-1zM27 8h1v1h-1zM28 8h1v1h-1zM29 8h1v1h-1zM30 8h1v1h-1zM11 9h1v1h-1zM13 9h1v1h-1zM14 9h1v1h-1zM16 9h1v1h-1zM19 9h1v1h-1zM21 9h1v1h-1zM22 9h1v1h-1zM3 10h1v1h-1zM6 10h1v1h-1zM8 10h1v1h-1zM10 10h1v1h-1zM12 10h1v1h-1zM17 10h1v1h-1zM18 10h1v1h-1zM19 10h1v1h-1zM20 10h1v1h-1zM21 10h1v1h-1zM22 10h1v1h-1zM23 10h1v1h-1zM25 10h1v1h-1zM26 10h1v1h-1zM28 10h1v1h-1zM2 11h1v1h-1zM6 11h1v1h-1zM9 11h1v1h-1zM11 11h1v1h-1zM12 11h1v1h-1zM13 11h1v1h-1zM15 11h1v1h-1zM17 11h1v1h-1zM20 11h1v1h-1zM23 11h1v1h-1zM24 11h1v1h-1zM25 11h1v1h-1zM26 11h1v1h-1zM28 11h1v1h-1zM29 11h1v1h-1zM30 11h1v1h-1zM4 12h1v1h-1zM5 12h1v1h-1zM6 12h1v1h-1zM8 12h1v1h-1zM10 12h1v1h-1zM11 12h1v1h-1zM13 12h1v1h-1zM16 12h1v1h-1zM22 12h1v1h-1zM23 12h1v1h-1zM25 12h1v1h-1zM26 12h1v1h-1zM27 12h1v1h-1zM30 12h1v1h-1zM3 13h1v1h-1zM10 13h1v1h-1zM11 13h1v1h-1zM12 13h1v1h-1zM14 13h1v1h-1zM15 13h1v1h-1zM17 13h1v1h-1zM18 13h1v1h-1zM19 13h1v1h-1zM21 13h1v1h-1zM23 13h1v1h-1zM26 13h1v1h-1zM27 13h1v1h-1zM29 13h1v1h-1zM30 13h1v1h-1zM2 14h1v1h-1zM4 14h1v1h-1zM7 14h1v1h-1zM8 14h1v1h-1zM10 14h1v1h-1zM11 14h1v1h-1zM13 14h1v1h-1zM15 14h1v1h-1zM16 14h1v1h-1zM19 14h1v1h-1zM21 14h1v1h-1zM25 14h1v1h-1zM27 14h1v1h-1zM30 14h1v1h-1zM2 15h1v1h-1zM6 15h1v1h-1zM7 15h1v1h-1zM9 15h1v1h-1zM11 15h1v1h-1zM12 15h1v1h-1zM14 15h1v1h-1zM17 15h1v1h-1zM19 15h1v1h-1zM20 15h1v1h-1zM24 15h1v1h-1zM26 15h1v1h-1zM28 15h1v1h-1zM30 15h1v1h-1zM2 16h1v1h-1zM3 16h1v1h-1zM4 16h1v1h-1zM5 16h1v1h-1zM6 16h1v1h-1zM8 16h1v1h-1zM11 16h1v1h-1zM13 16h1v1h-1zM16 16h1v1h-1zM17 16h1v1h-1zM20 16h1v1h-1zM22 16h1v1h-1zM24 16h1v1h-1zM26 16h1v1h-1zM30 16h1v1h-1zM2 17h1v1h-1zM4 17h1v1h-1zM6 17h1v1h-1zM9 17h1v1h-1zM11 17h1v1h-1zM12 17h1v1h-1zM13 17h1v1h-1zM14 17h1v1h-1zM15 17h1v1h-1zM16 17h1v1h-1zM18 17h1v1h-1zM19 17h1v1h-1zM21 17h1v1h-1zM22 17h1v1h-1zM23 17h1v1h-1zM25 17h1v1h-1zM27 17h1v1h-1zM29 17h1v1h-1zM30 17h1v1h-1zM3 18h1v1h-1zM4 18h1v1h-1zM5 18h1v1h-1zM6 18h1v1h-1zM8 18h1v1h-1zM10 18h1v1h-1zM11 18h1v1h-1zM12 18h1v1h-1zM14 18h1v1h-1zM15 18h1v1h-1zM16 18h1v1h-1zM19 18h1v1h-1zM22 18h1v1h-1zM23 18h1v1h-1zM29 18h1v1h-1zM2 19h1v1h-1zM6 19h1v1h-1zM7 19h1v1h-1zM9 19h1v1h-1zM11 19h1v1h-1zM12 19h1v1h-1zM14 19h1v1h-1zM19 19h1v1h-1zM20 19h1v1h-1zM24 19h1v1h-1zM26 19h1v1h-1zM30 19h1v1h-1zM7 20h1v1h-1zM8 20h1v1h-1zM10 20h1v1h-1zM11 20h1v1h-1zM12 20h1v1h-1zM13 20h1v1h-1zM14 20h1v1h-1zM15 20h1v1h-1zM16 20h1v1h-1zM17 20h1v1h-1zM18 20h1v1h-1zM19 20h1v1h-1zM20 20h1v1h-1zM30 20h1v1h-1zM9 21h1v1h-1zM11 21h1v1h-1zM12 21h1v1h-1zM16 21h1v1h-1zM17 21h1v1h-1zM18 21h1v1h-1zM19 21h1v1h-1zM21 21h1v1h-1zM25 21h1v1h-1zM27 21h1v1h-1zM29 21h1v1h-1zM30 21h1v1h-1zM2 22h1v1h-1zM3 22h1v1h-1zM4 22h1v1h-1zM5 22h1v1h-1zM6 22h1v1h-1zM8 22h1v1h-1zM9 22h1v1h-1zM10 22h1v1h-1zM16 22h1v1h-1zM19 22h1v1h-1zM21 22h1v1h-1zM22 22h1v1h-1zM23 22h1v1h-1zM24 22h1v1h-1zM25 22h1v1h-1zM26 22h1v1h-1zM10 23h1v1h-1zM16 23h1v1h-1zM17 23h1v1h-1zM20 23h1v1h-1zM21 23h1v1h-1zM22 23h1v1h-1zM26 23h1v1h-1zM28 23h1v1h-1zM30 23h1v1h-1zM2 24h1v1h-1zM3 24h1v1h-1zM4 24h1v1h-1zM5 24h1v1h-1zM6 24h1v1h-1zM7 24h1v1h-1zM8 24h1v1h-1zM11 24h1v1h-1zM12 24h1v1h-1zM13 24h1v1h-1zM14 24h1v1h-1zM15 24h1v1h-1zM17 24h1v1h-1zM19 24h1v1h-1zM21 24h1v1h-1zM22 24h1v1h-1zM24 24h1v1h-1zM26 24h1v1h-1zM30 24h1v1h-1zM2 25h1v1h-1zM8 25h1v1h-1zM11 25h1v1h-1zM15 25h1v1h-1zM17 25h1v1h-1zM18 25h1v1h-1zM19 25h1v1h-1zM20 25h1v1h-1zM21 25h1v1h-1zM22 25h1v1h-1zM26 25h1v1h-1zM27 25h1v1h-1zM30 25h1v1h-1zM2 26h1v1h-1zM4 26h1v1h-1zM5 26h1v1h-1zM6 26h1v1h-1zM8 26h1v1h-1zM10 26h1v1h-1zM11 26h1v1h-1zM12 26h1v1h-1zM13 26h1v1h-1zM17 26h1v1h-1zM18 26h1v1h-1zM19 26h1v1h-1zM21 26h1v1h-1zM22 26h1v1h-1zM23 26h1v1h-1zM24 26h1v1h-1zM25 26h1v1h-1zM26 26h1v1h-1zM29 26h1v1h-1zM30 26h1v1h-1zM2 27h1v1h-1zM4 27h1v1h-1zM5 27h1v1h-1zM6 27h1v1h-1zM8 27h1v1h-1zM11 27h1v1h-1zM12 27h1v1h-1zM13 27h1v1h-1zM14 27h1v1h-1zM16 27h1v1h-1zM17 27h1v1h-1zM18 27h1v1h-1zM25 27h1v1h-1zM28 27h1v1h-1zM30 27h1v1h-1zM2 28h1v1h-1zM4 28h1v1h-1zM5 28h1v1h-1zM6 28h1v1h-1zM8 28h1v1h-1zM11 28h1v1h-1zM12 28h1v1h-1zM17 28h1v1h-1zM18 28h1v1h-1zM19 28h1v1h-1zM21 28h1v1h-1zM22 28h1v1h-1zM23 28h1v1h-1zM29 28h1v1h-1zM30 28h1v1h-1zM2 29h1v1h-1zM8 29h1v1h-1zM10 29h1v1h-1zM11 29h1v1h-1zM12 29h1v1h-1zM13 29h1v1h-1zM14 29h1v1h-1zM17 29h1v1h-1zM18 29h1v1h-1zM19 29h1v1h-1zM20 29h1v1h-1zM21 29h1v1h-1zM22 29h1v1h-1zM24 29h1v1h-1zM25 29h1v1h-1zM27 29h1v1h-1zM29 29h1v1h-1zM30 29h1v1h-1zM2 30h1v1h-1zM3 30h1v1h-1zM4 30h1v1h-1zM5 30h1v1h-1zM6 30h1v1h-1zM7 30h1v1h-1zM8 30h1v1h-1zM11 30h1v1h-1zM14 30h1v1h-1zM15 30h1v1h-1zM19 30h1v1h-1zM22 30h1v1h-1zM23 30h1v1h-1zM26 30h1v1h-1zM27 30h1v1h-1zM29 30h1v1h-1z" fill="#1B2A4A"/></svg>
-      <b>実機で試せます</b>
-      <span>見本の在庫入りで開きます</span>
+    <div class="venn" role="img" aria-label="店で撮った商品と、登録した家の薬・化粧品を重ねて判定する">
+      <div class="sq a"></div>
+      <div class="sq b"></div>
+      <div class="ov"><b>重ねて判定</b><span><i style="background:var(--blue)"></i><i style="background:var(--amber)"></i><i style="background:var(--red)"></i></span></div>
+      <div class="la">店で撮った商品</div>
+      <div class="lb">登録した<br>家の薬・化粧品</div>
     </div>
   </header>
 
-  <!-- 1 迷い -->
   <section>
-    <h2><span class="n">1</span>私たちの迷い<span class="sub">チームの3人が、実際に困っていたこと</span></h2>
-    <div class="eps">
-      <div class="ep a">
-        <div class="lb">エピソード 1｜組み合わせの迷い</div>
-        <div class="who">濱田・杉本｜肌が弱く、ステロイドの塗り薬を使っている</div>
-        <div class="scene">ある日、ドラッグストアで化粧水を手に取って、手が止まった。</div>
-        <div class="row">
-          <div class="bubble"><p>薬を塗った肌に、使っていい？</p><p>薬と化粧品、どっちが先？</p></div>
-          <img class="ppl" src="../ピッチ/assets/people-1.png" alt="">
-        </div>
+    <h2>できること<span class="sub legend">判定は3色<i style="background:var(--blue)"></i>買っても問題なさそう<i style="background:var(--amber)"></i>家にあるもので足りそう<i style="background:var(--red)"></i>注意が必要</span></h2>
+    <div class="cases">
+      <div class="case" style="--sig:#B45309">
+        <h3>名前が違っても、<br>同じ成分に気づける</h3>
+        <p>家の薬で足りれば、買わずに済む</p>
+        <div class="shot"><div class="pic"><img src="../ピッチ/assets/yellow-real.png" alt="「買わなくて大丈夫です」の判定画面"><b class="ring" style="left:5%;top:51.3%;width:29%;height:4.3%"><em>店の商品</em></b><b class="ring" style="left:4%;top:67%;width:74%;height:12.2%"><em>家にある薬</em></b></div></div>
       </div>
-      <div class="ep b">
-        <div class="lb">エピソード 2｜重複の迷い</div>
-        <div class="who">井上｜店頭に立つと、家にある薬を思い出せない</div>
-        <div class="scene">風邪薬を買って帰ると、似たような薬がもう家にあった。</div>
-        <div class="row">
-          <div class="bubble"><p>家に、同じような薬あったっけ？</p><p>名前は違うけど、中身は同じ？</p></div>
-          <img class="ppl" src="../ピッチ/assets/people-2.png" alt="">
-        </div>
+      <div class="case" style="--sig:#DC2626">
+        <h3>薬を塗った肌に使えるか、<br>目安がその場でわかる</h3>
+        <p>※医師・薬剤師の指示が優先</p>
+        <div class="shot"><div class="pic"><img src="../ピッチ/assets/red-real.png" alt="「注意が必要です」の判定画面"><b class="ring" style="left:5%;top:50.6%;width:70%;height:8.6%"><em>店の商品</em></b><b class="ring" style="left:4%;top:79.6%;width:76%;height:9.4%"><em>家にある薬</em></b></div></div>
+      </div>
+      <div class="case">
+        <h3>薬と化粧品を塗る順番が、<br>ひと目でわかる</h3>
+        <p>家にあるものから、自動で並ぶ</p>
+        <div class="shot"><div class="pic"><img src="../ピッチ/assets/routine-crop.jpg" alt="お風呂上がりに塗る順番の画面"></div></div>
       </div>
     </div>
-    <div class="band">
-      <div class="q">どの迷いも、家にある薬と見比べないと答えが出ない。店の人も、あなたの家の薬までは知らない。</div>
-      <div class="a">でも、店の棚の前では、家の薬と見比べられない。</div>
-    </div>
+    <p class="real">画面はすべて実機のもの。判定の文は生成AIの実際の出力</p>
   </section>
 
-  <!-- 2 しくみ -->
   <section>
-    <h2><span class="n">2</span>だから作った、Overlai のしくみ</h2>
-    <div class="steps">
-      <div class="step">
-        <div class="h"><span class="no">1</span>家のものを登録</div>
-        <p>薬も化粧品も、撮るだけで成分まで登録</p>
-      </div>
-      <div class="arrow">→</div>
-      <div class="step">
-        <div class="h"><span class="no">2</span>店頭で撮る<span class="ai">生成AI</span></div>
-        <p>書式がばらばらでも、成分を読み取る</p>
-      </div>
-      <div class="arrow">→</div>
-      <div class="step">
-        <div class="h"><span class="no">3</span>重ねて判定<span class="ai">生成AI</span></div>
-        <p>重複も組み合わせも、3色と理由で示す</p>
-      </div>
-    </div>
-    <div class="legend"><span>判定の3色</span><i style="background:#2563EB"></i>買っても問題なさそう<i style="background:#D97706"></i>家にあるもので足りそう<i style="background:#DC2626"></i>注意が必要</div>
-
-    <div class="answers">
-      <div class="ans a" style="--sig:#DC2626">
-        <div class="lb">エピソード 1 への答え</div>
-        <div class="h">「使っていい？」の目安が、<br>その場でわかる</div>
-        <div class="stage">
-          <div class="shot"><div class="pic"><img src="../ピッチ/assets/red-real.png" alt=""><b class="ring" style="left:5%;top:50.6%;width:70%;height:8.6%"><em>店の商品</em></b><b class="ring" style="left:4%;top:79.6%;width:76%;height:9.4%"><em>家にある薬</em></b></div></div>
-          <div class="side"><p>薬を塗った肌に刺激になりうる化粧品を、理由つきで知らせる。※医師・薬剤師の指示が優先</p>
-            <div class="out"><div class="k">AIの実際の出力</div><div class="v">注意が必要です</div>
-            <q>…エタノールを含む化粧水を重ねることで刺激が強くなる可能性があります。</q></div></div>
-        </div>
-      </div>
-      <div class="ans a" style="--sig:#1B2A4A">
-        <div class="lb">エピソード 1 への答え</div>
-        <div class="h">家にある薬と化粧品を塗る<br>順番が、ひと目でわかる</div>
-        <div class="stage">
-          <div class="shot"><img src="../ピッチ/assets/routine-crop.jpg" alt=""></div>
-          <div class="side"><p>化粧水から処方の軟膏まで、家にあるものを塗る順に自動で並べる。</p>
-            <div class="out"><div class="k">実際の画面</div><div class="v">お風呂上がりに<br>塗る順番</div>
-            <q>水分の多いものから、油分で蓋をするものへ並べています</q></div></div>
-        </div>
-      </div>
-      <div class="ans b" style="--sig:#B45309">
-        <div class="lb">エピソード 2 への答え</div>
-        <div class="h">名前が違っても、同じ成分が<br>入っていれば気づける</div>
-        <div class="stage">
-          <div class="shot"><div class="pic"><img src="../ピッチ/assets/yellow-real.png" alt=""><b class="ring" style="left:5%;top:51.3%;width:29%;height:4.3%"><em>店の商品</em></b><b class="ring" style="left:4%;top:67%;width:74%;height:12.2%"><em>家にある薬</em></b></div></div>
-          <div class="side"><p>重ね飲みに気づけ、家の薬で足りれば買わずに済む。</p>
-            <div class="out"><div class="k">AIの実際の出力</div><div class="v">買わなくて<br>大丈夫です</div>
-            <q>イブプロフェン・アセトアミノフェンの解熱鎮痛作用が、在庫のイブA錠と同じ用途で重なる可能性があります。</q></div></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 3 しくみの中身 -->
-  <section>
-    <h2><span class="n">3</span>しくみの中身と工夫<span class="sub">撮った写真から判定が出るまで</span></h2>
+    <h2>しくみ<span class="sub">撮った写真が、判定になるまで</span></h2>
     <div class="flow">
-      <div class="node"><div class="t">スマホ</div><div class="h">成分表示を撮影</div>
-        </div>
+      <div class="node"><div class="t">スマホ</div><div class="h">成分表示を撮る</div></div>
       <div class="arrow">→</div>
-      <div class="node ai"><div class="t">生成AI ①</div><div class="h">成分を読み取る</div>
-        </div>
+      <div class="node ai"><div class="t">生成AI ①</div><div class="h">成分を読み取る</div></div>
       <div class="arrow">→</div>
-      <div class="node ai"><div class="t">生成AI ②</div><div class="h">家の薬と照らして判定</div>
-        </div>
+      <div class="node ai"><div class="t">生成AI ②</div><div class="h">家の在庫と照らす</div></div>
       <div class="arrow">→</div>
-      <div class="node key"><div class="t">サーバー</div><div class="h">理由を裏取りして返す</div>
-        </div>
+      <div class="node"><div class="t">サーバー</div><div class="h">理由を裏取りして返す</div></div>
     </div>
     <div class="points">
-      <div class="pt"><div class="h">工夫① 薬の知識は、出典つきで持つ</div>
-        <p>飲み合わせ・吸収の妨げ・同じ効き目の薬などの知識を、添付文書などの出典とセットで用意。出典を書けない組み合わせは判定に使わない。</p></div>
-      <div class="pt"><div class="h">工夫② AIが書いた理由を、裏取りする</div>
-        <p>理由に挙げた成分が、店の商品にも家の薬にも見当たらなければ、その理由は表示しない。残った理由には出典を付けて見せる。</p></div>
+      <div class="pt"><div class="h">工夫① 薬の知識は、出典つき</div>
+        <p>薬の知識は添付文書などの出典とセットで持ち、出典のない知識は使わない。</p></div>
+      <div class="pt"><div class="h">工夫② AIの理由を、裏取りする</div>
+        <p>理由に挙げた成分が店の商品にも家の薬にもなければ、その理由は出さない。</p></div>
+      <div class="pt"><div class="h">安全のために</div>
+        <p>判定は目安として示し、「注意が必要」なら医師・薬剤師への相談を案内する。</p></div>
     </div>
-    <div class="safety"><b>安全のために：</b>判定は断定せず目安として示し、「注意が必要」のときは必ず医師・薬剤師への相談を案内する。診断や治療の判断はしない。</div>
   </section>
 
-  <div class="vision">肌の治療を続ける人も、家族の薬を買う人も、店頭で迷わない毎日へ。</div>
+  <footer class="cta">
+    <div class="cta-t">
+      <b>スマホで読み取ると、実機を試せます</b>
+      <span>見本の在庫が入った状態で開きます</span>
+      <div class="credit">ユメカタリ 学生生成AIコンテスト 2026｜開発部門<br><b>鈴鹿工業高等専門学校</b>　井上 高志・濱田 圭太郎・杉本 隼都</div>
+    </div>
+    <div class="qr"><svg viewBox="0 0 33 33" shape-rendering="crispEdges" aria-label="https://overlai-delta.vercel.app のQRコード"><rect width="33" height="33" fill="#fff"/><path d="M2 2h1v1h-1zM3 2h1v1h-1zM4 2h1v1h-1zM5 2h1v1h-1zM6 2h1v1h-1zM7 2h1v1h-1zM8 2h1v1h-1zM12 2h1v1h-1zM13 2h1v1h-1zM14 2h1v1h-1zM16 2h1v1h-1zM20 2h1v1h-1zM24 2h1v1h-1zM25 2h1v1h-1zM26 2h1v1h-1zM27 2h1v1h-1zM28 2h1v1h-1zM29 2h1v1h-1zM30 2h1v1h-1zM2 3h1v1h-1zM8 3h1v1h-1zM11 3h1v1h-1zM14 3h1v1h-1zM18 3h1v1h-1zM21 3h1v1h-1zM24 3h1v1h-1zM30 3h1v1h-1zM2 4h1v1h-1zM4 4h1v1h-1zM5 4h1v1h-1zM6 4h1v1h-1zM8 4h1v1h-1zM10 4h1v1h-1zM11 4h1v1h-1zM14 4h1v1h-1zM17 4h1v1h-1zM19 4h1v1h-1zM20 4h1v1h-1zM22 4h1v1h-1zM24 4h1v1h-1zM26 4h1v1h-1zM27 4h1v1h-1zM28 4h1v1h-1zM30 4h1v1h-1zM2 5h1v1h-1zM4 5h1v1h-1zM5 5h1v1h-1zM6 5h1v1h-1zM8 5h1v1h-1zM11 5h1v1h-1zM12 5h1v1h-1zM16 5h1v1h-1zM17 5h1v1h-1zM20 5h1v1h-1zM24 5h1v1h-1zM26 5h1v1h-1zM27 5h1v1h-1zM28 5h1v1h-1zM30 5h1v1h-1zM2 6h1v1h-1zM4 6h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1zM8 6h1v1h-1zM10 6h1v1h-1zM11 6h1v1h-1zM12 6h1v1h-1zM16 6h1v1h-1zM17 6h1v1h-1zM18 6h1v1h-1zM19 6h1v1h-1zM24 6h1v1h-1zM26 6h1v1h-1zM27 6h1v1h-1zM28 6h1v1h-1zM30 6h1v1h-1zM2 7h1v1h-1zM8 7h1v1h-1zM10 7h1v1h-1zM12 7h1v1h-1zM18 7h1v1h-1zM21 7h1v1h-1zM22 7h1v1h-1zM24 7h1v1h-1zM30 7h1v1h-1zM2 8h1v1h-1zM3 8h1v1h-1zM4 8h1v1h-1zM5 8h1v1h-1zM6 8h1v1h-1zM7 8h1v1h-1zM8 8h1v1h-1zM10 8h1v1h-1zM12 8h1v1h-1zM14 8h1v1h-1zM16 8h1v1h-1zM18 8h1v1h-1zM20 8h1v1h-1zM22 8h1v1h-1zM24 8h1v1h-1zM25 8h1v1h-1zM26 8h1v1h-1zM27 8h1v1h-1zM28 8h1v1h-1zM29 8h1v1h-1zM30 8h1v1h-1zM11 9h1v1h-1zM13 9h1v1h-1zM14 9h1v1h-1zM16 9h1v1h-1zM19 9h1v1h-1zM21 9h1v1h-1zM22 9h1v1h-1zM3 10h1v1h-1zM6 10h1v1h-1zM8 10h1v1h-1zM10 10h1v1h-1zM12 10h1v1h-1zM17 10h1v1h-1zM18 10h1v1h-1zM19 10h1v1h-1zM20 10h1v1h-1zM21 10h1v1h-1zM22 10h1v1h-1zM23 10h1v1h-1zM25 10h1v1h-1zM26 10h1v1h-1zM28 10h1v1h-1zM2 11h1v1h-1zM6 11h1v1h-1zM9 11h1v1h-1zM11 11h1v1h-1zM12 11h1v1h-1zM13 11h1v1h-1zM15 11h1v1h-1zM17 11h1v1h-1zM20 11h1v1h-1zM23 11h1v1h-1zM24 11h1v1h-1zM25 11h1v1h-1zM26 11h1v1h-1zM28 11h1v1h-1zM29 11h1v1h-1zM30 11h1v1h-1zM4 12h1v1h-1zM5 12h1v1h-1zM6 12h1v1h-1zM8 12h1v1h-1zM10 12h1v1h-1zM11 12h1v1h-1zM13 12h1v1h-1zM16 12h1v1h-1zM22 12h1v1h-1zM23 12h1v1h-1zM25 12h1v1h-1zM26 12h1v1h-1zM27 12h1v1h-1zM30 12h1v1h-1zM3 13h1v1h-1zM10 13h1v1h-1zM11 13h1v1h-1zM12 13h1v1h-1zM14 13h1v1h-1zM15 13h1v1h-1zM17 13h1v1h-1zM18 13h1v1h-1zM19 13h1v1h-1zM21 13h1v1h-1zM23 13h1v1h-1zM26 13h1v1h-1zM27 13h1v1h-1zM29 13h1v1h-1zM30 13h1v1h-1zM2 14h1v1h-1zM4 14h1v1h-1zM7 14h1v1h-1zM8 14h1v1h-1zM10 14h1v1h-1zM11 14h1v1h-1zM13 14h1v1h-1zM15 14h1v1h-1zM16 14h1v1h-1zM19 14h1v1h-1zM21 14h1v1h-1zM25 14h1v1h-1zM27 14h1v1h-1zM30 14h1v1h-1zM2 15h1v1h-1zM6 15h1v1h-1zM7 15h1v1h-1zM9 15h1v1h-1zM11 15h1v1h-1zM12 15h1v1h-1zM14 15h1v1h-1zM17 15h1v1h-1zM19 15h1v1h-1zM20 15h1v1h-1zM24 15h1v1h-1zM26 15h1v1h-1zM28 15h1v1h-1zM30 15h1v1h-1zM2 16h1v1h-1zM3 16h1v1h-1zM4 16h1v1h-1zM5 16h1v1h-1zM6 16h1v1h-1zM8 16h1v1h-1zM11 16h1v1h-1zM13 16h1v1h-1zM16 16h1v1h-1zM17 16h1v1h-1zM20 16h1v1h-1zM22 16h1v1h-1zM24 16h1v1h-1zM26 16h1v1h-1zM30 16h1v1h-1zM2 17h1v1h-1zM4 17h1v1h-1zM6 17h1v1h-1zM9 17h1v1h-1zM11 17h1v1h-1zM12 17h1v1h-1zM13 17h1v1h-1zM14 17h1v1h-1zM15 17h1v1h-1zM16 17h1v1h-1zM18 17h1v1h-1zM19 17h1v1h-1zM21 17h1v1h-1zM22 17h1v1h-1zM23 17h1v1h-1zM25 17h1v1h-1zM27 17h1v1h-1zM29 17h1v1h-1zM30 17h1v1h-1zM3 18h1v1h-1zM4 18h1v1h-1zM5 18h1v1h-1zM6 18h1v1h-1zM8 18h1v1h-1zM10 18h1v1h-1zM11 18h1v1h-1zM12 18h1v1h-1zM14 18h1v1h-1zM15 18h1v1h-1zM16 18h1v1h-1zM19 18h1v1h-1zM22 18h1v1h-1zM23 18h1v1h-1zM29 18h1v1h-1zM2 19h1v1h-1zM6 19h1v1h-1zM7 19h1v1h-1zM9 19h1v1h-1zM11 19h1v1h-1zM12 19h1v1h-1zM14 19h1v1h-1zM19 19h1v1h-1zM20 19h1v1h-1zM24 19h1v1h-1zM26 19h1v1h-1zM30 19h1v1h-1zM7 20h1v1h-1zM8 20h1v1h-1zM10 20h1v1h-1zM11 20h1v1h-1zM12 20h1v1h-1zM13 20h1v1h-1zM14 20h1v1h-1zM15 20h1v1h-1zM16 20h1v1h-1zM17 20h1v1h-1zM18 20h1v1h-1zM19 20h1v1h-1zM20 20h1v1h-1zM30 20h1v1h-1zM9 21h1v1h-1zM11 21h1v1h-1zM12 21h1v1h-1zM16 21h1v1h-1zM17 21h1v1h-1zM18 21h1v1h-1zM19 21h1v1h-1zM21 21h1v1h-1zM25 21h1v1h-1zM27 21h1v1h-1zM29 21h1v1h-1zM30 21h1v1h-1zM2 22h1v1h-1zM3 22h1v1h-1zM4 22h1v1h-1zM5 22h1v1h-1zM6 22h1v1h-1zM8 22h1v1h-1zM9 22h1v1h-1zM10 22h1v1h-1zM16 22h1v1h-1zM19 22h1v1h-1zM21 22h1v1h-1zM22 22h1v1h-1zM23 22h1v1h-1zM24 22h1v1h-1zM25 22h1v1h-1zM26 22h1v1h-1zM10 23h1v1h-1zM16 23h1v1h-1zM17 23h1v1h-1zM20 23h1v1h-1zM21 23h1v1h-1zM22 23h1v1h-1zM26 23h1v1h-1zM28 23h1v1h-1zM30 23h1v1h-1zM2 24h1v1h-1zM3 24h1v1h-1zM4 24h1v1h-1zM5 24h1v1h-1zM6 24h1v1h-1zM7 24h1v1h-1zM8 24h1v1h-1zM11 24h1v1h-1zM12 24h1v1h-1zM13 24h1v1h-1zM14 24h1v1h-1zM15 24h1v1h-1zM17 24h1v1h-1zM19 24h1v1h-1zM21 24h1v1h-1zM22 24h1v1h-1zM24 24h1v1h-1zM26 24h1v1h-1zM30 24h1v1h-1zM2 25h1v1h-1zM8 25h1v1h-1zM11 25h1v1h-1zM15 25h1v1h-1zM17 25h1v1h-1zM18 25h1v1h-1zM19 25h1v1h-1zM20 25h1v1h-1zM21 25h1v1h-1zM22 25h1v1h-1zM26 25h1v1h-1zM27 25h1v1h-1zM30 25h1v1h-1zM2 26h1v1h-1zM4 26h1v1h-1zM5 26h1v1h-1zM6 26h1v1h-1zM8 26h1v1h-1zM10 26h1v1h-1zM11 26h1v1h-1zM12 26h1v1h-1zM13 26h1v1h-1zM17 26h1v1h-1zM18 26h1v1h-1zM19 26h1v1h-1zM21 26h1v1h-1zM22 26h1v1h-1zM23 26h1v1h-1zM24 26h1v1h-1zM25 26h1v1h-1zM26 26h1v1h-1zM29 26h1v1h-1zM30 26h1v1h-1zM2 27h1v1h-1zM4 27h1v1h-1zM5 27h1v1h-1zM6 27h1v1h-1zM8 27h1v1h-1zM11 27h1v1h-1zM12 27h1v1h-1zM13 27h1v1h-1zM14 27h1v1h-1zM16 27h1v1h-1zM17 27h1v1h-1zM18 27h1v1h-1zM25 27h1v1h-1zM28 27h1v1h-1zM30 27h1v1h-1zM2 28h1v1h-1zM4 28h1v1h-1zM5 28h1v1h-1zM6 28h1v1h-1zM8 28h1v1h-1zM11 28h1v1h-1zM12 28h1v1h-1zM17 28h1v1h-1zM18 28h1v1h-1zM19 28h1v1h-1zM21 28h1v1h-1zM22 28h1v1h-1zM23 28h1v1h-1zM29 28h1v1h-1zM30 28h1v1h-1zM2 29h1v1h-1zM8 29h1v1h-1zM10 29h1v1h-1zM11 29h1v1h-1zM12 29h1v1h-1zM13 29h1v1h-1zM14 29h1v1h-1zM17 29h1v1h-1zM18 29h1v1h-1zM19 29h1v1h-1zM20 29h1v1h-1zM21 29h1v1h-1zM22 29h1v1h-1zM24 29h1v1h-1zM25 29h1v1h-1zM27 29h1v1h-1zM29 29h1v1h-1zM30 29h1v1h-1zM2 30h1v1h-1zM3 30h1v1h-1zM4 30h1v1h-1zM5 30h1v1h-1zM6 30h1v1h-1zM7 30h1v1h-1zM8 30h1v1h-1zM11 30h1v1h-1zM14 30h1v1h-1zM15 30h1v1h-1zM19 30h1v1h-1zM22 30h1v1h-1zM23 30h1v1h-1zM26 30h1v1h-1zM27 30h1v1h-1zM29 30h1v1h-1z" fill="#1B2A4A"/></svg></div>
+  </footer>
 
 </div>
 </body>
