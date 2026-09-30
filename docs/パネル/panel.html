@@ -27,6 +27,7 @@
   .hd { display:flex; align-items:flex-start; gap:6mm; padding-bottom:1mm; }
   .hd-l { flex:1; }
   .contest { font-size:7pt; color:var(--muted); letter-spacing:.04em; }
+  .contest b { color:var(--ink); }
   .brand { display:flex; align-items:center; gap:3mm; margin-top:1.6mm; }
   .brand svg { width:11.5mm; height:11.5mm; }
   .brand .wm { font-size:30pt; line-height:1; color:var(--navy); font-weight:400; letter-spacing:.01em;
@@ -87,7 +88,7 @@
   .answers { display:grid; grid-template-columns:repeat(3, 1fr); gap:4mm; margin-top:1.4mm; align-items:start; }
   .ans { display:flex; flex-direction:column; }
   .ans .pair { display:flex; gap:2.4mm; align-items:stretch; }
-  .ans .shot { height:31mm; flex:none; display:block; border:.6pt solid var(--line); border-radius:3.4mm; padding:1mm; background:#fff; }
+  .ans .shot { height:29mm; flex:none; display:block; border:.6pt solid var(--line); border-radius:3.4mm; padding:1mm; background:#fff; }
   .ans .shot img { height:100%; display:block; border-radius:2.6mm; }
   .ans .out { flex:1; background:var(--canvas); border-radius:2.6mm; padding:2.2mm 2.6mm; display:flex; flex-direction:column; }
   .ans .out .k { font-size:6.5pt; font-weight:700; color:var(--muted); letter-spacing:.04em; }
@@ -101,16 +102,25 @@
   .ans.a { --c:var(--blue); }
   .ans.b { --c:var(--amber); }
 
-  /* ── 03 設計 ── */
-  .design { display:grid; grid-template-columns:repeat(3, 1fr); gap:2mm; }
-  .d { border:.6pt solid var(--line); border-radius:2.6mm; padding:1.6mm 2.8mm 1.8mm; }
-  .d .h { font-size:8.5pt; font-weight:700; color:var(--navy); }
-  .d p { font-size:7pt; color:var(--muted); margin-top:.2mm; line-height:1.5; }
-  .stats { display:grid; grid-template-columns:repeat(4, 1fr); margin-top:2mm; background:var(--canvas); border-radius:2.6mm; }
-  .st { padding:1.1mm 3mm; text-align:center; }
-  .st + .st { border-left:.6pt solid var(--line); }
-  .st b { display:block; font-size:12pt; color:var(--navy); line-height:1.25; }
-  .st span { font-size:7pt; color:var(--muted); }
+  /* ── 03 しくみの中身：構成図と、工夫した2点 ── */
+  .flow { display:grid; grid-template-columns:1fr auto 1fr auto 1fr auto 1fr; align-items:stretch; gap:1.6mm; }
+  .node { border:.6pt solid var(--line); border-radius:2.6mm; padding:2mm 2.6mm; background:#fff; }
+  .node.ai { background:var(--blue-bg); border-color:var(--blue-bd); }
+  .node.key { background:var(--navy); border-color:var(--navy); }
+  .node .t { font-size:6.5pt; font-weight:700; color:var(--muted); letter-spacing:.04em; }
+  .node.ai .t { color:var(--blue); }
+  .node.key .t { color:var(--pale); }
+  .node .h { font-size:9pt; font-weight:700; color:var(--navy); margin-top:.4mm; line-height:1.35; }
+  .node.key .h { color:#fff; }
+  .node p { font-size:6.8pt; color:var(--muted); margin-top:.6mm; line-height:1.45; }
+  .node.key p { color:var(--pale); }
+  .flow .arrow { font-size:10pt; }
+  .points { display:grid; grid-template-columns:1fr 1fr; gap:3mm; margin-top:2mm; }
+  .pt { border-left:1.2mm solid var(--navy); background:var(--canvas); border-radius:0 2.6mm 2.6mm 0; padding:1.8mm 3.4mm; }
+  .pt .h { font-size:10pt; font-weight:700; color:var(--navy); }
+  .pt p { font-size:7.3pt; color:var(--muted); margin-top:.6mm; line-height:1.55; }
+  .safety { margin-top:1.6mm; font-size:7.5pt; color:var(--muted); text-align:center; }
+  .safety b { color:var(--ink); }
   .vision { margin-top:1.2mm; text-align:center; font-size:11pt; font-weight:700; color:var(--navy); letter-spacing:.02em; }
 
   /* ── フッター ── */
@@ -125,7 +135,7 @@
   <!-- ヘッダー -->
   <header class="hd">
     <div class="hd-l">
-      <div class="contest">ユメカタリ 学生生成AIコンテスト 2026｜開発部門</div>
+      <div class="contest">ユメカタリ 学生生成AIコンテスト 2026｜開発部門　　<b>鈴鹿工業高等専門学校</b>　井上 高志・濱田 圭太郎・杉本 隼都</div>
       <div class="brand">
         <svg viewBox="0 0 90 90" aria-hidden="true">
           <path d="M14 14 h30 a10 10 0 0 1 10 10 v30 a10 10 0 0 1 -10 10 h-30 a10 10 0 0 1 -10 -10 v-30 a10 10 0 0 1 10 -10 z" fill="#1B2A4A" fill-opacity=".38"/>
@@ -238,30 +248,32 @@
     </div>
   </section>
 
-  <!-- 03 設計 -->
+  <!-- 03 しくみの中身 -->
   <section>
-    <h2><span class="n">03</span>AIに任せすぎない設計<span class="sub">薬に関わるアプリだから、AIの得意なところだけをAIに任せる</span></h2>
-    <div class="design">
-      <div class="d"><div class="h">「読む」と「判断する」を分ける</div><p>成分を読むAIと、判断するAIを分けている</p></div>
-      <div class="d"><div class="h">決められることはルールで</div><p>塗る順番・期限・相談の案内はAIに任せない</p></div>
-      <div class="d"><div class="h">薬の知識は出典つき</div><p>出典を書けない組み合わせは使わない</p></div>
-      <div class="d"><div class="h">理由の裏取り</div><p>商品にも家の薬にもない成分の話は出さない</p></div>
-      <div class="d"><div class="h">予備のAIを用意</div><p>一方が止まっても、もう一方で判定を続ける</p></div>
-      <div class="d"><div class="h">登録した薬はサーバーに残さない</div><p>スマホに保存し、判定のときだけ送る</p></div>
+    <h2><span class="n">03</span>しくみの中身と工夫<span class="sub">撮った写真から判定が出るまで</span></h2>
+    <div class="flow">
+      <div class="node"><div class="t">スマホ</div><div class="h">成分表示を撮影</div>
+        <p>家の薬・化粧品の記録はスマホの中に保存</p></div>
+      <div class="arrow">→</div>
+      <div class="node ai"><div class="t">生成AI ①</div><div class="h">成分を読み取る</div>
+        <p>写真から商品名・剤形・成分を取り出す</p></div>
+      <div class="arrow">→</div>
+      <div class="node ai"><div class="t">生成AI ②</div><div class="h">家の薬と照らして判定</div>
+        <p>出典つきの薬の知識を渡し、重複と組み合わせを見る</p></div>
+      <div class="arrow">→</div>
+      <div class="node key"><div class="t">サーバー</div><div class="h">理由を裏取りして返す</div>
+        <p>根拠をたどれない理由は落とし、出典を添える</p></div>
     </div>
-    <div class="stats">
-      <div class="st"><b>約10秒</b><span>撮影から判定まで</span></div>
-      <div class="st"><b>9回中9回</b><span>同じ画像で、同じ判定</span></div>
-      <div class="st"><b>実商品 5点</b><span>市販薬・化粧品で実機確認</span></div>
-      <div class="st"><b>82件</b><span>動作を確かめる自動テスト</span></div>
+    <div class="points">
+      <div class="pt"><div class="h">工夫① 薬の知識は、出典つきで持つ</div>
+        <p>飲み合わせ・吸収の妨げ・同じ効き目の薬などの知識を、添付文書などの出典とセットで用意。出典を書けない組み合わせは判定に使わない。</p></div>
+      <div class="pt"><div class="h">工夫② AIが書いた理由を、裏取りする</div>
+        <p>理由に挙げた成分が、店の商品にも家の薬にも見当たらなければ、その理由は表示しない。残った理由には出典を付けて見せる。</p></div>
     </div>
+    <div class="safety"><b>安全のために：</b>判定は断定せず目安として示し、「注意が必要」のときは必ず医師・薬剤師への相談を案内する。診断や治療の判断はしない。</div>
     <div class="vision">肌の治療を続ける人も、家族の薬を買う人も、店頭で迷わない毎日へ。</div>
   </section>
 
-  <footer class="ft">
-    <span><b>鈴鹿工業高等専門学校</b>　井上 高志・濱田 圭太郎・杉本 隼都</span>
-    <span>判定は目安です。最後は医師・薬剤師にご相談ください。</span>
-  </footer>
 
 </div>
 </body>
