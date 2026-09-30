@@ -91,16 +91,23 @@ def chips(y, labels, color, bg, border):
     return out
 
 
-def episode(no, kind, who, color, bg, border, scene, doubts):
-    """場面は小さく、そのとき浮かんだ「迷い」を一番大きく見せる。"""
+def episode(no, kind, who, color, cloud, people, scene, doubts):
+    """人物のイラストと、そのとき浮かんだ迷いの吹き出し。迷いを一番大きく見せる。
+    イラストは illust/make.py で描いたもの（素材サイトの画像は使わない）"""
+    cw, ch = 8.3, None
+    cl = image(cloud, 0.6, 2.6, w=cw)
+    ch = cl['h']
+    cx, cy = 0.6 + 0.494 * cw, 2.6 + 0.491 * ch  # 吹き出しの本体の中心
+    ppl = image(people, 0, 0, h=2.75)
+    ppl['x'], ppl['y'] = 12.95 - ppl['w'], 7.5 - ppl['h']
     out = [
-        text(0.9, 0.9, 8, 0.5, f'エピソード {no}｜{kind}', 20, color, bold=True),
-        text(0.9, 1.4, 11.5, 0.5, who, 18, MUTED),
-        text(0.9, 2.1, 11.5, 1.2, scene, 28, MUTED, bold=True),
+        text(0.9, 0.8, 8, 0.5, f'エピソード {no}｜{kind}', 20, color, bold=True),
+        text(0.9, 1.3, 11.5, 0.5, who, 18, MUTED),
+        text(0.9, 1.85, 12, 0.6, scene, 26, MUTED, bold=True),
+        cl, ppl,
     ]
     for i, q in enumerate(doubts):
-        w = len(q) * 40 / 72 * 1.02 + 1.0
-        out.append(rect(0.9, 3.65 + i * 1.4, w, 1.1, bg, radius=0.55, line=border, label=q, size=40, color=NAVY))
+        out.append(text(cx - 3.6, cy - 0.76 + i * 0.86, 7.2, 0.72, q, 32, NAVY, bold=True, align='center'))
     return out
 
 
@@ -121,8 +128,8 @@ SLIDES.append(dict(bg=WHITE, notes=(
     'ステロイドの塗り薬を使う濱田と杉本は、ある日、化粧水を手に取って、手が止まりました。'
     '薬を塗った肌に使っていいのか。どっちが先か。'
 ), items=episode(
-    1, '組み合わせの迷い', '濱田・杉本｜肌が弱く、ステロイドの塗り薬を使っている', BLUE, 'EFF6FF', 'BFDBFE',
-    'ある日、ドラッグストアで\n化粧水を手に取って、手が止まった。',
+    1, '組み合わせの迷い', '濱田・杉本｜肌が弱く、ステロイドの塗り薬を使っている', BLUE, 'cloud-blue.png', 'people-1.png',
+    'ある日、ドラッグストアで化粧水を手に取って、手が止まった。',
     ['薬を塗った肌に、使っていい？', '薬と化粧品、どっちが先？'],
 )))
 
@@ -130,8 +137,8 @@ SLIDES.append(dict(bg=WHITE, notes=(
 SLIDES.append(dict(bg=WHITE, notes=(
     '井上は、風邪薬を買って帰ると、似た薬がもう家にありました。名前が違うと、同じ薬だと気づけないんです。'
 ), items=episode(
-    2, '重複の迷い', '井上', AMBER, 'FFF7ED', 'FED7AA',
-    '風邪薬を買って家に帰ると、\n似たような薬がもう家にあった。',
+    2, '重複の迷い', '井上', AMBER, 'cloud-amber.png', 'people-2.png',
+    '風邪薬を買って家に帰ると、似たような薬がもう家にあった。',
     ['家に、同じような薬あったっけ？', '名前は違うけど、中身は同じ？'],
 )))
 
