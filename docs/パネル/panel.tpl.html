@@ -9,7 +9,8 @@
      1枚で伝えることは「店で撮るだけで、家の薬と重ねて買うべきかがわかる」の一つ。
      エピソードはブースで口頭で話すので載せない。載せるのは、アプリの説明・実機の画面・しくみだけ。
      色は紺と灰色だけで組み、塗りつぶした紺は「重なり」の図と、最後の「試せます」の帯の2か所に絞る。
-     判定の3色（青・黄・赤）は、凡例と実機の画面の中にだけ出す */
+     判定の3色（青・黄・赤）は、凡例と実機の画面の中にだけ出す。
+     角丸は、画面・箱・帯が 3mm、小物が 1.6mm（重なりの図はロゴと同じ形なので別） */
   @page { size: A4; margin: 0; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -32,14 +33,14 @@
                font-family:"Helvetica Neue","Hiragino Sans",sans-serif; }
   .brand .ro { color:var(--muted); align-self:flex-end; }
   h1 { margin-top:3mm; font-size:40pt; line-height:1.15; font-weight:800; color:var(--navy); letter-spacing:.02em; }
-  .lead { margin-top:3.5mm; font-size:13pt; font-weight:700; line-height:1.6; }
+  .lead { margin-top:3.5mm; font-size:13.5pt; font-weight:700; line-height:1.6; }
 
   /* ロゴと同じ二つの四角を重ね、重なった所が判定になることを図で見せる */
   .venn { position:relative; width:60mm; height:60mm; }
-  .venn .sq { position:absolute; width:40mm; height:40mm; border-radius:7mm; }
+  .venn .sq { position:absolute; width:42mm; height:42mm; border-radius:7mm; }
   .venn .a { left:0; top:0; background:#E4E7EC; }
-  .venn .b { left:20mm; top:20mm; background:#BCC3CE; }
-  .venn .ov { position:absolute; left:20mm; top:20mm; width:20mm; height:20mm; border-radius:7mm 0 7mm 0; background:var(--navy);
+  .venn .b { left:18mm; top:18mm; background:#BCC3CE; }
+  .venn .ov { position:absolute; left:18mm; top:18mm; width:24mm; height:24mm; border-radius:7mm 0 7mm 0; background:var(--navy);
               color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.4mm; }
   .venn .ov b { font-size:10pt; line-height:1.2; }
   .venn .ov i { display:inline-block; width:2.4mm; height:2.4mm; border-radius:50%; margin:0 .5mm; }
@@ -50,46 +51,47 @@
   /* ── 段落見出し ── */
   section { margin-top:6.5mm; }
   section:last-of-type { margin-bottom:6mm; } /* 最後の帯との間を必ず空ける */
-  h2 { display:flex; align-items:baseline; gap:4mm; font-size:17pt; line-height:1.25; font-weight:800; color:var(--navy);
+  h2 { display:flex; align-items:baseline; gap:4mm; font-size:15pt; line-height:1.25; font-weight:800; color:var(--navy);
        padding-bottom:1.4mm; border-bottom:1.4pt solid var(--navy); margin-bottom:3.5mm; }
   h2 .sub { margin-left:auto; font-size:8.5pt; font-weight:400; color:var(--muted); }
-  .legend { font-weight:700; color:var(--ink); }
+  /* 凡例は、説明している画面のすぐ下に置く */
+  .legend { margin-top:2.4mm; font-weight:700; }
+  .legend span { color:var(--muted); }
   .legend i { display:inline-block; width:2.6mm; height:2.6mm; border-radius:50%; margin:0 1mm 0 3.4mm; vertical-align:-.2mm; }
 
   /* ── できること：実機の画面を大きく並べる ── */
   .cases { display:grid; grid-template-columns:repeat(3, 1fr); gap:9mm; }
-  .case h3 { font-size:11.5pt; line-height:1.45; font-weight:700; white-space:nowrap; }
+  .case h3 { font-size:12pt; line-height:1.45; font-weight:700; white-space:nowrap; }
   .case p { color:var(--muted); margin-top:.6mm; white-space:nowrap; }
-  .shot { display:inline-block; height:var(--phone); margin-top:3mm; border:.6pt solid var(--line); border-radius:4mm;
+  .shot { display:inline-block; height:var(--phone); margin-top:3mm; border:.6pt solid var(--line); border-radius:3mm;
           padding:1.2mm; background:#fff; }
   .pic { position:relative; height:100%; }
-  .pic img { height:100%; display:block; border-radius:3mm; }
+  .pic img { height:100%; display:block; border-radius:2.2mm; }
   /* 画面のどこを重ねたかを、店の商品と家の薬に枠をつけて示す */
   .ring { position:absolute; border:1.2pt solid var(--sig); border-radius:1.6mm; }
   .ring em { position:absolute; left:-.6mm; bottom:100%; margin-bottom:.5mm; font-style:normal; font-weight:700;
              line-height:1.3; color:#fff; background:var(--sig); border-radius:.8mm; padding:0 1.2mm; white-space:nowrap; }
-  .real { margin-top:1.2mm; text-align:right; color:var(--muted); }
 
   /* ── しくみ ── */
-  .flow { display:grid; grid-template-columns:1fr auto 1fr auto 1fr auto 1fr; gap:2.4mm; align-items:stretch; }
-  .node { border:.6pt solid var(--line); border-radius:2.6mm; padding:2.2mm 3mm 2.4mm; }
+  .flow { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr); gap:2.4mm; align-items:stretch; }
+  .node { border:.6pt solid var(--line); border-radius:3mm; padding:2.2mm 3mm 2.4mm; }
   .node.ai { background:var(--mist); border-color:var(--mist); }
   .node .t { color:var(--muted); line-height:1.4; }
   .node .h { font-size:10.5pt; font-weight:700; color:var(--navy); line-height:1.4; white-space:nowrap; }
   .flow .arrow { align-self:center; color:var(--muted); font-size:11pt; }
   .points { display:grid; grid-template-columns:repeat(3, 1fr); gap:9mm; margin-top:4mm; }
   .pt .h { font-size:10.5pt; font-weight:700; color:var(--navy); line-height:1.45; white-space:nowrap; }
-  .pt p { color:var(--muted); margin-top:1mm; }
+  .pt p { color:var(--muted); margin-top:1mm; white-space:nowrap; } /* 改行は <br> で意味の切れ目に置く */
 
   /* ── 試せます：読みの終わり（右下）に置く ── */
   .cta { margin-top:auto; display:flex; align-items:center; gap:6mm; background:var(--navy); color:#fff;
-         border-radius:3.4mm; padding:3mm 3mm 3mm 7mm; }
+         border-radius:3mm; padding:3mm 3mm 3mm 7mm; }
   .credit { margin-top:3.4mm; padding-top:2.4mm; border-top:.6pt solid rgba(255,255,255,.22); color:var(--pale); line-height:1.5; }
   .credit b { color:#fff; font-weight:700; }
   .cta-t { flex:1; }
   .cta-t > b { display:block; font-size:15pt; line-height:1.4; }
   .cta-t > span { display:block; margin-top:1mm; color:var(--pale); font-size:9.5pt; }
-  .qr { flex:none; background:#fff; border-radius:2mm; padding:1.6mm; }
+  .qr { flex:none; background:#fff; border-radius:1.6mm; padding:1.6mm; }
   .qr svg { display:block; width:24mm; height:24mm; }
 </style>
 </head>
@@ -107,64 +109,64 @@
         <span class="ro">Overlay（重ねる）＋ AI</span>
       </div>
       <h1>重ねる前に、<br>重ねて見る。</h1>
-      <p class="lead">店で成分表示を撮るだけで、家にある薬・化粧品と<br>重ねて「買うべきか」がわかるアプリ。</p>
+      <p class="lead">店で成分表示を撮るだけで、家の薬・化粧品と重ねて<br>「買うべきか」の目安がわかるアプリ。</p>
     </div>
-    <div class="venn" role="img" aria-label="店で撮った商品と、登録した家の薬・化粧品を重ねて判定する">
+    <div class="venn" role="img" aria-label="店で撮った商品と、撮って登録した家の薬・化粧品を重ねて判定する">
       <div class="sq a"></div>
       <div class="sq b"></div>
       <div class="ov"><b>重ねて判定</b><span><i style="background:var(--blue)"></i><i style="background:var(--amber)"></i><i style="background:var(--red)"></i></span></div>
       <div class="la">店で撮った商品</div>
-      <div class="lb">登録した<br>家の薬・化粧品</div>
+      <div class="lb">撮って登録した<br>家の薬・化粧品</div>
     </div>
   </header>
 
   <section>
-    <h2>できること<span class="sub legend">判定は3色<i style="background:var(--blue)"></i>買っても問題なさそう<i style="background:var(--amber)"></i>家にあるもので足りそう<i style="background:var(--red)"></i>注意が必要</span></h2>
+    <h2>できること<span class="sub">画面はすべて実機。判定の文と✦印のひと言は生成AIの出力、塗る順番はルールで決める</span></h2>
     <div class="cases">
       <div class="case" style="--sig:#B45309">
-        <h3>名前が違っても、<br>同じ成分に気づける</h3>
+        <h3>名前が違っても、<br>同じ働きの薬に気づける</h3>
         <p>家の薬で足りれば、買わずに済む</p>
-        <div class="shot"><div class="pic"><img src="../ピッチ/assets/yellow-real.png" alt="「買わなくて大丈夫です」の判定画面"><b class="ring" style="left:5%;top:51.3%;width:29%;height:4.3%"><em>店の商品</em></b><b class="ring" style="left:4%;top:67%;width:74%;height:12.2%"><em>家にある薬</em></b></div></div>
+        <div class="shot"><div class="pic"><img src="../ピッチ/assets/yellow-real.png" alt="「買わなくて大丈夫です」の判定画面"><b class="ring" style="left:5%;top:51.3%;width:29%;height:4.3%"><em>店の商品</em></b><b class="ring" style="left:3.5%;top:67%;width:93%;height:12.2%"><em>家の薬</em></b></div></div>
       </div>
       <div class="case" style="--sig:#DC2626">
-        <h3>薬を塗った肌に使えるか、<br>目安がその場でわかる</h3>
+        <h3>化粧品を薬と重ねていいか、<br>目安がその場でわかる</h3>
         <p>※医師・薬剤師の指示が優先</p>
-        <div class="shot"><div class="pic"><img src="../ピッチ/assets/red-real.png" alt="「注意が必要です」の判定画面"><b class="ring" style="left:5%;top:50.6%;width:70%;height:8.6%"><em>店の商品</em></b><b class="ring" style="left:4%;top:79.6%;width:76%;height:9.4%"><em>家にある薬</em></b></div></div>
+        <div class="shot"><div class="pic"><img src="../ピッチ/assets/red-real.png" alt="「注意が必要です」の判定画面"><b class="ring" style="left:3.5%;top:50.4%;width:42%;height:4.4%"><em>店の商品</em></b><b class="ring" style="left:3.5%;top:79.6%;width:93%;height:9.4%"><em>家の薬</em></b></div></div>
       </div>
       <div class="case">
         <h3>薬と化粧品を塗る順番が、<br>ひと目でわかる</h3>
-        <p>家にあるものから、自動で並ぶ</p>
+        <p>※処方薬は医師・薬剤師の指示が優先</p>
         <div class="shot"><div class="pic"><img src="../ピッチ/assets/routine-crop.jpg" alt="お風呂上がりに塗る順番の画面"></div></div>
       </div>
     </div>
-    <p class="real">画面はすべて実機のもの。判定の文は生成AIの実際の出力</p>
+    <p class="legend"><span>判定は3色</span><i style="background:var(--blue)"></i>買っても問題なさそう<i style="background:var(--amber)"></i>買わなくてよさそう<i style="background:var(--red)"></i>注意が必要</p>
   </section>
 
   <section>
-    <h2>しくみ<span class="sub">撮った写真が、判定になるまで</span></h2>
+    <h2>しくみ<span class="sub">商品データベースは使わず、成分表示を生成AIが直接読む</span></h2>
     <div class="flow">
       <div class="node"><div class="t">スマホ</div><div class="h">成分表示を撮る</div></div>
       <div class="arrow">→</div>
-      <div class="node ai"><div class="t">生成AI ①</div><div class="h">成分を読み取る</div></div>
+      <div class="node ai"><div class="t">生成AI</div><div class="h">成分を読み取る</div></div>
       <div class="arrow">→</div>
-      <div class="node ai"><div class="t">生成AI ②</div><div class="h">家の在庫と照らす</div></div>
+      <div class="node ai"><div class="t">生成AI</div><div class="h">家のものと比べる</div></div>
       <div class="arrow">→</div>
-      <div class="node"><div class="t">サーバー</div><div class="h">理由を裏取りして返す</div></div>
+      <div class="node"><div class="t">サーバー</div><div class="h">理由を裏取りする</div></div>
     </div>
     <div class="points">
       <div class="pt"><div class="h">工夫① 薬の知識は、出典つき</div>
-        <p>薬の知識は添付文書などの出典とセットで持ち、出典のない知識は使わない。</p></div>
+        <p>薬の組み合わせの知識を、<br>添付文書などの出典つきでAIに渡す。</p></div>
       <div class="pt"><div class="h">工夫② AIの理由を、裏取りする</div>
-        <p>理由に挙げた成分が店の商品にも家の薬にもなければ、その理由は出さない。</p></div>
+        <p>店にも家にもない成分の理由は消し、<br>残った理由に出典や調べ先を添える。</p></div>
       <div class="pt"><div class="h">安全のために</div>
-        <p>判定は目安として示し、「注意が必要」なら医師・薬剤師への相談を案内する。</p></div>
+        <p>判定は目安。年齢や持病までは見ない。<br>どの色でも医師・薬剤師に相談を促す。</p></div>
     </div>
   </section>
 
   <footer class="cta">
     <div class="cta-t">
-      <b>スマホで読み取ると、実機を試せます</b>
-      <span>見本の在庫が入った状態で開きます</span>
+      <b>スマホで読み取ると、その場で試せます</b>
+      <span>インストール不要。見本の薬・化粧品が入った状態で開きます</span>
       <div class="credit">ユメカタリ 学生生成AIコンテスト 2026｜開発部門<br><b>鈴鹿工業高等専門学校</b>　井上 高志・濱田 圭太郎・杉本 隼都</div>
     </div>
     <div class="qr">{{QR}}</div>
