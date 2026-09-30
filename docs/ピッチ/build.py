@@ -191,7 +191,7 @@ SLIDES.append(dict(bg=WHITE, notes=(
 ]))
 
 # 5. エピソード1への答え（何ができるかではなく、使う人に何がうれしいかを書く）
-SLIDES.append(dict(bg=CANVAS, notes=(
+SLIDES.append(dict(bg=WHITE, notes=(
     '使っていいかの目安がその場で分かり、塗る順番まで案内します。'
 ), items=[
     text(0.9, 0.95, 6, 0.5, 'エピソード 1 への答え｜組み合わせ', 20, BLUE, bold=True),
@@ -206,7 +206,7 @@ SLIDES.append(dict(bg=CANVAS, notes=(
 ]))
 
 # 6. エピソード2への答え（5枚目と同じ組み方にそろえる）
-SLIDES.append(dict(bg=CANVAS, notes=(
+SLIDES.append(dict(bg=WHITE, notes=(
     '名前が違っても、成分で重なりに気づけます。'
 ), items=[
     text(0.9, 0.95, 6, 0.5, 'エピソード 2 への答え｜重複', 20, AMBER, bold=True),
