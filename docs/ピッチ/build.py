@@ -147,13 +147,13 @@ SLIDES.append(dict(bg=WHITE, notes=(
 )))
 
 # 3. 共通する原因
-SLIDES.append(dict(bg=NAVY, notes=(
+SLIDES.append(dict(bg=WHITE, notes=(
     'どの迷いも、家にある薬と見比べないと答えが出ません。でも、店の棚の前では、それができません。'
 ), items=[
     text(0.9, 1.3, 11.5, 0.6, '「使っていい？」「どっちが先？」「もう家にある？」', 24, FAINT),
-    text(0.9, 2.05, 11.5, 0.7, 'どの迷いも、家にある薬と見比べないと答えが出ない。', 30, PALE),
-    rect(0.9, 3.2, 0.9, 0.06, PALE),
-    text(0.9, 3.6, 11.8, 2.4, 'でも、店の棚の前では、\n家の薬と見比べられない。', 50, WHITE, bold=True),
+    text(0.9, 2.05, 11.5, 0.7, 'どの迷いも、家にある薬と見比べないと答えが出ない。', 30, MUTED),
+    rect(0.9, 3.2, 0.9, 0.06, NAVY),
+    text(0.9, 3.6, 11.8, 2.4, 'でも、店の棚の前では、\n家の薬と見比べられない。', 50, NAVY, bold=True),
 ]))
 
 # 4. しくみ
@@ -240,16 +240,16 @@ SLIDES.append(dict(bg=WHITE, notes=(
 ]))
 
 # 8. 締め
-SLIDES.append(dict(bg=NAVY, notes=(
+SLIDES.append(dict(bg=WHITE, notes=(
     'Overlai。' + SLOGAN
 ), items=[
-    text(0, 1.2, W, 0.7, '店頭で撮るだけで、家の薬や化粧品と重ねて判定する。', 26, PALE, align='center'),
-    *brand(4.05, 2.3, size=80, color=WHITE, logo='logo-white.png'),
-    text(0, 4.45, W, 0.8, SLOGAN, 34, WHITE, bold=True, align='center'),
-    text(0.9, 6.62, 9, 0.4, '鈴鹿工業高等専門学校　井上 高志・濱田 圭太郎・杉本 隼都', 15, PALE),
-    rect(11.28, 5.0, 1.4, 1.4, WHITE, radius=0.12),
+    text(0, 1.2, W, 0.7, '店頭で撮るだけで、家の薬や化粧品と重ねて判定する。', 26, MUTED, align='center'),
+    *brand(4.05, 2.3, size=80),
+    text(0, 4.45, W, 0.8, SLOGAN, 34, NAVY, bold=True, align='center'),
+    text(0.9, 6.62, 9, 0.4, '鈴鹿工業高等専門学校　井上 高志・濱田 圭太郎・杉本 隼都', 15, MUTED),
+    rect(11.28, 5.0, 1.4, 1.4, WHITE, radius=0.12, line=LINE),
     image('qr.png', 11.33, 5.05, h=1.3),
-    text(11.08, 6.5, 1.8, 0.4, '実機を試す', 13, PALE, align='center'),
+    text(11.08, 6.5, 1.8, 0.4, '実機を試す', 13, MUTED, align='center'),
 ]))
 
 
