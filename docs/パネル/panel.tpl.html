@@ -20,8 +20,8 @@
     font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN",sans-serif;
     color:var(--ink); font-size:8pt; line-height:1.6; letter-spacing:.01em; background:#fff;
   }
-  .page { width:210mm; height:297mm; padding:8mm 10mm 6mm; overflow:hidden;
-          display:flex; flex-direction:column; gap:2.4mm; }
+  .page { width:210mm; height:297mm; padding:7.5mm 10mm 5.5mm; overflow:hidden;
+          display:flex; flex-direction:column; gap:2mm; }
 
   /* ── ヘッダー ── */
   .hd { display:flex; align-items:flex-start; gap:6mm; padding-bottom:1mm; }
@@ -33,7 +33,8 @@
                font-family:"Helvetica Neue","Hiragino Sans",sans-serif; }
   .brand .ro { font-size:7.5pt; color:var(--muted); margin-left:1mm; align-self:flex-end; padding-bottom:1.4mm; }
   h1 { margin-top:1.6mm; font-size:19pt; line-height:1.3; font-weight:700; color:var(--navy); letter-spacing:.02em; }
-  .lead { margin-top:1.6mm; font-size:9pt; color:var(--muted); line-height:1.6; }
+  .pillars { margin-top:1mm; font-size:10pt; font-weight:700; color:var(--blue); letter-spacing:.02em; }
+  .lead { margin-top:1.2mm; font-size:9pt; color:var(--muted); line-height:1.6; }
   .lead b { color:var(--ink); }
   .qr { width:30mm; text-align:center; padding-top:.5mm; }
   .qr svg { display:block; width:25mm; height:25mm; margin:0 auto; }
@@ -44,26 +45,28 @@
   /* 段落の切れ目が離れても分かるよう、見出しは番号の札＋太い下線にする */
   section + section { margin-top:1.6mm; }
   h2 { display:flex; align-items:center; gap:2.6mm; font-size:16pt; line-height:1.3; font-weight:700; color:var(--navy);
-       letter-spacing:.02em; margin-bottom:2.4mm; padding-bottom:1.4mm; border-bottom:1.2pt solid var(--navy); }
+       letter-spacing:.02em; margin-bottom:2mm; padding-bottom:1.2mm; border-bottom:1.2pt solid var(--navy); }
   h2 .n { font-size:10pt; font-weight:700; color:#fff; background:var(--navy); border-radius:1.6mm;
           padding:.4mm 2mm; letter-spacing:.06em; }
   h2 .sub { font-size:8pt; font-weight:400; color:var(--muted); letter-spacing:.01em; margin-left:auto; }
 
   /* ── 01 エピソード ── */
   .eps { display:grid; grid-template-columns:1fr 1fr; gap:4mm; }
-  .ep { border:.6pt solid var(--line); border-radius:3.4mm; padding:3.4mm 4.4mm 3.6mm; position:relative; overflow:hidden; }
+  .ep { border:.6pt solid var(--line); border-radius:3.4mm; padding:3mm 4mm 3mm 4.4mm; position:relative; overflow:hidden; }
   .ep::before { content:""; position:absolute; left:0; top:0; bottom:0; width:1.4mm; background:var(--c); }
   .ep .lb { font-size:8.5pt; font-weight:700; color:var(--c); }
   .ep .who { font-size:7pt; color:var(--muted); margin-top:.4mm; }
-  .ep .scene { font-size:8.5pt; font-weight:700; color:var(--muted); margin-top:1.4mm; }
-  .ep .big { font-size:15.5pt; font-weight:700; color:var(--navy); line-height:1.35; margin-top:.8mm; letter-spacing:.01em; }
-  .chips { display:flex; flex-wrap:nowrap; gap:1.4mm; margin-top:2.4mm; }
-  .chip { font-size:7.3pt; font-weight:700; color:var(--c); background:var(--bg); border:.6pt solid var(--bd);
-          border-radius:10mm; padding:1mm 2.6mm; white-space:nowrap; }
+  .ep .scene { font-size:8pt; white-space:nowrap; font-weight:700; color:var(--muted); margin-top:1.4mm; line-height:1.5; }
+  .ep .row { display:flex; align-items:flex-end; gap:2.6mm; margin-top:1.6mm; }
+  .bubble { flex:1; min-width:0; background:var(--bg); border:.8pt solid var(--bd); border-radius:4mm; padding:2mm 3mm; position:relative; }
+  .bubble::after { content:""; position:absolute; right:-2.2mm; bottom:3.4mm; width:3.4mm; height:3.4mm; background:var(--bg);
+                   border-right:.8pt solid var(--bd); border-top:.8pt solid var(--bd); transform:rotate(45deg) skew(8deg, 8deg); }
+  .bubble p { font-size:11.5pt; font-weight:700; color:var(--navy); line-height:1.5; letter-spacing:.01em; white-space:nowrap; }
+  .ep .ppl { height:15mm; display:block; flex:none; }
   .ep.a { --c:var(--blue); --bg:var(--blue-bg); --bd:var(--blue-bd); }
   .ep.b { --c:var(--amber); --bg:var(--amber-bg); --bd:var(--amber-bd); }
 
-  .band { background:var(--navy); border-radius:3.4mm; padding:2.8mm 5mm 3mm; margin-top:2.4mm; }
+  .band { background:var(--navy); border-radius:3.4mm; padding:2.4mm 5mm 2.6mm; margin-top:2mm; }
   .band .q { font-size:8pt; color:var(--faint); }
   .band .q b { color:var(--pale); font-weight:700; }
   .band .a { font-size:15.5pt; font-weight:700; color:#fff; line-height:1.35; margin-top:1mm; letter-spacing:.01em; }
@@ -78,10 +81,12 @@
               border-radius:10mm; padding:.2mm 1.8mm; margin-left:1mm; white-space:nowrap; }
   .step p { font-size:7pt; color:var(--muted); margin-top:1.2mm; line-height:1.55; }
   .arrow { color:var(--faint); font-size:11pt; align-self:center; }
+  .legend { display:flex; justify-content:flex-end; gap:4mm; margin-top:1.2mm; font-size:7.5pt; font-weight:700; color:var(--muted); }
+  .legend i { display:inline-block; width:2.6mm; height:2.6mm; border-radius:50%; margin-right:1.2mm; vertical-align:-.3mm; }
 
-  .answers { display:grid; grid-template-columns:repeat(3, 1fr); gap:4mm; margin-top:2.4mm; }
+  .answers { display:grid; grid-template-columns:repeat(3, 1fr); gap:4mm; margin-top:1.4mm; }
   .ans { display:flex; flex-direction:column; align-items:center; }
-  .ans .shot { height:35mm; display:block; border:.6pt solid var(--line); border-radius:3.4mm; padding:1mm; background:#fff; }
+  .ans .shot { height:27mm; display:block; border:.6pt solid var(--line); border-radius:3.4mm; padding:1mm; background:#fff; }
   .ans .shot img { height:100%; display:block; border-radius:2.6mm; }
   .ans .cap { font-size:6.5pt; color:var(--faint); margin-top:1mm; }
   .ans .txt { align-self:stretch; margin-top:1.6mm; }
@@ -97,10 +102,11 @@
   .d .h { font-size:8.5pt; font-weight:700; color:var(--navy); }
   .d p { font-size:7pt; color:var(--muted); margin-top:.2mm; line-height:1.5; }
   .stats { display:grid; grid-template-columns:repeat(4, 1fr); margin-top:2mm; background:var(--canvas); border-radius:2.6mm; }
-  .st { padding:1.4mm 3mm; text-align:center; }
+  .st { padding:1.1mm 3mm; text-align:center; }
   .st + .st { border-left:.6pt solid var(--line); }
   .st b { display:block; font-size:12pt; color:var(--navy); line-height:1.25; }
   .st span { font-size:7pt; color:var(--muted); }
+  .vision { margin-top:1.4mm; text-align:center; font-size:11pt; font-weight:700; color:var(--navy); letter-spacing:.02em; }
 
   /* ── フッター ── */
   .ft { margin-top:auto; display:flex; justify-content:space-between; align-items:baseline;
@@ -124,8 +130,9 @@
         <span class="ro">Overlay（重ねる）＋ AI</span>
       </div>
       <h1>重ねる前に、重ねて見る。</h1>
+      <div class="pillars">買い重ねる前に。塗り重ねる前に。一緒に飲む前に。</div>
       <p class="lead">家にある薬と化粧品を登録しておけば、店頭で商品の成分表示を撮るだけで、<br>
-        生成AIが家にあるものと重ねて、<b>「組み合わせ」</b>と<b>「重複」</b>を判定するアプリです。</p>
+        生成AIが家にあるものと重ねて、<b>「組み合わせ」</b>と<b>「重複」</b>から買うべきかを判定するアプリです。</p>
     </div>
     <div class="qr">
       {{QR}}
@@ -141,16 +148,20 @@
       <div class="ep a">
         <div class="lb">エピソード 1｜組み合わせの迷い</div>
         <div class="who">濱田・杉本｜肌が弱く、ステロイドの塗り薬を使っている</div>
-        <div class="scene">ある日、ドラッグストアで――</div>
-        <div class="big">化粧水を手に取って、<br>手が止まった。</div>
-        <div class="chips"><span class="chip">薬を塗った肌に使っていい？</span><span class="chip">薬と化粧品、どっちが先？</span></div>
+        <div class="scene">ある日、ドラッグストアで化粧水を手に取って、手が止まった。</div>
+        <div class="row">
+          <div class="bubble"><p>薬を塗った肌に、使っていい？</p><p>薬と化粧品、どっちが先？</p></div>
+          <img class="ppl" src="../ピッチ/assets/people-1.png" alt="">
+        </div>
       </div>
       <div class="ep b">
         <div class="lb">エピソード 2｜重複の迷い</div>
         <div class="who">井上｜店頭に立つと、家にある薬を思い出せない</div>
-        <div class="scene">風邪薬を買って帰ると――</div>
-        <div class="big">似たような薬が、<br>もう家にあった。</div>
-        <div class="chips"><span class="chip">もう家にある？</span><span class="chip">名前は違うけど、中身は同じ？</span></div>
+        <div class="scene">風邪薬を買って帰ると、似たような薬がもう家にあった。</div>
+        <div class="row">
+          <div class="bubble"><p>家に、同じような薬あったっけ？</p><p>名前は違うけど、中身は同じ？</p></div>
+          <img class="ppl" src="../ピッチ/assets/people-2.png" alt="">
+        </div>
       </div>
     </div>
     <div class="band">
@@ -165,19 +176,20 @@
     <div class="steps">
       <div class="step">
         <div class="h"><span class="no">1</span>家のものを登録</div>
-        <p>処方薬も市販薬も化粧品も一つの在庫に。<br>撮影でも手入力でも。残量や期限も管理。</p>
+        <p>薬も化粧品も、撮れば成分まで入る。<br>これが判定の基準。残量や期限も管理。</p>
       </div>
       <div class="arrow">→</div>
       <div class="step">
         <div class="h"><span class="no">2</span>店頭で撮る<span class="ai">生成AI</span></div>
-        <p>商品の成分表示を撮ると、<br>書式がばらばらでも成分を読み取る。</p>
+        <p>気になった商品を撮るだけ。<br>書式がばらばらでも成分を読み取る。</p>
       </div>
       <div class="arrow">→</div>
       <div class="step">
         <div class="h"><span class="no">3</span>重ねて判定<span class="ai">生成AI</span></div>
-        <p>重複も、薬との組み合わせも考えて、<br>買うべきかを3色と理由で伝える。</p>
+        <p>重複も組み合わせも考え、買うべきかを<br>3色と出典つきの理由で伝える。</p>
       </div>
     </div>
+    <div class="legend"><span>判定の3色：</span><span><i style="background:#2563EB"></i>買っても問題なさそう</span><span><i style="background:#D97706"></i>買わなくて大丈夫</span><span><i style="background:#DC2626"></i>注意が必要</span></div>
 
     <div class="answers">
       <div class="ans a">
@@ -185,8 +197,8 @@
         <div class="cap">実際の判定画面（市販の薬用化粧水）</div>
         <div class="txt">
           <div class="lb">エピソード 1 への答え</div>
-          <div class="h">合わない組み合わせは、<br>理由つきで知らせる</div>
-          <p>家に顔用のステロイド軟膏があるから「注意」。商品の良し悪しではなく、組み合わせで判定する。</p>
+          <div class="h">「使っていい？」の目安が、<br>その場でわかる</div>
+          <p>薬を塗っている肌に刺激になりうる化粧品は、理由つきで教えてくれる。商品の良し悪しではなく、家の薬との組み合わせで判定する。</p>
         </div>
       </div>
       <div class="ans a">
@@ -194,8 +206,8 @@
         <div class="cap">実際の塗る順番の画面</div>
         <div class="txt">
           <div class="lb">エピソード 1 への答え</div>
-          <div class="h">塗る順番も、<br>家にあるもので組み立てる</div>
-          <p>化粧水→美容液→処方ローション→処方軟膏の順に、剤形からルールで並べる。医師の指示が優先。</p>
+          <div class="h">今ある薬と化粧品の<br>塗る順番が、ひと目でわかる</div>
+          <p>化粧水から処方の軟膏まで、家にあるものを塗る順に並べて見せる。※医師・薬剤師の指示が優先</p>
         </div>
       </div>
       <div class="ans b">
@@ -203,8 +215,8 @@
         <div class="cap">実際の判定画面（市販の解熱鎮痛薬）</div>
         <div class="txt">
           <div class="lb">エピソード 2 への答え</div>
-          <div class="h">商品名が違っても、<br>成分で重なりに気づく</div>
-          <p>店頭の解熱鎮痛薬と家の「イブA錠」には、どちらもイブプロフェンが入っている。</p>
+          <div class="h">名前が違っても、同じ成分が<br>入っていれば気づける</div>
+          <p>店頭の解熱鎮痛薬と家の「イブA錠」には、どちらもイブプロフェン。家の薬で足りるなら買わずに済み、同じ成分の重ね飲みも防ぎやすくなる。</p>
         </div>
       </div>
     </div>
@@ -227,6 +239,7 @@
       <div class="st"><b>実商品 5点</b><span>市販薬・化粧品で実機確認</span></div>
       <div class="st"><b>82件</b><span>自動テスト</span></div>
     </div>
+    <div class="vision">肌の治療を続ける人も、家族の薬を買う人も、店頭で迷わない毎日へ。</div>
   </section>
 
   <footer class="ft">
