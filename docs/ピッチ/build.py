@@ -91,14 +91,17 @@ def chips(y, labels, color, bg, border):
     return out
 
 
-def episode(no, kind, who, color, bg, border, lead, big, doubts):
-    return [
-        text(0.9, 1.0, 6, 0.5, f'エピソード {no}｜{kind}', 20, color, bold=True),
-        text(0.9, 1.5, 11, 0.5, who, 18, MUTED),
-        text(0.9, 2.45, 11.5, 0.6, lead, 24, MUTED, bold=True),
-        text(0.9, 3.15, 11.5, 2.2, big, 54, NAVY, bold=True),
-        *chips(5.75, doubts, color, bg, border),
+def episode(no, kind, who, color, bg, border, scene, doubts):
+    """場面は小さく、そのとき浮かんだ「迷い」を一番大きく見せる。"""
+    out = [
+        text(0.9, 0.9, 8, 0.5, f'エピソード {no}｜{kind}', 20, color, bold=True),
+        text(0.9, 1.4, 11.5, 0.5, who, 18, MUTED),
+        text(0.9, 2.1, 11.5, 1.2, scene, 28, MUTED, bold=True),
     ]
+    for i, q in enumerate(doubts):
+        w = len(q) * 40 / 72 * 1.02 + 1.0
+        out.append(rect(0.9, 3.65 + i * 1.4, w, 1.1, bg, radius=0.55, line=border, label=q, size=40, color=NAVY))
+    return out
 
 
 # 0. 表紙（話しながら次へ送る）
@@ -119,8 +122,7 @@ SLIDES.append(dict(bg=WHITE, notes=(
     '薬を塗った肌に使っていいのか。どっちが先か。'
 ), items=episode(
     1, '組み合わせの迷い', '濱田・杉本｜肌が弱く、ステロイドの塗り薬を使っている', BLUE, 'EFF6FF', 'BFDBFE',
-    'ある日、ドラッグストアで――',
-    '化粧水を手に取って、\n手が止まった。',
+    'ある日、ドラッグストアで\n化粧水を手に取って、手が止まった。',
     ['薬を塗った肌に、使っていい？', '薬と化粧品、どっちが先？'],
 )))
 
@@ -129,8 +131,7 @@ SLIDES.append(dict(bg=WHITE, notes=(
     '井上は、風邪薬を買って帰ると、似た薬がもう家にありました。名前が違うと、同じ薬だと気づけないんです。'
 ), items=episode(
     2, '重複の迷い', '井上', AMBER, 'FFF7ED', 'FED7AA',
-    '風邪薬を買って、家に帰ると――',
-    '似たような薬が、\nもう家にあった。',
+    '風邪薬を買って家に帰ると、\n似たような薬がもう家にあった。',
     ['家に、同じような薬あったっけ？', '名前は違うけど、中身は同じ？'],
 )))
 

@@ -24,7 +24,7 @@
           display:flex; flex-direction:column; gap:2.4mm; }
 
   /* ── ヘッダー ── */
-  .hd { display:flex; align-items:flex-start; gap:6mm; padding-bottom:3mm; border-bottom:1.2pt solid var(--navy); }
+  .hd { display:flex; align-items:flex-start; gap:6mm; padding-bottom:1mm; }
   .hd-l { flex:1; }
   .contest { font-size:7pt; color:var(--muted); letter-spacing:.04em; }
   .brand { display:flex; align-items:center; gap:3mm; margin-top:1.6mm; }
@@ -41,10 +41,13 @@
   .qr span { display:block; font-size:6.5pt; color:var(--faint); letter-spacing:0; }
 
   /* ── セクション見出し ── */
-  h2 { display:flex; align-items:baseline; gap:2.4mm; font-size:12pt; font-weight:700; color:var(--navy);
-       letter-spacing:.02em; margin-bottom:2mm; }
-  h2 .n { font-size:8pt; font-weight:700; color:var(--blue); letter-spacing:.1em; }
-  h2 .sub { font-size:7.5pt; font-weight:400; color:var(--muted); letter-spacing:.01em; }
+  /* 段落の切れ目が離れても分かるよう、見出しは番号の札＋太い下線にする */
+  section + section { margin-top:1.6mm; }
+  h2 { display:flex; align-items:center; gap:2.6mm; font-size:16pt; line-height:1.3; font-weight:700; color:var(--navy);
+       letter-spacing:.02em; margin-bottom:2.4mm; padding-bottom:1.4mm; border-bottom:1.2pt solid var(--navy); }
+  h2 .n { font-size:10pt; font-weight:700; color:#fff; background:var(--navy); border-radius:1.6mm;
+          padding:.4mm 2mm; letter-spacing:.06em; }
+  h2 .sub { font-size:8pt; font-weight:400; color:var(--muted); letter-spacing:.01em; margin-left:auto; }
 
   /* ── 01 エピソード ── */
   .eps { display:grid; grid-template-columns:1fr 1fr; gap:4mm; }
@@ -52,8 +55,8 @@
   .ep::before { content:""; position:absolute; left:0; top:0; bottom:0; width:1.4mm; background:var(--c); }
   .ep .lb { font-size:8.5pt; font-weight:700; color:var(--c); }
   .ep .who { font-size:7pt; color:var(--muted); margin-top:.4mm; }
-  .ep .scene { font-size:8.5pt; font-weight:700; color:var(--muted); margin-top:1.8mm; }
-  .ep .big { font-size:16.5pt; font-weight:700; color:var(--navy); line-height:1.35; margin-top:.8mm; letter-spacing:.01em; }
+  .ep .scene { font-size:8.5pt; font-weight:700; color:var(--muted); margin-top:1.4mm; }
+  .ep .big { font-size:15.5pt; font-weight:700; color:var(--navy); line-height:1.35; margin-top:.8mm; letter-spacing:.01em; }
   .chips { display:flex; flex-wrap:nowrap; gap:1.4mm; margin-top:2.4mm; }
   .chip { font-size:7.3pt; font-weight:700; color:var(--c); background:var(--bg); border:.6pt solid var(--bd);
           border-radius:10mm; padding:1mm 2.6mm; white-space:nowrap; }
@@ -78,7 +81,7 @@
 
   .answers { display:grid; grid-template-columns:repeat(3, 1fr); gap:4mm; margin-top:2.4mm; }
   .ans { display:flex; flex-direction:column; align-items:center; }
-  .ans .shot { height:40mm; display:block; border:.6pt solid var(--line); border-radius:3.4mm; padding:1mm; background:#fff; }
+  .ans .shot { height:35mm; display:block; border:.6pt solid var(--line); border-radius:3.4mm; padding:1mm; background:#fff; }
   .ans .shot img { height:100%; display:block; border-radius:2.6mm; }
   .ans .cap { font-size:6.5pt; color:var(--faint); margin-top:1mm; }
   .ans .txt { align-self:stretch; margin-top:1.6mm; }
