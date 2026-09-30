@@ -96,6 +96,11 @@
   .ans .shot { position:absolute; left:0; top:0; height:100%; border:.6pt solid var(--line); border-radius:3.6mm;
                padding:1mm; background:#fff; }
   .ans .shot img { height:100%; display:block; border-radius:2.8mm; }
+  /* 画面のどこを「重ねて」いるかを、店の商品と家の薬に丸をつけて示す */
+  .ans .pic { position:relative; height:100%; }
+  .ans .ring { position:absolute; border:1.1pt solid var(--sig); border-radius:1.6mm; }
+  .ans .ring em { position:absolute; left:-.6mm; bottom:100%; margin-bottom:.4mm; font-style:normal; font-size:7pt; font-weight:700;
+                  line-height:1.25; color:#fff; background:var(--sig); border-radius:.8mm; padding:0 1mm; white-space:nowrap; }
   .ans .out { margin:auto 0 2mm -6mm; background:#fff; border:.8pt solid var(--sig);
               border-radius:2.6mm; padding:2mm 2.4mm 2.2mm; box-shadow:0 1.2mm 3mm rgba(27,42,74,.14); }
   .ans .out .k { font-size:7pt; font-weight:700; color:var(--muted); }
@@ -213,7 +218,7 @@
         <div class="lb">エピソード 1 への答え</div>
         <div class="h">「使っていい？」の目安が、<br>その場でわかる</div>
         <div class="stage">
-          <div class="shot"><img src="../ピッチ/assets/red-real.png" alt=""></div>
+          <div class="shot"><div class="pic"><img src="../ピッチ/assets/red-real.png" alt=""><b class="ring" style="left:5%;top:50.6%;width:70%;height:8.6%"><em>店の商品</em></b><b class="ring" style="left:4%;top:79.6%;width:76%;height:9.4%"><em>家にある薬</em></b></div></div>
           <div class="side"><p>薬を塗った肌に刺激になりうる化粧品を、理由つきで知らせる。※医師・薬剤師の指示が優先</p>
             <div class="out"><div class="k">AIの実際の出力</div><div class="v">注意が必要です</div>
             <q>…エタノールを含む化粧水を重ねることで刺激が強くなる可能性があります。</q></div></div>
@@ -233,7 +238,7 @@
         <div class="lb">エピソード 2 への答え</div>
         <div class="h">名前が違っても、同じ成分が<br>入っていれば気づける</div>
         <div class="stage">
-          <div class="shot"><img src="../ピッチ/assets/yellow-real.png" alt=""></div>
+          <div class="shot"><div class="pic"><img src="../ピッチ/assets/yellow-real.png" alt=""><b class="ring" style="left:5%;top:51.3%;width:29%;height:4.3%"><em>店の商品</em></b><b class="ring" style="left:4%;top:67%;width:74%;height:12.2%"><em>家にある薬</em></b></div></div>
           <div class="side"><p>重ね飲みに気づけ、家の薬で足りれば買わずに済む。</p>
             <div class="out"><div class="k">AIの実際の出力</div><div class="v">買わなくて<br>大丈夫です</div>
             <q>イブプロフェン・アセトアミノフェンの解熱鎮痛作用が、在庫のイブA錠と同じ用途で重なる可能性があります。</q></div></div>
