@@ -74,7 +74,7 @@
 
   /* ── しくみ ── */
   /* 使う人の動きで3段に分け、AIが何をするかは下の小さい行に書く */
-  /* 下の3つの説明と列をそろえるため、矢印は列の間に絵で置く */
+  /* 下の3つの説明は上のステップと1対1で対応させる。列をそろえるため、矢印は列の間に絵で置く */
   .flow, .points { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:7mm; }
   .step { position:relative; border:.6pt solid var(--line); border-radius:3mm; padding:2.4mm 3mm 2.6mm; }
   .step + .step::before { content:"›"; position:absolute; left:-7mm; width:7mm; top:50%; transform:translateY(-50%);
@@ -85,10 +85,7 @@
   .step .h { margin-top:1mm; font-size:10.5pt; font-weight:700; color:var(--navy); line-height:1.4; white-space:nowrap; }
   .step p { color:var(--muted); line-height:1.5; white-space:nowrap; }
   .points { margin-top:4mm; }
-  .pt .h { display:flex; align-items:center; gap:1.6mm; font-size:10.5pt; font-weight:700; color:var(--navy); line-height:1.45; white-space:nowrap; }
-  /* 上のステップと同じ番号を白抜きで付け、どのステップの補足かを示す */
-  .pt .h i { flex:none; font-style:normal; font-size:8.5pt; display:inline-flex; align-items:center; justify-content:center;
-             width:4.6mm; height:4.6mm; border-radius:50%; border:.8pt solid var(--navy); line-height:1; }
+  .pt .h { font-size:10.5pt; font-weight:700; color:var(--navy); line-height:1.45; white-space:nowrap; }
   .pt p { color:var(--muted); margin-top:1mm; white-space:nowrap; } /* 改行は <br> で意味の切れ目に置く */
 
   /* ── 試せます：読みの終わり（右下）に置く ── */
@@ -158,11 +155,11 @@
       <div class="step"><div class="t"><i>3</i>その場で</div><div class="h">買うべきかの目安が出る</div><p>3色の判定と、成分名つきの理由</p></div>
     </div>
     <div class="points">
-      <div class="pt"><div class="h"><i>1</i>自分の体質も登録できる</div>
+      <div class="pt"><div class="h">自分の体質も登録できる</div>
         <p>肌質や年代、悩みを登録すると、<br>使い方の助言が自分向けになる。</p></div>
-      <div class="pt"><div class="h"><i>2</i>根拠のない警告は出さない</div>
+      <div class="pt"><div class="h">根拠のない警告は出さない</div>
         <p>出典のない組み合わせは推測しない。<br>必ず医師・薬剤師への相談も案内する。</p></div>
-      <div class="pt"><div class="h"><i>3</i>理由に根拠と出典を添える</div>
+      <div class="pt"><div class="h">理由に根拠と出典を添える</div>
         <p>AIが挙げた理由を、プログラムが確かめ、<br>薬の説明書をたどれるリンクを添える。</p></div>
     </div>
   </section>
