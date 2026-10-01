@@ -16,7 +16,7 @@
   :root {
     --navy:#1B2A4A; --ink:#0F172A; --muted:#475569; --pale:#C9D0DB; --line:#D9DFE7; --mist:#F2F4F7;
     --blue:#2563EB; --amber:#D97706; --red:#DC2626;
-    --phone:60.5mm;
+    --phone:65mm;
   }
   html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body {
@@ -49,7 +49,7 @@
   .venn .lb { right:4mm; bottom:4mm; text-align:right; }
 
   /* ── 段落見出し ── */
-  section { margin-top:6mm; }
+  section { margin-top:6.5mm; }
   section:last-of-type { margin-bottom:6mm; } /* 最後の帯との間を必ず空ける */
   h2 { display:flex; align-items:baseline; gap:4mm; font-size:15pt; line-height:1.25; font-weight:800; color:var(--navy);
        padding-bottom:1.4mm; border-bottom:1.4pt solid var(--navy); margin-bottom:3.5mm; }
@@ -73,23 +73,19 @@
              line-height:1.3; color:#fff; background:var(--sig); border-radius:.8mm; padding:0 1.2mm; white-space:nowrap; }
 
   /* ── しくみ ── */
-  /* 使う人の動きで3段に分け、1枚のカードの上に「やること」、下に「うれしいこと」を置く。
-     上下を同じカードに入れて、どの補足がどのステップのものかを読み違えないようにする */
-  /* できることの列とそろえるため、矢印は列の間に絵で置く */
-  .flow { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:7mm; }
-  .step { position:relative; display:flex; flex-direction:column; border:.6pt solid var(--line); border-radius:3mm; }
-  .step + .step::before { content:"›"; position:absolute; left:-7mm; width:7mm; top:50%; transform:translateY(-50%);
-                          text-align:center; color:var(--muted); font-size:14pt; line-height:1; }
-  .do { padding:2.4mm 2.4mm 2.6mm; }
-  .do .t { display:flex; align-items:center; gap:1.6mm; color:var(--muted); font-weight:700; line-height:1.4; }
+  /* 使う人の動きで3列に分け、番号をつなぐ1本の線で流れを見せる（箱で囲まない）。
+     主役は「やること」。「うれしいこと」は一回り小さくし、左の縦線でやることにぶら下げる */
+  .flow { position:relative; display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:7mm; } /* できることの列とそろえる */
+  .flow::before { content:""; position:absolute; left:2.3mm; right:0; top:2.3mm; border-top:.8pt solid var(--pale); }
+  .do .t { position:relative; display:flex; align-items:center; color:var(--muted); font-weight:700; line-height:1.4; }
   .do .t i { font-style:normal; display:inline-flex; align-items:center; justify-content:center; width:4.6mm; height:4.6mm;
-             border-radius:50%; background:var(--navy); color:#fff; line-height:1; }
-  .do .h { margin-top:1mm; font-size:10.5pt; font-weight:700; color:var(--navy); line-height:1.4; white-space:nowrap; }
+             border-radius:50%; background:var(--navy); color:#fff; line-height:1; box-shadow:0 0 0 1.2mm #fff; }
+  .do .t span { background:#fff; padding:0 1.6mm; } /* 線の上に文字を載せる */
+  .do .h { margin-top:1.4mm; font-size:12pt; font-weight:700; color:var(--navy); line-height:1.4; white-space:nowrap; }
   .do p { color:var(--muted); line-height:1.5; white-space:nowrap; }
-  /* 下の段は薄い地にして、上の段と分けつつ同じカードに収める */
-  .pt { flex:1; background:var(--mist); border-top:.6pt solid var(--line); border-radius:0 0 2.8mm 2.8mm; padding:2.4mm 2.4mm 2.8mm; }
-  .pt .h { font-size:10pt; font-weight:700; color:var(--navy); line-height:1.45; white-space:nowrap; }
-  .pt p { color:var(--ink); margin-top:.8mm; line-height:1.55; white-space:nowrap; } /* 改行は <br> で意味の切れ目に置く */
+  .pt { margin-top:2.8mm; padding-left:2.6mm; border-left:1.6pt solid var(--pale); }
+  .pt .h { font-size:9.5pt; font-weight:700; color:var(--ink); line-height:1.45; white-space:nowrap; }
+  .pt p { color:var(--muted); margin-top:.4mm; white-space:nowrap; } /* 改行は <br> で意味の切れ目に置く */
 
   /* ── 試せます：読みの終わり（右下）に置く ── */
   .cta { margin-top:auto; display:flex; align-items:center; gap:6mm; background:var(--navy); color:#fff;
@@ -154,15 +150,15 @@
     <h2>しくみ</h2>
     <div class="flow">
       <div class="step">
-        <div class="do"><div class="t"><i>1</i>家で</div><div class="h">薬・化粧品を撮って登録</div><p>AIが成分表示を読み取る</p></div>
+        <div class="do"><div class="t"><i>1</i><span>家で</span></div><div class="h">薬・化粧品を撮って登録</div><p>AIが成分表示を読み取る</p></div>
         <div class="pt"><div class="h">自分の体質も登録できる</div><p>肌質や年代、悩みを登録すると、<br>使い方の助言がパーソナライズされる</p></div>
       </div>
       <div class="step">
-        <div class="do"><div class="t"><i>2</i>店で</div><div class="h">気になる商品を撮る</div><p>AIが家のものと照らし合わせる</p></div>
+        <div class="do"><div class="t"><i>2</i><span>店で</span></div><div class="h">気になる商品を撮る</div><p>AIが家のものと照らし合わせる</p></div>
         <div class="pt"><div class="h">撮るだけで、すぐ確かめられる</div><p>商品名の入力も検索もいらない<br>店先で成分表示を1枚撮れば済む</p></div>
       </div>
       <div class="step">
-        <div class="do"><div class="t"><i>3</i>その場で</div><div class="h">買うべきかの目安が出る</div><p>3色の判定と、成分名つきの理由</p></div>
+        <div class="do"><div class="t"><i>3</i><span>その場で</span></div><div class="h">買うべきかの目安が出る</div><p>3色の判定と、成分名つきの理由</p></div>
         <div class="pt"><div class="h">理由に根拠と出典を添える</div><p>根拠の薄い推測は、最初から出さない<br>表示された理由は、安心して読める</p></div>
       </div>
     </div>
