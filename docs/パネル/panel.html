@@ -16,7 +16,7 @@
   :root {
     --navy:#1B2A4A; --ink:#0F172A; --muted:#475569; --pale:#C9D0DB; --line:#D9DFE7; --mist:#F2F4F7;
     --blue:#2563EB; --amber:#D97706; --red:#DC2626;
-    --phone:65mm;
+    --phone:60.5mm;
   }
   html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body {
@@ -62,7 +62,7 @@
   /* ── できること：実機の画面を大きく並べる ── */
   .cases { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:7mm; } /* しくみの列とそろえる */
   .case h3 { font-size:12pt; line-height:1.45; font-weight:700; white-space:nowrap; }
-  .case p { color:var(--muted); margin-top:.6mm; white-space:nowrap; }
+  .case p { color:var(--muted); margin-top:.6mm; white-space:nowrap; min-height:3.2em; } /* 2行分。画面の上端をそろえる */
   .shot { display:inline-block; height:var(--phone); margin-top:3mm; border:.6pt solid var(--line); border-radius:3mm;
           padding:1.2mm; background:#fff; }
   .pic { position:relative; height:100%; }
@@ -85,7 +85,10 @@
   .step .h { margin-top:1mm; font-size:10.5pt; font-weight:700; color:var(--navy); line-height:1.4; white-space:nowrap; }
   .step p { color:var(--muted); line-height:1.5; white-space:nowrap; }
   .points { margin-top:4mm; }
-  .pt .h { font-size:10.5pt; font-weight:700; color:var(--navy); line-height:1.45; white-space:nowrap; }
+  .pt .h { display:flex; align-items:center; gap:1.6mm; font-size:10.5pt; font-weight:700; color:var(--navy); line-height:1.45; white-space:nowrap; }
+  /* 上のステップと同じ番号を白抜きで付け、どのステップの補足かを示す */
+  .pt .h i { flex:none; font-style:normal; font-size:8.5pt; display:inline-flex; align-items:center; justify-content:center;
+             width:4.6mm; height:4.6mm; border-radius:50%; border:.8pt solid var(--navy); line-height:1; }
   .pt p { color:var(--muted); margin-top:1mm; white-space:nowrap; } /* 改行は <br> で意味の切れ目に置く */
 
   /* ── 試せます：読みの終わり（右下）に置く ── */
@@ -134,8 +137,8 @@
         <div class="shot"><div class="pic"><img src="../ピッチ/assets/yellow-real.png" alt="「買わなくて大丈夫です」の判定画面"><b class="ring" style="left:5%;top:51.3%;width:29%;height:4.3%"><em>重複する成分</em></b><b class="ring" style="left:3.5%;top:67%;width:93%;height:12.2%"><em>家の薬</em></b></div></div>
       </div>
       <div class="case" style="--sig:#DC2626">
-        <h3>いまの薬との組み合わせの<br>注意が、店でわかる</h3>
-        <p>飲み薬も塗り薬も、化粧品も見られる</p>
+        <h3>使っている薬との相性が、<br>買う前にわかる</h3>
+        <p>飲み薬だけでなく、塗り薬や<br>化粧品との組み合わせも確かめられる</p>
         <div class="shot"><div class="pic"><img src="../ピッチ/assets/red-real.png" alt="「注意が必要です」の判定画面"><b class="ring" style="left:3.5%;top:50.4%;width:42%;height:4.4%"><em>店の商品</em></b><b class="ring" style="left:3.5%;top:79.6%;width:93%;height:9.4%"><em>家の薬</em></b></div></div>
       </div>
       <div class="case" style="--sig:var(--navy)">
@@ -155,18 +158,18 @@
       <div class="step"><div class="t"><i>3</i>その場で</div><div class="h">買うべきかの目安が出る</div><p>3色の判定と、成分名つきの理由</p></div>
     </div>
     <div class="points">
-      <div class="pt"><div class="h">理由には、根拠と出典を添える</div>
-        <p>AIが挙げた理由を、プログラムが確かめ、<br>薬の説明書をたどれるリンクを添える。</p></div>
-      <div class="pt"><div class="h">根拠のない警告は出さない</div>
-        <p>出典のない組み合わせは推測しない。<br>必ず医師・薬剤師への相談も案内する。</p></div>
-      <div class="pt"><div class="h">自分の体質に合わせられる</div>
+      <div class="pt"><div class="h"><i>1</i>自分の体質も登録できる</div>
         <p>肌質や年代、悩みを登録すると、<br>使い方の助言が自分向けになる。</p></div>
+      <div class="pt"><div class="h"><i>2</i>根拠のない警告は出さない</div>
+        <p>出典のない組み合わせは推測しない。<br>必ず医師・薬剤師への相談も案内する。</p></div>
+      <div class="pt"><div class="h"><i>3</i>理由に根拠と出典を添える</div>
+        <p>AIが挙げた理由を、プログラムが確かめ、<br>薬の説明書をたどれるリンクを添える。</p></div>
     </div>
   </section>
 
   <footer class="cta">
     <div class="cta-t">
-      <b>スマホで読み取ると、その場で試せます</b>
+      <b>今すぐ試せます</b>
       <span>インストール不要。見本の薬・化粧品が入った状態で開きます</span>
       <div class="credit">ユメカタリ 学生生成AIコンテスト 2026｜開発部門<br><b>鈴鹿工業高等専門学校</b>　井上 高志・濱田 圭太郎・杉本 隼都</div>
     </div>
