@@ -152,6 +152,11 @@ def episode(no, kind, who, people, scene, doubts):
     ppl = image(people, 0, 0, h=2.75)
     # 人物は吹き出しのしっぽのすぐ右に置く（1人のときに右端まで離れないように）
     ppl['x'], ppl['y'] = min(X1 + 0.3 - ppl['w'], 8.9), H - ppl['h']
+    # 吹き出しと人物のまとまりを、左右の余白が同じになるよう中央へ寄せる
+    dx = ((W - ppl['x'] - ppl['w']) - cl['x']) / 2
+    cl['x'] += dx
+    ppl['x'] += dx
+    cx += dx
     out = [
         label(f'CASE {no}｜{kind}'),
         text(X0, 1.25, 11.5, line_h(18), who, 18, MUTED),
