@@ -12,7 +12,7 @@ import {
   useWarmUp,
 } from '@/lib/client';
 import { coverCrop, toResizedDataUrl } from '@/lib/image';
-import { loadProfile, loadStock } from '@/lib/storage';
+import { insertStock, loadProfile, loadStock, removeStock, savePendingScan } from '@/lib/storage';
 import { SEED_STOCK } from '@/lib/seed';
 import type { AnalyzeResponse, ApiErrorBody, Profile, StockItem } from '@/lib/types';
 
@@ -55,13 +55,23 @@ function Scanner() {
   const fileRef = useRef<HTMLInputElement>(null);
   const guideRef = useRef<HTMLDivElement>(null);
 
-  const [stock] = useStoredState<StockItem[]>(loadStock, SEED_STOCK);
+  const [stock, setStock] = useStoredState<StockItem[]>(loadStock, SEED_STOCK);
   const [profile] = useStoredState<Profile>(loadProfile, {});
   const [phase, setPhase] = useState<Phase>('idle');
   const [cameraReady, setCameraReady] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [emptyStock, setEmptyStock] = useState(false);
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
+  /** 判定だけをやり直している最中か（「もう家に無い」） */
+  const [rejudging, setRejudging] = useState(false);
+  /** 直前に外したもの。「元に戻す」で在庫も判定も外す前に戻す */
+  const [removed, setRemoved] = useState<{
+    item: StockItem;
+    index: number;
+    before: AnalyzeResponse;
+  } | null>(null);
+  /** 判定が今の在庫に合っていないときの説明 */
+  const [stale, setStale] = useState<string | null>(null);
 
   // 構図を決めているあいだに判定APIの関数を起こしておく（#24）
   useWarmUp('/api/analyze');
@@ -95,41 +105,112 @@ function Scanner() {
     };
   }, []);
 
-  const analyze = useCallback(
-    async (dataUrl: string) => {
-      setPhase('extracting');
-      const timer = setTimeout(() => setPhase('judging'), JUDGING_SWITCH_MS);
+  /** 判定APIを呼ぶ。成功なら結果、失敗なら画面に出す文言を返す */
+  const requestJudgement = useCallback(
+    async (
+      payload: { image: string } | { extraction: AnalyzeResponse['extraction'] },
+      items: StockItem[],
+    ): Promise<
+      | { ok: true; result: AnalyzeResponse }
+      | { ok: false; message: string; emptyStock: boolean }
+    > => {
       const controller = new AbortController();
       const abortTimer = setTimeout(() => controller.abort(), CLIENT_TIMEOUT_MS);
       try {
         const res = await fetch('/api/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: dataUrl, stock, demo }),
+          body: JSON.stringify({ ...payload, stock: items, demo }),
           signal: controller.signal,
         });
-
         if (!res.ok) {
           // サーバーの文言があればそれを出す。無いのは Vercel が関数ごと打ち切った 504 など
           const body = (await res.json().catch(() => null)) as ApiErrorBody | null;
-          setErrorMsg(body?.error.message ?? describeHttpFailure(res.status));
-          setEmptyStock(body?.error.code === 'EMPTY_STOCK');
-          setPhase('error');
-          return;
+          return {
+            ok: false,
+            message: body?.error.message ?? describeHttpFailure(res.status),
+            emptyStock: body?.error.code === 'EMPTY_STOCK',
+          };
         }
-        setResult((await res.json()) as AnalyzeResponse);
-        setPhase('done');
+        return { ok: true, result: (await res.json()) as AnalyzeResponse };
       } catch (err) {
-        setEmptyStock(false);
-        setErrorMsg(describeFetchFailure(err));
-        setPhase('error');
+        return { ok: false, message: describeFetchFailure(err), emptyStock: false };
       } finally {
-        clearTimeout(timer);
         clearTimeout(abortTimer);
       }
     },
-    [stock, demo],
+    [demo],
   );
+
+  const analyze = useCallback(
+    async (dataUrl: string) => {
+      setPhase('extracting');
+      setRemoved(null);
+      setStale(null);
+      const timer = setTimeout(() => setPhase('judging'), JUDGING_SWITCH_MS);
+      const outcome = await requestJudgement({ image: dataUrl }, stock);
+      clearTimeout(timer);
+      if (!outcome.ok) {
+        setErrorMsg(outcome.message);
+        setEmptyStock(outcome.emptyStock);
+        setPhase('error');
+        return;
+      }
+      setResult(outcome.result);
+      setPhase('done');
+    },
+    [requestJudgement, stock],
+  );
+
+  /**
+   * 「もう家に無い」— 在庫から外し、判定だけをやり直す（Issue #35）。
+   * 確認は挟まない。代わりに「元に戻す」で取り返せるようにする。
+   */
+  const removeAndRejudge = useCallback(
+    async (item: StockItem) => {
+      if (!result || rejudging) return;
+      const index = stock.findIndex((i) => i.id === item.id);
+      const next = removeStock(item.id);
+      setStock(next);
+      // 「元に戻す」で戻せるのは直前の1件だけ。判定も直前のものに戻す
+      setRemoved({ item, index, before: result });
+
+      if (next.length === 0) {
+        setStale('照合する在庫がなくなりました');
+        return;
+      }
+
+      setRejudging(true);
+      const outcome = await requestJudgement({ extraction: result.extraction }, next);
+      setRejudging(false);
+      if (outcome.ok) {
+        setResult(outcome.result);
+        setStale(null);
+      } else {
+        // 古い判定をそのまま見せると、外したはずの薬の警告が残って見える
+        setStale(
+          `在庫は外しましたが、判定をやり直せませんでした（${outcome.message}）。この判定は外す前の在庫に基づいています。もう一度撮ると判定し直します`,
+        );
+      }
+    },
+    [result, rejudging, stock, setStock, requestJudgement],
+  );
+
+  /** 直前に外したものを戻し、判定も外す前に戻す。AIは呼ばない */
+  const undoRemove = useCallback(() => {
+    if (!removed || rejudging) return;
+    setStock(insertStock(removed.item, removed.index));
+    setResult(removed.before);
+    setRemoved(null);
+    setStale(null);
+  }, [removed, rejudging, setStock]);
+
+  /** 「買ったので在庫に入れる」— 読み取り結果を持って追加画面へ */
+  const addToStock = useCallback(() => {
+    if (!result) return;
+    savePendingScan(result.extraction);
+    router.push('/stock/new?from=scan');
+  }, [result, router]);
 
   /**
    * 縮小して送る。**画像が読めなかったときに、何も起きないまま止まらない。**
@@ -343,8 +424,15 @@ function Scanner() {
           result={result}
           stock={stock}
           profile={profile}
+          onRemoveItem={result.mocked ? undefined : removeAndRejudge}
+          onAddToStock={result.mocked ? undefined : addToStock}
+          pending={rejudging}
+          removed={removed ? { name: removed.item.name, onUndo: undoRemove } : null}
+          stale={stale}
           onClose={() => {
             setResult(null);
+            setRemoved(null);
+            setStale(null);
             setPhase('idle');
           }}
         />

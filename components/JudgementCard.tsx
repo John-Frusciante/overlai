@@ -1,7 +1,15 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, ExternalLink, Stethoscope, X } from 'lucide-react';
+import {
+  ChevronDown,
+  ExternalLink,
+  Loader2,
+  PackagePlus,
+  Stethoscope,
+  Undo2,
+  X,
+} from 'lucide-react';
 import { matchCleanser } from '@/lib/cleanser';
 import { toItemForm } from '@/lib/mapping';
 import { CleanserMatchRow } from '@/components/CleanserMatchCard';
@@ -28,11 +36,26 @@ export function JudgementCard({
   stock,
   profile = {},
   onClose,
+  onRemoveItem,
+  onAddToStock,
+  pending = false,
+  removed = null,
+  stale = null,
 }: {
   result: AnalyzeResponse;
   stock: StockItem[];
   profile?: Profile;
   onClose: () => void;
+  /** 「もう家に無い」。渡さなければボタンを出さない（?demo= のとき） */
+  onRemoveItem?: (item: StockItem) => void;
+  /** 「買ったので在庫に入れる」。渡さなければボタンを出さない */
+  onAddToStock?: () => void;
+  /** 判定のやり直し中。ボタンを止め、上に「照合しています」を出す */
+  pending?: boolean;
+  /** 直前に外したもの。「元に戻す」を出す */
+  removed?: { name: string; onUndo: () => void } | null;
+  /** 判定が今の在庫に合っていないときの説明。あれば色を灰色にする */
+  stale?: string | null;
 }) {
   const [open, setOpen] = useState(false);
   /** ヒーローが画面から出たか。出たら細いヘッダーに切り替える */
@@ -81,7 +104,10 @@ export function JudgementCard({
     }
   };
 
-  const gradient = `linear-gradient(142deg, ${style.base} 0%, ${style.deep} 100%)`;
+  // 今の在庫に合っていない判定は、色で読ませない（外したはずの薬の警告に見えるため）
+  const gradient = stale
+    ? 'linear-gradient(142deg, #8A8F98 0%, #5F646D 100%)'
+    : `linear-gradient(142deg, ${style.base} 0%, ${style.deep} 100%)`;
 
   return (
     <div
@@ -167,6 +193,28 @@ export function JudgementCard({
 
       {/* せり上がる白いシート */}
       <div className="animate-sheet-up relative -mt-7 rounded-t-[26px] bg-surface px-5 pb-36 pt-7 shadow-e4">
+        {/* 「もう家に無い」のあと — 何が起きたかと、取り返し方 */}
+        {stale && (
+          <p className="mb-4 rounded-xl bg-surface-sunken px-3.5 py-2.5 text-[12.5px] leading-relaxed text-muted">
+            {stale}
+          </p>
+        )}
+        {removed && (
+          <div className="mb-5 flex items-center gap-3 rounded-xl bg-surface-sunken px-3.5 py-2.5">
+            <p className="min-w-0 flex-1 text-[12.5px] leading-relaxed text-muted">
+              {removed.name}を在庫から外しました
+            </p>
+            <button
+              onClick={removed.onUndo}
+              disabled={pending}
+              className="inline-flex shrink-0 items-center gap-1 text-[12.5px] font-semibold text-brand disabled:opacity-40"
+            >
+              <Undo2 size={13} strokeWidth={2.4} />
+              元に戻す
+            </button>
+          </div>
+        )}
+
         {/* 固定応答（`?demo=`）。AIの判定に見せかけない */}
         {result.mocked && (
           <p className="mb-5 rounded-xl bg-amber-50 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-amber-800">
@@ -220,6 +268,11 @@ export function JudgementCard({
         {matched.length > 0 && (
           <section className="mt-8">
             <SectionHeader title="あなたの家にあるもの" count={matched.length} />
+            {onRemoveItem && (
+              <p className="mt-1 px-1 text-[12px] leading-relaxed text-faint">
+                使い切ったものがあれば外してください。判定をやり直します。
+              </p>
+            )}
             <ul className="stagger mt-2.5 space-y-2">
               {matched.map((item, i) => {
                 const cat = categoryStyle(item.category);
@@ -257,6 +310,15 @@ export function JudgementCard({
                           : item.status}
                       </p>
                     </div>
+                    {onRemoveItem && (
+                      <button
+                        onClick={() => onRemoveItem(item)}
+                        disabled={pending}
+                        className="shrink-0 self-center rounded-full border border-line px-3 py-1.5 text-[12px] font-semibold text-muted transition-transform active:scale-95 disabled:opacity-40"
+                      >
+                        もう家に無い
+                      </button>
+                    )}
                   </li>
                 );
               })}
@@ -323,6 +385,18 @@ export function JudgementCard({
           </section>
         )}
 
+        {/* 買ったなら在庫に入っていたほうが、次からの判定に反映されて安全（購入を勧めるためではない） */}
+        {onAddToStock && (
+          <button
+            onClick={onAddToStock}
+            disabled={pending}
+            className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-line bg-surface py-3.5 text-[14px] font-semibold text-muted shadow-e1 transition-transform active:scale-[0.99] disabled:opacity-40"
+          >
+            <PackagePlus size={16} strokeWidth={2.2} />
+            買ったので在庫に入れる
+          </button>
+        )}
+
         {/* 免責 — §12.2 */}
         <p className="mt-9 px-1 text-[11.5px] leading-relaxed text-faint">
           本アプリは一般的な成分情報を提示するものであり、診断・治療の判断を行うものではありません。
@@ -340,6 +414,16 @@ export function JudgementCard({
           薬剤師・皮膚科に相談する
         </button>
       </div>
+
+      {/* 判定のやり直し中 — スキャン画面の2段階表示の2段目と同じ言葉にする */}
+      {pending && (
+        <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/45 backdrop-blur-[2px]">
+          <span className="inline-flex items-center gap-2.5 rounded-full bg-surface px-5 py-3 text-[14px] font-semibold text-ink shadow-e3">
+            <Loader2 size={16} strokeWidth={2.4} className="animate-spin" />
+            家の在庫と照合しています
+          </span>
+        </div>
+      )}
     </div>
   );
 }
