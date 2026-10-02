@@ -9,8 +9,8 @@ import { StockList } from '@/components/StockList';
 import { ConfirmRemove } from '@/components/ConfirmRemove';
 import { ButtonLink } from '@/components/ui/Button';
 import { useIsClient, useStoredState } from '@/lib/client';
-import { endedCourses, extendCourse, localDateKey, parseDays } from '@/lib/course';
-import { collectAlerts, lowStock } from '@/lib/expiry';
+import { extendCourse, localDateKey, parseDays } from '@/lib/course';
+import { upkeepAlerts } from '@/lib/upkeep';
 import {
   loadCollapsed,
   loadCustomCategories,
@@ -49,14 +49,12 @@ export default function MyStockPage() {
    * ハイドレーションが壊れるため、クライアントで描画されてからだけ求める。
    */
   const isClient = useIsClient();
-  const alerts: ExpiryAlert[] = useMemo(
-    () => (isClient ? collectAlerts(stock) : []),
-    [isClient, stock],
-  );
-  const low = useMemo(() => (isClient ? lowStock(stock) : []), [isClient, stock]);
-  /** 処方の終わる日を過ぎた薬。日付に依存するのでクライアントでだけ求める */
-  const ended = useMemo(
-    () => (isClient ? endedCourses(stock, localDateKey()) : []),
+  // 処方の終わり・期限・残量。同じ品は1行にまとめる（lib/upkeep.ts）
+  const { ended, expiry: alerts, low } = useMemo(
+    () =>
+      isClient
+        ? upkeepAlerts(stock, localDateKey())
+        : { ended: [] as StockItem[], expiry: [] as ExpiryAlert[], low: [] as StockItem[] },
     [isClient, stock],
   );
 
@@ -395,7 +393,9 @@ function CourseRow({
 
         {mode === 'extend' && (
           <div className="mt-3">
-            <p className="text-[12.5px] font-semibold text-sky-900">あと何日分ありますか？</p>
+            <p className="text-[12.5px] font-semibold text-sky-900">
+              今日の分を含めて、あと何日分ありますか？
+            </p>
             <div className="mt-1.5 flex gap-2">
               <input
                 autoFocus

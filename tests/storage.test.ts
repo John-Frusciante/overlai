@@ -22,6 +22,7 @@ import {
   toggleDose,
 } from '../lib/storage';
 import { SEED_STOCK } from '../lib/seed';
+import { endedCourses, localDateKey } from '../lib/course';
 import type { StockItem } from '../lib/types';
 
 /**
@@ -176,5 +177,26 @@ describe('壊れた飲む期間の読み込み', () => {
     assert.ok(result.ok);
     assert.equal(loadStock()[0].course, undefined);
     assert.equal(loadStock()[0].name, backup.stock[0].name);
+  });
+});
+
+describe('見本に戻すとき（展示）', () => {
+  it('スキャン結果の受け渡しも消す（次の来場者に前の人の商品を見せない）', () => {
+    savePendingScan({
+      product_name: '前の来場者の商品',
+      category: 'スキンケア',
+      form: '化粧水',
+      ingredients: ['グリセリン'],
+      confidence: 'high',
+    });
+    resetAll();
+    assert.equal(loadPendingScan(), null);
+  });
+
+  it('戻した日を基準に見本を作る（何日も開いたままでも「飲み終わりましたか」が出ない）', () => {
+    const later = new Date();
+    later.setDate(later.getDate() + 30);
+    resetAll(later);
+    assert.deepEqual(endedCourses(loadStock(), localDateKey(later)), []);
   });
 });

@@ -7,7 +7,7 @@ import type {
   RoutineKind,
   StockItem,
 } from './types';
-import { SEED_STOCK } from './seed';
+import { seedStock } from './seed';
 import { replaceWith } from './stockOps';
 import { isCourse } from './course';
 
@@ -59,8 +59,9 @@ function remove(key: string): void {
 export function loadStock(): StockItem[] {
   const items = read<StockItem[]>(STOCK_KEY, []);
   if (!Array.isArray(items) || items.length === 0) {
-    write(STOCK_KEY, SEED_STOCK);
-    return SEED_STOCK;
+    const seed = seedStock();
+    write(STOCK_KEY, seed);
+    return seed;
   }
   return items;
 }
@@ -133,15 +134,18 @@ export function insertStock(item: StockItem, index: number): StockItem[] {
  * 「在庫だけ戻す」では足りず、**このファイルが持つ鍵をすべて**初期化する。
  * 鍵を増やしたらここにも足すこと（tests/storage.test.ts が見張っている）。
  */
-export function resetAll(): StockItem[] {
-  saveStock(SEED_STOCK);
+export function resetAll(today = new Date()): StockItem[] {
+  const seed = seedStock(today);
+  saveStock(seed);
   write(DOSE_KEY, []);
   write(PROFILE_KEY, {});
   write(COLLAPSED_KEY, []);
   write(CATEGORY_KEY, []);
   write(ROUTINE_KEY, []);
   remove(ADVICE_KEY);
-  return SEED_STOCK;
+  // 前の来場者がスキャンした商品を、次の人の追加画面に出さない（sessionStorage 側）
+  clearPendingScan();
+  return seed;
 }
 
 /** このファイルが管理している鍵。初期化の漏れをテストで確かめるために公開する */

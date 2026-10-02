@@ -1,16 +1,5 @@
 import type { StockItem } from './types';
 
-/** 開封日・期限をデモ実行日を基準に生成する（シードが古びないようにするため） */
-function daysAgo(n: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
-}
-function daysLater(n: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() + n);
-  return d.toISOString().slice(0, 10);
-}
 
 /**
  * デモ用シードデータ — 設計仕様書 §6.2
@@ -30,7 +19,16 @@ function daysLater(n: number): string {
  * デモの主役である🟡判定が不安定になる（§7.4 決定表の優先1）。
  * stk-001 を抗アレルギー薬にしてあるのはこのため。
  */
-export const SEED_STOCK: StockItem[] = [
+export function seedStock(today = new Date()): StockItem[] {
+  /** 開封日・期限を「見本を作った日」を基準に生成する（シードが古びないようにするため） */
+  const daysAgo = (n: number): string => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - n);
+    return d.toISOString().slice(0, 10);
+  };
+  const daysLater = (n: number): string => daysAgo(-n);
+
+  return [
   {
     id: 'stk-001',
     name: 'フェキソフェナジン塩酸塩錠60mg（処方）',
@@ -159,3 +157,13 @@ export const SEED_STOCK: StockItem[] = [
     openedAt: daysAgo(95),
   },
 ];
+}
+
+/**
+ * 読み込んだ時点の見本。画面の初期値（端末を読む前の仮の値）に使う。
+ *
+ * 見本に戻すとき（`resetAll`）はこれを使わず、`seedStock()` で**その日を基準に作り直す**。
+ * 展示端末を何日も開いたままにすると、ここに入っている日付が古くなり、
+ * 戻した直後から「飲み終わりましたか」が出てしまうため。
+ */
+export const SEED_STOCK: StockItem[] = seedStock();

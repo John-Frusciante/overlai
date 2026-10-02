@@ -1,6 +1,6 @@
 import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
-import { SEED_STOCK } from '../lib/seed';
+import { SEED_STOCK, seedStock } from '../lib/seed';
 import { ABSORPTION_RULES, INTERACTION_RULES, matchesIngredient } from '../lib/knowledge';
 import { endedCourses, localDateKey } from '../lib/course';
 
@@ -19,6 +19,12 @@ describe('シードデータ', () => {
     // 見本に戻した直後から終わった薬が並ぶと、来場者に最初に見せる画面が崩れる
     const today = localDateKey();
     assert.deepEqual(endedCourses(SEED_STOCK, today), []);
+  });
+
+  it('見本はその日を基準に作り直せる（展示端末を何日も開いたままでも崩れない）', () => {
+    const later = new Date();
+    later.setDate(later.getDate() + 30);
+    assert.deepEqual(endedCourses(seedStock(later), localDateKey(later)), []);
   });
 
   it('処方の飲む期間の見本が1つはある（機能の見本として）', () => {
