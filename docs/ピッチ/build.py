@@ -1,14 +1,24 @@
-"""本選1分ピッチのスライドを pptx とプレビューPNGの両方に書き出す。
+"""本選1分ピッチのスライドを pptx とプレビューPNGに書き出す。
 
-同じ定義から両方を作るので、PNG を見れば pptx の配置を確かめられる。
+流れと文言はブースパネル（docs/パネル/panel.tpl.html）と同じにし、その前に2つのエピソードを置く。
+  表紙 → エピソード1（重複）→ エピソード2（組み合わせ）→ アプリの一文と重なりの図 → できること → しくみ → 締め
+エピソードの順は、パネルの「できること」の順（重複 → 組み合わせ → 順番）に合わせる。
 
-  pip install python-pptx pillow
-  python3 docs/ピッチ/build.py
+パネルで決めたことを、ここでも守る。
+- 色は紺と灰色で組む。判定の3色（青・黄・赤）は凡例と実機の画面の中にだけ出す
+- 塗りつぶした紺は「重なり」の図と、最後の「お試しください」の帯の2か所に絞る
+- 説明は使う人にとってうれしいことを書く。開発者向けの補足は載せない
+- しくみは「やること」が主役で、「うれしいこと」はその横にぶら下げる（一回り小さく、縦線を付ける）
+- 実機の画面には、どこを見ればいいかの囲みを付ける（位置はパネルと同じ割合）
+- 判定画面は実機で市販品を撮った実際の出力。画面にない内容をスライドに書かない
 
-プレビューPNGは、同じフォルダに NotoSansJP-Regular.otf / NotoSansJP-Bold.otf を置いたときだけ作る。
-Googleスライドに取り込んだあとはそちらが正本。ここは叩き台を作り直すときに使う。
+  uv run --with python-pptx --with pillow python docs/ピッチ/build.py
+
+プレビューは Noto Sans JP の otf（Regular・Bold）がある場合だけ作る。置き場所は環境変数 NOTO_DIR か、
+このフォルダ。PREVIEW_DIR を渡すと、1枚ずつの PNG もそこに書き出す。
+Googleスライドに取り込んだあとはそちらが正本。ここは作り直すときに使う。
 """
-import sys
+import os
 from pathlib import Path
 
 from lxml import etree
@@ -22,28 +32,34 @@ from pptx.util import Inches, Pt
 
 HERE = Path(__file__).parent
 A = HERE / 'assets'
-OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else HERE
-OUT.mkdir(parents=True, exist_ok=True)
+FONTS = Path(os.environ.get('NOTO_DIR', HERE))
+PREVIEW_DIR = os.environ.get('PREVIEW_DIR')
 
 W, H = 13.333, 7.5
+X0, X1 = 0.75, 12.583  # 左右の余白
 FONT = 'Noto Sans JP'
 DPI = 144
-
-NAVY, INK, MUTED, FAINT = '1B2A4A', '0F172A', '475569', '94A3B8'
-CANVAS, LINE, WHITE = 'F5F7FA', 'E2E8F0', 'FFFFFF'
-RED, AMBER, BLUE, PALE = 'DC2626', 'C2410C', '2563EB', 'CBD5E1'
-
 LEAD = 1.45  # Noto Sans JP の行送り（フォントサイズ比）
+MIN_PT = 14  # 投影で読める下限
+
+# パネルと同じ色
+NAVY, INK, MUTED, PALE, LINE, MIST, WHITE = '1B2A4A', '0F172A', '475569', 'C9D0DB', 'D9DFE7', 'F2F4F7', 'FFFFFF'
+BLUE, AMBER, RED = '2563EB', 'D97706', 'DC2626'
+SQ_A, SQ_B = 'E4E7EC', 'BCC3CE'  # 重なりの図の二つの四角
+
+SLOGAN = '重ねる前に、重ねて見る。'
 
 
 # ── 要素 ─────────────────────────────────────────────
-def rect(x, y, w, h, fill, radius=0, line=None, label=None, size=18, color=INK, bold=True):
-    """label を渡すと図形の中央に文字を置く（札・番号の丸）。"""
-    return dict(kind='rect', x=x, y=y, w=w, h=h, fill=fill, radius=radius, line=line,
-                label=label, size=size, color=color, bold=bold)
+def rect(x, y, w, h, fill, radius=0, line=None, line_w=1, label=None, size=18, color=INK, bold=True, shape='round'):
+    """label を渡すと図形の中央に文字を置く（札・番号の丸）。
+    shape='diag' は左上と右下だけ丸い四角（重なりの図の、重なった部分）"""
+    return dict(kind='rect', x=x, y=y, w=w, h=h, fill=fill, radius=radius, line=line, line_w=line_w,
+                label=label, size=size, color=color, bold=bold, shape=shape)
 
 
 def text(x, y, w, h, body, size, color=INK, bold=False, align='left', spacing=1.0):
+    """改行は body の \\n で決める（勝手に折り返さない）。"""
     return dict(kind='text', x=x, y=y, w=w, h=h, body=body, size=size, color=color,
                 bold=bold, align=align, spacing=spacing)
 
@@ -57,199 +73,222 @@ def image(path, x, y, h=None, w=None):
     return dict(kind='image', path=path, x=x, y=y, w=w, h=h)
 
 
-def phone(path, x, y, h):
-    """スクリーンショットを白い枠に入れる。"""
-    im = image(path, x, y, h=h)
-    p = 0.09
-    return [rect(x - p, y - p, im['w'] + 2 * p, h + 2 * p, WHITE, radius=0.22, line=LINE), im]
+def font(size, bold):
+    return ImageFont.truetype(str(FONTS / ('NotoSansJP-Bold.otf' if bold else 'NotoSansJP-Regular.otf')),
+                              round(size * DPI / 72))
 
 
-def brand(x, y, size=20, color=NAVY, logo='logo.png'):
+HAVE_FONTS = (FONTS / 'NotoSansJP-Bold.otf').exists() and (FONTS / 'NotoSansJP-Regular.otf').exists()
+
+
+def width_of(s, size, bold=False):
+    """文字列の幅（インチ）。フォントが無ければ全角1文字＝1em で見積もる。"""
+    if HAVE_FONTS:
+        return font(size, bold).getlength(s) / DPI
+    return len(s) * size / 72
+
+
+def line_h(size, spacing=1.0, lines=1):
+    return size * LEAD * spacing / 72 * lines
+
+
+def brand(x, y, size, color=NAVY):
+    """ロゴの四角と「Overlai」。返り値は要素と全体の幅"""
     s = size / 72 * 1.5
-    return [image(logo, x, y, h=s), text(x + s * 1.02, y + s * 0.5 - size * LEAD / 144, size / 72 * 4.5, size * LEAD / 72 + 0.05, 'Overlai', size, color)]
+    tx = x + s * 1.02
+    return [image('logo.png', x, y, h=s),
+            text(tx, y + s * 0.5 - line_h(size) / 2, width_of('Overlai', size) + 0.2, line_h(size), 'Overlai', size, color)], \
+        s * 1.02 + width_of('Overlai', size)
+
+
+def heading(title):
+    """段落見出し。パネルの h2 と同じく、下に紺の線を引く"""
+    return [text(X0, 0.5, 6, line_h(26), title, 26, NAVY, bold=True),
+            rect(X0, 1.08, X1 - X0, 0.022, NAVY, shape='rect')]
+
+
+def phone(path, x, y, h, rings=(), sig=NAVY):
+    """実機の画面を白い枠に入れ、見てほしい所を囲む。rings は (left, top, width, height, 札) を画像に対する割合で"""
+    im = image(path, x, y, h=h)
+    p = 0.08
+    out = [rect(x - p, y - p, im['w'] + 2 * p, h + 2 * p, WHITE, radius=0.14, line=LINE), im]
+    for l, t, w, hh, label in rings:
+        rx, ry, rw, rh = x + im['w'] * l, y + h * t, im['w'] * w, h * hh
+        out.append(rect(rx, ry, rw, rh, None, radius=0.05, line=sig, line_w=1.75))
+        tw = width_of(label, 14, True) + 0.16
+        out.append(rect(rx - 0.02, ry - 0.31, tw, 0.28, sig, radius=0.04, label=label, size=14, color=WHITE))
+    return out, im['w']
 
 
 # ── スライド ────────────────────────────────────────
-# 二つのエピソード（組み合わせの迷い・重複の迷い）→ 共通する原因 → 両方を解くプロダクト → コンセプト → 締め
-# 判定画面は赤・黄とも、実機で市販品を撮った実際の出力（red-real.png・yellow-real.png）。
-# 画面にない内容（残量に触れた文など）をスライドに書かないこと
 SLIDES = []
 
-
-def chip(x, y, label, color, bg, border, size=20):
-    """エピソードの中の「迷い」を吹き出し風の札にする。"""
-    w = len(label) * size / 72 * 1.02 + 0.7
-    return [rect(x, y, w, 0.72, bg, radius=0.36, line=border, label=label, size=size, color=color)], w
-
-
-def chips(y, labels, color, bg, border):
-    out, x = [], 0.9
-    for lb in labels:
-        items, w = chip(x, y, lb, color, bg, border)
-        out += items
-        x += w + 0.3
-    return out
+# 0. 表紙（スローガンは、アプリを出す4枚目まで取っておく）
+SLIDES.append(dict(notes='鈴鹿高専の、Overlaiです。', items=[
+    image('logo-faint.png', 7.75, 1.05, h=5.4),
+    text(X0, 0.75, 9, line_h(16), 'ユメカタリ 学生生成AIコンテスト 2026｜開発部門', 16, MUTED),
+    *brand(X0, 2.45, 80)[0],
+    text(X0, 4.3, 8, line_h(22), 'Overlay（重ねる）＋ AI', 22, MUTED),
+    text(X0, 6.0, 8, line_h(16), '鈴鹿工業高等専門学校', 16, MUTED, bold=True),
+    text(X0, 6.4, 8, line_h(16), '井上 高志・濱田 圭太郎・杉本 隼都', 16, MUTED),
+]))
 
 
-def episode(no, kind, who, color, cloud, people, scene, doubts):
+def episode(no, kind, who, people, scene, doubts):
     """人物のイラストと、そのとき浮かんだ迷いの吹き出し。迷いを一番大きく見せる。
-    イラストは illust/make.py で描いたもの（素材サイトの画像は使わない）"""
-    cw, ch = 8.3, None
-    cl = image(cloud, 0.6, 2.6, w=cw)
-    ch = cl['h']
-    cx, cy = 0.6 + 0.494 * cw, 2.6 + 0.491 * ch  # 吹き出しの本体の中心
+    イラストは illust/make.py で描いたもの。エピソードは実話だけで組む"""
+    cl = image('cloud.png', 0.45, 2.55, w=8.5)
+    cx, cy = cl['x'] + 0.495 * cl['w'], cl['y'] + 0.49 * cl['h']  # 吹き出しの本体の中心
     ppl = image(people, 0, 0, h=2.75)
-    ppl['x'], ppl['y'] = 12.95 - ppl['w'], 7.5 - ppl['h']
+    ppl['x'], ppl['y'] = X1 + 0.3 - ppl['w'], H - ppl['h']
     out = [
-        text(0.9, 0.8, 8, 0.5, f'エピソード {no}｜{kind}', 20, color, bold=True),
-        text(0.9, 1.3, 11.5, 0.5, who, 18, MUTED),
-        text(0.9, 1.85, 12, 0.6, scene, 26, MUTED, bold=True),
+        text(X0, 0.75, 9, line_h(20), f'エピソード {no}｜{kind}', 20, NAVY, bold=True),
+        text(X0, 1.25, 11.5, line_h(18), who, 18, MUTED),
+        text(X0, 1.8, 11.8, line_h(26), scene, 26, INK, bold=True),
         cl, ppl,
     ]
     for i, q in enumerate(doubts):
-        out.append(text(cx - 3.6, cy - 0.76 + i * 0.86, 7.2, 0.72, q, 32, NAVY, bold=True, align='center'))
+        out.append(text(cx - 3.7, cy - 0.78 + i * 0.86, 7.4, line_h(32), q, 32, NAVY, bold=True, align='center'))
     return out
 
 
-# スローガン。店頭の判定だけでなく、塗る順番・飲み合わせまで含めて「重ねる前に確かめる」アプリだと言う。
-# 表紙・コンセプト・締めの3か所で使う（パネルの見出しも同じ文にそろえる）
-SLOGAN = '重ねる前に、重ねて見る。'
-
-# 0. 表紙（話しながら次へ送る）
-SLIDES.append(dict(bg=WHITE, notes=(
-    '鈴鹿高専の、Overlaiです。'
-), items=[
-    image('logo-faint.png', 8.6, 1.1, h=5.4),
-    text(0.9, 1.25, 9, 0.5, 'ユメカタリ 学生生成AIコンテスト 2026｜開発部門', 16, MUTED),
-    *brand(0.9, 2.35, size=72),
-    text(0.9, 4.2, 8.5, 0.9, SLOGAN, 34, NAVY, bold=True),
-    text(0.9, 6.05, 10, 0.4, '鈴鹿工業高等専門学校', 15, MUTED, bold=True),
-    text(0.9, 6.45, 10, 0.4, '井上 高志・濱田 圭太郎・杉本 隼都', 15, MUTED),
-]))
-
-# 1. エピソード1：組み合わせの迷い
-SLIDES.append(dict(bg=WHITE, notes=(
-    'ステロイドの塗り薬を使う濱田と杉本は、ある日、化粧水を手に取って、手が止まりました。'
-    '使っていいのか。どっちが先か。'
-), items=episode(
-    1, '組み合わせの迷い', '濱田・杉本｜肌が弱く、ステロイドの塗り薬を使っている', BLUE, 'cloud-blue.png', 'people-1.png',
-    'ある日、ドラッグストアで化粧水を手に取って、手が止まった。',
-    ['薬を塗った肌に、使っていい？', '薬と化粧品、どっちが先？'],
-)))
-
-# 2. エピソード2：重複の迷い（人物紹介はエピソード1と同じく「どんな人か」を書く）
-SLIDES.append(dict(bg=WHITE, notes=(
-    '井上は、風邪薬を買って帰ると、似た薬がもう家にありました。'
-), items=episode(
-    2, '重複の迷い', '井上｜店頭に立つと、家にある薬を思い出せない', AMBER, 'cloud-amber.png', 'people-2.png',
+# 1. エピソード1：重複（→ できること①）
+SLIDES.append(dict(notes='井上は、風邪薬を買って帰ったら、似た薬がもう家にありました。', items=episode(
+    1, '重複の迷い', '井上｜店頭に立つと、家にある薬を思い出せない', 'people-1.png',
     '風邪薬を買って帰ると、似たような薬がもう家にあった。',
     ['家に、同じような薬あったっけ？', '名前は違うけど、中身は同じ？'],
 )))
 
-# 3. 共通する原因
-SLIDES.append(dict(bg=WHITE, notes=(
-    'どの迷いも、家にある薬と見比べないと答えが出ません。でも、店の棚の前では、それができません。'
-), items=[
-    text(0.9, 1.3, 11.5, 0.6, '「使っていい？」「どっちが先？」「もう家にある？」', 24, FAINT),
-    text(0.9, 2.05, 11.5, 0.7, 'どの迷いも、家にある薬と見比べないと答えが出ない。', 30, MUTED),
-    rect(0.9, 3.2, 0.9, 0.06, NAVY),
-    text(0.9, 3.6, 11.8, 2.4, 'でも、店の棚の前では、\n家の薬と見比べられない。', 50, NAVY, bold=True),
-]))
+# 2. エピソード2：組み合わせ（→ できること②③）
+SLIDES.append(dict(notes=(
+    '濱田と杉本は、ステロイドの塗り薬を使っています。化粧水を手に取ったとき、'
+    '使っていいのか、どっちが先か、迷いました。'
+), items=episode(
+    2, '組み合わせの迷い', '濱田・杉本｜肌が弱く、ステロイドの塗り薬を使っている', 'people-2.png',
+    'ある日、ドラッグストアで化粧水を手に取って、手が止まった。',
+    ['薬を塗った肌に、使っていい？', '薬と化粧品、どっちが先？'],
+)))
 
-# 4. しくみ
-def step(n, y, head, sub, ai=False):
+
+# 3. アプリの一文（パネルの見出しと同じ）
+def venn(x, y, s):
+    """ロゴと同じ二つの四角を重ね、重なった所が判定になることを図で見せる"""
+    a, off, ov, r = 0.7 * s, 0.3 * s, 0.4 * s, 0.117 * s
+    pad = 0.067 * s
+    lb = '撮って登録した\n家の薬・化粧品'
     out = [
-        rect(0.9, y + 0.04, 0.52, 0.52, NAVY, radius=0.26, label=str(n), color=WHITE),
-        text(1.65, y, 6.6, 0.5, head, 22, INK, bold=True),
-        text(1.65, y + 0.5, 7.2, 0.4, sub, 15, MUTED),
+        rect(x, y, a, a, SQ_A, radius=r),
+        rect(x + off, y + off, a, a, SQ_B, radius=r),
+        rect(x + off, y + off, ov, ov, NAVY, radius=r, shape='diag'),
+        text(x + off, y + off + ov * 0.28, ov, line_h(18), '重ねて判定', 18, WHITE, bold=True, align='center'),
+        text(x + pad, y + pad, a, line_h(18), '店で撮った商品', 18, NAVY, bold=True),
+        text(x + s - pad - 2.4, y + s - pad - line_h(18, 1.0, 2), 2.4, line_h(18, 1.0, 2), lb, 18, NAVY,
+             bold=True, align='right'),
     ]
-    if ai:  # 生成AIを使う段にだけ札を付ける
-        out.append(rect(1.65 + len(head) * 22 / 72 + 0.15, y + 0.07, 0.95, 0.36, 'EFF6FF', radius=0.18,
-                        line='BFDBFE', label='生成AI', size=12, color=BLUE))
+    d, g = 0.16, 0.09
+    dx = x + off + ov / 2 - (3 * d + 2 * g) / 2
+    for i, c in enumerate([BLUE, AMBER, RED]):
+        out.append(rect(dx + i * (d + g), y + off + ov * 0.62, d, d, c, radius=d / 2))
     return out
 
+
+TOP = 1.05
+br, bw = brand(X0, TOP, 34)
+SLIDES.append(dict(notes=(
+    'どちらも、家の薬と見比べられれば迷わずに済みます。そこで作ったのがOverlaiです。'
+    '店で成分表示を撮るだけで、買うべきかの目安がわかります。'
+), items=[
+    *br,
+    text(X0 + bw + 0.3, TOP + 34 / 72 * 1.5 * 0.5 - line_h(16) / 2 + 0.06, 4, line_h(16), 'Overlay（重ねる）＋ AI', 16, MUTED),
+    text(X0, TOP + 0.95, 7.6, line_h(72, 0.95, 2), '重ねる前に、\n重ねて見る。', 72, NAVY, bold=True, spacing=0.95),
+    text(X0, TOP + 4.2, 11.5, line_h(26, 1.0, 2), '店で成分表示を撮るだけで、家の薬・化粧品と比べて\n「買うべきか」の目安がわかるアプリ。', 26, INK, bold=True),
+    *venn(X1 - 4.0, TOP, 4.0),
+]))
+
+
+# 4. できること（パネルと同じ3列。画面の囲みもパネルと同じ位置）
 def legend(x, y):
     """3色の意味。アプリの判定の見出しと同じ言葉を使う"""
-    out = []
-    for c, lb in [('2563EB', '買っても問題なさそう'), ('D97706', '家にあるもので足りそう'), ('DC2626', '注意が必要')]:
-        out += [rect(x, y + 0.1, 0.2, 0.2, c, radius=0.1), text(x + 0.28, y, 2.3, 0.4, lb, 14, MUTED, bold=True)]
-        x += 0.28 + len(lb) * 14 / 72 + 0.35
+    out = [text(x, y, 1.6, line_h(15), '判定は3色', 15, MUTED, bold=True)]
+    x += width_of('判定は3色', 15, True) + 0.35
+    for c, lb in [(BLUE, '買っても問題なさそう'), (AMBER, '買わなくて大丈夫'), (RED, '注意が必要')]:
+        out += [rect(x, y + 0.12, 0.19, 0.19, c, radius=0.095),
+                text(x + 0.28, y, width_of(lb, 15, True) + 0.1, line_h(15), lb, 15, INK, bold=True)]
+        x += 0.28 + width_of(lb, 15, True) + 0.4
     return out
 
-SLIDES.append(dict(bg=WHITE, notes=(
-    'そこで作ったのが、Overlaiです。店頭で撮るだけで、生成AIが家にあるものと重ねて判定し、出典つきで理由を示します。'
-), items=[
-    *brand(0.9, 0.7, size=66),
-    text(5.75, 1.45, 3.2, 0.4, 'Overlay（重ねる）＋ AI', 16, MUTED),
-    text(0.9, 2.5, 8.2, 1.4, '店頭で撮るだけで、\n家にあるものと重ねて判定する。', 30, INK, bold=True),
-    *step(1, 4.05, '家にあるものを登録する', '薬も化粧品も、撮れば成分まで入る。これが判定の基準になる。'),
-    *step(2, 4.95, '店頭で、成分表示を撮る', '気になった商品を撮るだけ。書式がばらばらでも読み取る。', ai=True),
-    *step(3, 5.85, '家の在庫と重ねて判定する', '重複も組み合わせも考え、買うべきかを3色と出典つきの理由で伝える。', ai=True),
-    *legend(1.65, 6.75),
-    *phone('stock-mid.jpg', 9.55, 0.55, 6.2),
-    text(9.3, 6.93, 3.5, 0.4, '家の在庫（マイストック）', 12, FAINT, align='center'),
-]))
 
-# 5. エピソード1への答え（何ができるかではなく、使う人に何がうれしいかを書く）
-SLIDES.append(dict(bg=WHITE, notes=(
-    '使っていいかの目安がその場で分かり、塗る順番まで案内します。'
-), items=[
-    text(0.9, 0.95, 6, 0.5, 'エピソード 1 への答え｜組み合わせ', 20, BLUE, bold=True),
-    text(0.9, 1.5, 5.8, 1.3, '「使っていい？」の目安が、\nその場でわかる。', 30, INK, bold=True),
-    text(0.9, 2.9, 5.8, 1.1, '薬を塗っている肌に刺激になりうる化粧品は、\n理由つきで教えてくれる。\n例）エタノール → 薬を塗った肌の刺激になる可能性', 15, MUTED),
-    rect(0.9, 4.25, 0.6, 0.05, LINE),
-    text(0.9, 4.5, 6.0, 1.3, '今ある薬と化粧品の\n塗る順番が、ひと目でわかる。', 30, INK, bold=True),
-    text(0.9, 5.9, 5.8, 0.8, '化粧水から処方の軟膏まで、家にあるものを\n塗る順に並べて見せる。※医師・薬剤師の指示が優先', 15, MUTED),
-    *phone('red-real.png', 6.95, 0.75, 5.5),
-    *phone('routine-crop.jpg', 10.25, 0.75, 5.5),
-    text(6.86, 6.5, 6.14, 0.4, '実際の判定画面（市販の薬用化粧水）・塗る順番の画面', 12, FAINT, align='center'),
-]))
+GAP = 0.45
+COL = (X1 - X0 - 2 * GAP) / 3
+CASES = [
+    ('名前が違っても、\n同じ働きの薬に気づける', '風邪薬と頭痛薬のように、別の薬でも\n成分がかぶっていれば知らせる',
+     'yellow-real.png', 'B45309', [(0.05, 0.513, 0.29, 0.043, '重複する成分'), (0.035, 0.67, 0.93, 0.122, '家の薬')]),
+    ('使っている薬との相性が、\n買う前にわかる', '飲み薬だけでなく、塗り薬や\n化粧品との組み合わせも確かめられる',
+     'red-real.png', RED, [(0.035, 0.504, 0.42, 0.044, '店の商品'), (0.035, 0.796, 0.93, 0.094, '家の薬')]),
+    ('薬や化粧品を使う順番や、\n詳しい使い方がわかる', '処方薬と化粧品を一緒に使う日も、\nどれから、どう塗ればいいか迷わない',
+     'routine-crop.jpg', NAVY, [(0.018, 0.096, 0.13, 0.734, '塗る順番')]),
+]
+items = heading('できること')
+for i, (h3, sub, shot, sig, rings) in enumerate(CASES):
+    x = X0 + i * (COL + GAP)
+    items += [text(x, 1.3, COL, line_h(20, 1.0, 2), h3, 20, INK, bold=True),
+              text(x, 2.15, COL, line_h(15, 1.0, 2), sub, 15, MUTED)]
+    items += phone(shot, x + 0.08, 3.03, 3.55, rings, sig)[0]
+items += legend(X0, 6.9)
+SLIDES.append(dict(notes=(
+    '名前が違っても同じ働きの薬に気づけて、使っている薬との相性も買う前にわかります。'
+    '塗る順番まで案内します。'
+), items=items))
 
-# 6. エピソード2への答え（5枚目と同じ組み方にそろえる）
-SLIDES.append(dict(bg=WHITE, notes=(
-    '名前が違っても、成分で重なりに気づけます。'
-), items=[
-    text(0.9, 0.95, 6, 0.5, 'エピソード 2 への答え｜重複', 20, AMBER, bold=True),
-    text(0.9, 1.5, 7.8, 1.3, '名前が違っても、同じ成分が\n入っていれば気づける。', 30, INK, bold=True),
-    text(0.9, 2.9, 7.8, 1.1, '店の解熱鎮痛薬と、家の「イブA錠」。商品名は違っても、\nどちらにもイブプロフェンが入っている。風邪薬にも同じ成分が\n入っていることがあるので、成分で見比べる。', 15, MUTED),
-    rect(0.9, 4.25, 0.6, 0.05, LINE),
-    text(0.9, 4.5, 7.8, 1.3, '家にある薬で足りるなら、\n買わずに済む。', 30, INK, bold=True),
-    text(0.9, 5.9, 7.8, 0.8, '重なっている家の薬を、その場で並べて見せる。\n無駄な買い物も、同じ成分の重ね飲みも防ぎやすくなる。', 15, MUTED),
-    *phone('yellow-real.png', 9.35, 0.55, 6.2),
-    text(9.26, 6.93, 3.25, 0.4, '実際の判定画面（市販の解熱鎮痛薬）', 12, FAINT, align='center'),
-]))
 
-# 7. コンセプト：店頭の判定だけでなく、買う・塗る・飲むの全部で「重ねる前に確かめる」
-def pillar(x, head, sub, tag):
-    return [
-        rect(x, 3.05, 3.72, 2.75, CANVAS, radius=0.25),
-        text(x + 0.4, 3.4, 3.1, 0.6, head, 26, NAVY, bold=True),
-        text(x + 0.4, 4.15, 3.1, 1.0, sub, 18, MUTED),
-        text(x + 0.4, 5.2, 3.1, 0.4, tag, 14, BLUE, bold=True),
+# 5. しくみ（やることが主役。うれしいことは一回り小さくし、縦線でぶら下げる）
+STEPS = [
+    ('家で', '薬・化粧品を撮って登録', 'AIが成分表示を読み取る',
+     '自分の体質も登録できる', '肌質や年代、悩みを登録すると、\n使い方の助言がパーソナライズされる'),
+    ('店で', '気になる商品を撮る', 'AIが家のものと照らし合わせる',
+     '撮るだけで、すぐ確かめられる', '商品名の入力も検索もいらない\n店先で成分表示を1枚撮れば済む'),
+    ('その場で', '買うべきかの目安が出る', '3色の判定と、成分名つきの理由',
+     '理由に根拠と出典を添える', '根拠の薄い推測は、最初から出さない\n表示された理由は、安心して読める'),
+]
+ROW0, PITCH, DOT = 1.5, 1.85, 0.5
+BX = 7.1  # うれしいことの列
+items = heading('しくみ')
+items.append(rect(X0 + DOT / 2 - 0.0125, ROW0 + 0.02 + DOT / 2, 0.025, PITCH * 2, PALE, shape='rect'))  # 番号をつなぐ線
+for i, (when, act, ai, ph, pp) in enumerate(STEPS):
+    y = ROW0 + i * PITCH
+    tx = X0 + DOT + 0.3
+    items += [
+        rect(X0, y + 0.02, DOT, DOT, NAVY, radius=DOT / 2, label=str(i + 1), size=18, color=WHITE),
+        text(tx, y + 0.04, 3, line_h(17), when, 17, MUTED, bold=True),
+        text(tx, y + 0.45, BX - tx - 0.2, line_h(28), act, 28, NAVY, bold=True),
+        text(tx, y + 1.02, BX - tx - 0.2, line_h(17), ai, 17, MUTED),
+        rect(BX, y + 0.1, 0.05, 1.2, PALE, shape='rect'),
+        text(BX + 0.3, y + 0.06, X1 - BX - 0.3, line_h(22), ph, 22, INK, bold=True),
+        text(BX + 0.3, y + 0.58, X1 - BX - 0.3, line_h(18, 1.0, 2), pp, 18, MUTED),
     ]
+SLIDES.append(dict(notes='家で一度登録すれば、店では撮るだけです。根拠の薄い推測は出さず、理由には出典を添えます。', items=items))
 
-SLIDES.append(dict(bg=WHITE, notes=(
-    '買い重ねる前に。塗り重ねる前に。一緒に飲む前に。'
-), items=[
-    text(0, 0.95, W, 0.5, 'Overlai が目指すこと', 20, BLUE, bold=True, align='center'),
-    text(0, 1.5, W, 1.1, SLOGAN, 54, NAVY, bold=True, align='center'),
-    *pillar(0.9, '買い重ねる前に', 'もう家にある？\n名前違いの同じ薬は？', '重複'),
-    *pillar(4.81, '塗り重ねる前に', '一緒に使っていい？\nどれを先に塗る？', '組み合わせ・塗る順番'),
-    *pillar(8.72, '一緒に飲む前に', '今飲んでいる薬と\n一緒で大丈夫？', '飲み合わせ'),
-    text(0, 6.25, W, 0.5, '肌の治療を続ける人も、家族の薬を買う人も、店頭で迷わない毎日へ。', 20, MUTED, bold=True, align='center'),
-]))
 
-# 8. 締め
-SLIDES.append(dict(bg=WHITE, notes=(
-    'Overlai。' + SLOGAN
-), items=[
-    text(0, 1.2, W, 0.7, '店頭で撮るだけで、家の薬や化粧品と重ねて判定する。', 26, MUTED, align='center'),
-    *brand(4.05, 2.3, size=80),
-    text(0, 4.45, W, 0.8, SLOGAN, 34, NAVY, bold=True, align='center'),
-    text(0.9, 6.62, 9, 0.4, '鈴鹿工業高等専門学校　井上 高志・濱田 圭太郎・杉本 隼都', 15, MUTED),
-    rect(11.28, 5.0, 1.4, 1.4, WHITE, radius=0.12, line=LINE),
-    image('qr.png', 11.33, 5.05, h=1.3),
-    text(11.08, 6.5, 1.8, 0.4, '実機を試す', 13, MUTED, align='center'),
+# 6. 締め（パネルの最後の帯と同じ）
+br, bw = brand(0, 1.0, 60)
+for it in br:
+    it['x'] += (W - bw) / 2
+BAND_Y, BAND_H, QR = 4.3, 2.45, 1.85
+qx = X1 - 0.3 - QR
+school = '鈴鹿工業高等専門学校'
+SLIDES.append(dict(notes=SLOGAN + 'ぜひ、お試しください。', items=[
+    *br,
+    text(0, 2.75, W, line_h(36), SLOGAN, 36, NAVY, bold=True, align='center'),
+    rect(X0, BAND_Y, X1 - X0, BAND_H, NAVY, radius=0.2),
+    text(X0 + 0.6, BAND_Y + 0.28, 8, line_h(32), 'ぜひ、お試しください', 32, WHITE, bold=True),
+    text(X0 + 0.6, BAND_Y + 1.0, 8.6, line_h(17), 'インストール不要。見本の薬・化粧品が入った状態で開きます', 17, PALE),
+    rect(X0 + 0.6, BAND_Y + 1.52, qx - 0.6 - X0 - 0.6, 0.012, '4D5972', shape='rect'),
+    text(X0 + 0.6, BAND_Y + 1.64, 8, line_h(14), 'ユメカタリ 学生生成AIコンテスト 2026｜開発部門', 14, PALE),
+    text(X0 + 0.6, BAND_Y + 1.64 + line_h(14), width_of(school, 14, True) + 0.1, line_h(14), school, 14, WHITE, bold=True),
+    text(X0 + 0.6 + width_of(school, 14, True) + 0.25, BAND_Y + 1.64 + line_h(14), 5, line_h(14),
+         '井上 高志・濱田 圭太郎・杉本 隼都', 14, PALE),
+    rect(qx, BAND_Y + (BAND_H - QR) / 2, QR, QR, WHITE, radius=0.08),
+    image('qr.png', qx + 0.06, BAND_Y + (BAND_H - QR) / 2 + 0.06, h=QR - 0.12),
 ]))
 
 
@@ -270,27 +309,34 @@ def set_font(run, size, color, bold):
         el.set('typeface', FONT)
 
 
+SHAPES = {'round': MSO_SHAPE.ROUNDED_RECTANGLE, 'rect': MSO_SHAPE.RECTANGLE, 'diag': MSO_SHAPE.ROUND_2_DIAG_RECTANGLE}
+ALIGN = {'left': PP_ALIGN.LEFT, 'center': PP_ALIGN.CENTER, 'right': PP_ALIGN.RIGHT}
+
+
 def build_pptx(path):
     prs = Presentation()
     prs.slide_width, prs.slide_height = Inches(W), Inches(H)
-    blank = prs.slide_layouts[6]
     for s in SLIDES:
-        sl = prs.slides.add_slide(blank)
-        bg = sl.background.fill
-        bg.solid()
-        bg.fore_color.rgb = rgb(s['bg'])
+        sl = prs.slides.add_slide(prs.slide_layouts[6])
+        sl.background.fill.solid()
+        sl.background.fill.fore_color.rgb = rgb(WHITE)
         for it in s['items']:
             x, y, w, h = (Inches(it[k]) for k in ('x', 'y', 'w', 'h'))
             if it['kind'] == 'rect':
-                shp = sl.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE if it['radius'] else MSO_SHAPE.RECTANGLE,
-                                          x, y, w, h)
-                if it['radius']:
-                    shp.adjustments[0] = it['radius'] / min(it['w'], it['h'])
-                shp.fill.solid()
-                shp.fill.fore_color.rgb = rgb(it['fill'])
+                kind = it['shape'] if it['radius'] or it['shape'] == 'diag' else 'rect'
+                shp = sl.shapes.add_shape(SHAPES[kind], x, y, w, h)
+                if kind != 'rect':
+                    shp.adjustments[0] = min(0.5, it['radius'] / min(it['w'], it['h']))
+                if kind == 'diag':
+                    shp.adjustments[1] = 0
+                if it['fill']:
+                    shp.fill.solid()
+                    shp.fill.fore_color.rgb = rgb(it['fill'])
+                else:
+                    shp.fill.background()
                 if it['line']:
                     shp.line.color.rgb = rgb(it['line'])
-                    shp.line.width = Pt(1)
+                    shp.line.width = Pt(it['line_w'])
                 else:
                     shp.line.fill.background()
                 shp.shadow.inherit = False
@@ -309,12 +355,12 @@ def build_pptx(path):
             else:
                 tb = sl.shapes.add_textbox(x, y, w, h)
                 tf = tb.text_frame
-                tf.word_wrap = True
+                tf.word_wrap = False
                 tf.margin_left = tf.margin_right = tf.margin_top = tf.margin_bottom = 0
                 tf.vertical_anchor = MSO_ANCHOR.TOP
                 for i, line in enumerate(it['body'].split('\n')):
                     p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-                    p.alignment = {'left': PP_ALIGN.LEFT, 'center': PP_ALIGN.CENTER}[it['align']]
+                    p.alignment = ALIGN[it['align']]
                     p.line_spacing = it['spacing']
                     r = p.add_run()
                     r.text = line
@@ -323,57 +369,71 @@ def build_pptx(path):
     prs.save(path)
 
 
-# ── プレビュー ───────────────────────────────────────
+# ── プレビューと確かめ ───────────────────────────────
 def px(v):
     return round(v * DPI)
 
 
-def build_preview(i, s, path):
-    img = Image.new('RGB', (px(W), px(H)), '#' + s['bg'])
+def render(i, s):
+    img = Image.new('RGB', (px(W), px(H)), '#' + WHITE)
     d = ImageDraw.Draw(img)
+    issues = []
     for it in s['items']:
         box = [px(it['x']), px(it['y']), px(it['x'] + it['w']), px(it['y'] + it['h'])]
+        if it['x'] < -0.01 or it['y'] < -0.01 or it['x'] + it['w'] > W + 0.01 or it['y'] + it['h'] > H + 0.01:
+            issues.append(f'スライドの外にはみ出し: {it.get("body") or it.get("label") or it.get("path") or it["kind"]}')
         if it['kind'] == 'rect':
-            d.rounded_rectangle(box, radius=px(it['radius']), fill='#' + it['fill'],
-                                outline=('#' + it['line']) if it['line'] else None, width=2)
+            fill = ('#' + it['fill']) if it['fill'] else None
+            outline = ('#' + it['line']) if it['line'] else None
+            lw = max(1, round(it['line_w'] * DPI / 72)) if it['line'] else 0
+            r = px(it['radius']) if it['shape'] != 'rect' else 0
+            d.rounded_rectangle(box, radius=r, fill=fill, outline=outline, width=lw)
+            if it['shape'] == 'diag':  # 右上と左下は角を立てる
+                d.rectangle([box[2] - r, box[1], box[2], box[1] + r], fill=fill)
+                d.rectangle([box[0], box[3] - r, box[0] + r, box[3]], fill=fill)
             if it['label']:
-                f = ImageFont.truetype(str(HERE / ('NotoSansJP-Bold.otf' if it['bold'] else 'NotoSansJP-Regular.otf')),
-                                       round(it['size'] * DPI / 72))
-                d.text(((box[0] + box[2]) / 2, (box[1] + box[3]) / 2), it['label'], font=f,
+                if it['size'] < MIN_PT:
+                    issues.append(f'文字が小さい（{it["size"]}pt）: {it["label"]}')
+                d.text(((box[0] + box[2]) / 2, (box[1] + box[3]) / 2), it['label'], font=font(it['size'], it['bold']),
                        fill='#' + it['color'], anchor='mm')
         elif it['kind'] == 'image':
             im = Image.open(A / it['path']).convert('RGBA').resize((box[2] - box[0], box[3] - box[1]), Image.LANCZOS)
             img.paste(im, box[:2], im)
         else:
-            f = ImageFont.truetype(str(HERE / ('NotoSansJP-Bold.otf' if it['bold'] else 'NotoSansJP-Regular.otf')),
-                                   round(it['size'] * DPI / 72))
+            f = font(it['size'], it['bold'])
+            if it['size'] < MIN_PT:
+                issues.append(f'文字が小さい（{it["size"]}pt）: {it["body"][:16]}')
             pitch = it['size'] * LEAD * it['spacing'] * DPI / 72
             yy = box[1]
-            for para in it['body'].split('\n'):
-                # 箱の幅で折り返す（pptx 側の折り返しを真似る）
-                lines, cur = [], ''
-                for ch in para:
-                    if f.getlength(cur + ch) > box[2] - box[0] and cur:
-                        lines.append(cur)
-                        cur = ch
-                    else:
-                        cur += ch
-                lines.append(cur)
-                for ln in lines:
-                    lw = f.getlength(ln)
-                    xx = box[0] if it['align'] == 'left' else (box[0] + box[2] - lw) / 2
-                    d.text((xx, yy + pitch * 0.12), ln, font=f, fill='#' + it['color'])
-                    yy += pitch
+            for ln in it['body'].split('\n'):
+                lw = f.getlength(ln)
+                if lw > box[2] - box[0] + 2:
+                    issues.append(f'横にはみ出し {(lw - box[2] + box[0]) / DPI:.2f}in: {ln[:16]}')
+                xx = {'left': box[0], 'center': (box[0] + box[2] - lw) / 2, 'right': box[2] - lw}[it['align']]
+                d.text((xx, yy + pitch * 0.12), ln, font=f, fill='#' + it['color'])
+                yy += pitch
             if yy > box[3] + 2:
-                print(f'  ! スライド{i + 1}: 文字が箱からはみ出しています → {it["body"][:16]}…')
-    img.save(path)
+                issues.append(f'縦にはみ出し: {it["body"][:16]}')
+    for msg in issues:
+        print(f'  ! スライド{i + 1}: {msg}')
+    return img
 
 
-build_pptx(OUT / 'Overlai_本選ピッチ.pptx')
-if (HERE / 'NotoSansJP-Bold.otf').exists():
-    for i, s in enumerate(SLIDES):
-        build_preview(i, s, OUT / f'preview-{i + 1}.png')
+build_pptx(HERE / 'Overlai_本選ピッチ.pptx')
+if HAVE_FONTS:
+    pages = [render(i, s) for i, s in enumerate(SLIDES)]
+    if PREVIEW_DIR:
+        Path(PREVIEW_DIR).mkdir(parents=True, exist_ok=True)
+        for i, pg in enumerate(pages):
+            pg.save(Path(PREVIEW_DIR) / f'slide-{i + 1}.png')
+    # 一覧（2列）
+    tw, th, gap = px(W) // 2, px(H) // 2, 16
+    rows = (len(pages) + 1) // 2
+    sheet = Image.new('RGB', (2 * tw + 3 * gap, rows * th + (rows + 1) * gap), '#8A8F98')
+    for i, pg in enumerate(pages):
+        sheet.paste(pg.resize((tw, th), Image.LANCZOS), (gap + (i % 2) * (tw + gap), gap + (i // 2) * (th + gap)))
+    sheet.save(HERE / 'preview.png')
 else:
-    print('Noto Sans JP の otf が無いのでプレビューは作りません')
+    print('Noto Sans JP の otf が無いのでプレビューは作りません（NOTO_DIR で場所を渡せる）')
 total = sum(len(s['notes']) for s in SLIDES)
 print(f'{len(SLIDES)}枚 / 台本 {total}字（約{total / 5:.0f}秒）')
