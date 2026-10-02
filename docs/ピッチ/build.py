@@ -246,29 +246,24 @@ for i, (doubt, h3, sub, shot, sig, rings, note) in enumerate(CASES):
 
 # 7〜8. 使い方（店で選ぶ・家で使うの2枚）
 # やることが主役。右の列は、そのステップにぶら下がるもの（一回り小さくし、縦線を付ける）
-ROW0, PITCH, DOT = 2.15, 1.7, 0.5
-BX = 7.1  # 右の列
+DOT = 0.5
 
 
-def benefit(head, body):
-    """うれしいこと（見出しと2行の説明）"""
+def benefits(*pairs):
+    """うれしいこと（見出しと説明）。2つ並べるときは説明を1行にする。返り値は (要素, 高さ)"""
     def draw(x, y, w):
-        return [text(x, y + 0.06, w, line_h(22), head, 22, INK, bold=True),
-                text(x, y + 0.58, w, line_h(18, 1.0, 2), body, 18, MUTED)]
-    return draw
-
-
-def points(*lines):
-    """うれしいこと（1行ずつ。説明は付けない）"""
-    def draw(x, y, w):
-        # 「で始まる行は、括弧の左の空きぶんだけ左へ出して頭をそろえる
-        return [text(x - (0.14 if ln.startswith('「') else 0), y + 0.1 + i * 0.52, w, line_h(21), ln, 21, INK, bold=True)
-                for i, ln in enumerate(lines)]
+        out, yy = [], y
+        for head, body in pairs:
+            n = body.count('\n') + 1
+            out += [text(x, yy + 0.06, w, line_h(22), head, 22, INK, bold=True),
+                    text(x, yy + 0.53, w, line_h(18, 1.0, n), body, 18, MUTED)]
+            yy += 0.53 + line_h(18, 1.0, n) + 0.16
+        return out, yy - 0.16 - y
     return draw
 
 
 def chips(*rows):
-    """登録するものを札で並べる（うれしいことの代わりに、何を入れるかを見せる）"""
+    """登録するものを札で並べる（①には、うれしいことの代わりに何を入れるかを見せる）"""
     def draw(x, y, w):
         out = []
         for r, row in enumerate(rows):
@@ -277,46 +272,53 @@ def chips(*rows):
                 cw = width_of(c, 17, True) + 0.4
                 out.append(rect(cx, y + 0.1 + r * 0.52, cw, 0.42, MIST, radius=0.21, label=c, size=17, color=NAVY))
                 cx += cw + 0.14
-        return out
+        return out, 0.1 + len(rows) * 0.52
     return draw
 
 
-def howto(tag, title, steps, notes):
-    items = [label(tag, y=0.6), text(X0, 1.05, 11, line_h(30), title, 30, INK, bold=True)]
-    items.append(rect(X0 + DOT / 2 - 0.0125, ROW0 + 0.02 + DOT / 2, 0.025, PITCH * 2, PALE, shape='rect'))  # 番号をつなぐ線
+def howto(tag, title, steps, notes, top=1.95, min_pitch=1.7, gap=0.3, bx=7.3):
+    """左に番号つきの3段（やること）、右の列（bx から）にぶら下がるもの。段の高さは右の列に合わせて伸びる"""
+    items = [label(tag, y=0.55), text(X0, 0.97, 11, line_h(30), title, 30, INK, bold=True)]
     tx = X0 + DOT + 0.3
+    y, centers = top, []
     for i, (when, act, sub, right) in enumerate(steps):
-        y = ROW0 + i * PITCH
+        ritems, rh = right(bx + 0.3, y, X1 - bx - 0.3)
         items += [
             rect(X0, y + 0.02, DOT, DOT, NAVY, radius=DOT / 2, label=str(i + 1), size=18, color=WHITE),
             text(tx, y + 0.04, 3, line_h(17), when, 17, MUTED, bold=True),
-            text(tx, y + 0.45, BX - tx - 0.2, line_h(28), act, 28, NAVY, bold=True),
-            text(tx, y + 1.02, BX - tx - 0.2, line_h(17), sub, 17, MUTED),
-            rect(BX, y + 0.1, 0.05, 1.2, PALE, shape='rect'),
-            *right(BX + 0.3, y, X1 - BX - 0.3),
+            text(tx, y + 0.45, bx - tx - 0.2, line_h(28), act, 28, NAVY, bold=True),
+            text(tx, y + 1.02, bx - tx - 0.2, line_h(17), sub, 17, MUTED),
+            rect(bx, y + 0.1, 0.05, max(1.2, rh), PALE, shape='rect'),
+            *ritems,
         ]
+        centers.append(y + 0.02 + DOT / 2)
+        y += max(min_pitch, max(1.36, rh) + gap)
+    # 番号をつなぐ線（番号の丸より先に描く）
+    items.insert(2, rect(X0 + DOT / 2 - 0.0125, centers[0], 0.025, centers[-1] - centers[0], PALE, shape='rect'))
     SLIDES.append(dict(notes=notes, items=items))
 
 
 howto('使い方 1｜店で選ぶ', '家で一度登録すれば、店では撮るだけ。', [
     ('家で', '薬・化粧品を撮って登録', 'AIが成分表示を読み取る',
-     benefit('自分の体質も登録できる', '肌質や年代、悩みを登録すると、\n使い方の助言がパーソナライズされる')),
+     benefits(('自分の体質も登録できる', '肌質や年代、悩みを登録すると、\n使い方の助言がパーソナライズされる'))),
     ('店で', '気になる商品を撮る', 'AIが家のものと照らし合わせる',
-     benefit('撮るだけで、すぐ確かめられる', '商品名の入力も検索もいらない\n店先で成分表示を1枚撮れば済む')),
+     benefits(('撮るだけで、すぐ確かめられる', '商品名の入力も検索もいらない\n店先で成分表示を1枚撮れば済む'))),
     ('その場で', '買うべきかの目安が出る', '3色の判定と、成分名つきの理由',
-     benefit('理由に根拠と出典を添える', '根拠の薄い推測は、最初から出さない\n表示された理由は、安心して読める')),
+     benefits(('理由に根拠と出典を添える', '根拠の薄い推測は、最初から出さない\n表示された理由は、安心して読める'))),
 ], '家で一度登録すれば、店では撮るだけ。理由には出典を添えます。')
 
 # 家で使う側。順番は剤形で決まり（lib/routine.ts）、AIが書くのは助言の言葉だけ。「AIが順番を決める」と書かないこと
-# ①は、うれしいことの代わりに登録するものを札で見せる（体質は撮らずに選んで入れる）
+# ①は、うれしいことの代わりに登録するものを札で見せる（体質は撮らずに設定から入れる）
+# ③の「順番の理由」は lib/routine.ts の剤形ごとの説明、「コツ」はAIの一言、記録は服薬（朝・昼・夜、直近7日）
 howto('使い方 2｜家で使う', '登録した薬と体質から、毎日の使い方がわかる。', [
     ('家で', '薬・化粧品と体質を登録', '薬・化粧品は撮るだけ、体質は設定から',
      chips(('飲み薬', '塗り薬', '化粧品'), ('肌質', '頭皮', '年代', '性別', '悩み'))),
-    ('アプリが', '自分に合った使い方を考える', '順番は剤形で決め、助言はAIが書く',
-     points('「朝は手早く」などの悩みも反映')),
+    ('アプリが', 'その人に合った使い方を考える', '順番は剤形で決め、助言はAIが書く',
+     benefits(('悩みまで入れて、パーソナライズ', '体質・年代・性別のほかに、\n朝は手早く済ませたい、といった悩みも'))),
     ('毎日', '順番と使い方が表示される', 'その日に使うものが、使う順に並ぶ',
-     points('薬を使ったかをチェックリストで記録', '手順ごとに、細かい使い方の説明')),
-], '登録した薬と体質から、毎日の使う順番と使い方も案内します。')
+     benefits(('薬を使ったかをチェックで記録', '朝・昼・夜ごとに付けて、7日分を見返せる'),
+              ('手順ごとに、使い方の説明が付く', 'その順番の理由と、使うときのコツがわかる'))),
+], '登録した薬と体質から、毎日の使う順番と使い方も案内します。', min_pitch=1.5, gap=0.2)
 
 
 # 8. 目指すこと（作り直す前の版の1枚。店頭の判定だけでなく、買う・塗る・飲むの全部で「重ねる前に確かめる」）
