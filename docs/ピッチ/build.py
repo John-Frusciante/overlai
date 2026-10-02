@@ -347,7 +347,7 @@ SLIDES.append(dict(notes='Overlai。' + SLOGAN, items=[
     text(0.9, 6.62, 9, line_h(15), '鈴鹿工業高等専門学校　' + TEAM, 15, MUTED),
     rect(11.28, 4.9, 1.4, 1.4, WHITE, radius=0.12, line=LINE),
     image('qr.png', 11.33, 4.95, h=1.3),
-    text(10.98, 6.4, 2.0, line_h(14), 'スマホで試せる', 14, MUTED, align='center'),
+    text(10.98, 6.4, 2.0, line_h(14), 'スマホで試す', 14, MUTED, align='center'),
 ]))
 
 
