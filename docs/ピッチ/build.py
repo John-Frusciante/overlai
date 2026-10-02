@@ -1,8 +1,9 @@
 """本選1分ピッチのスライドを pptx とプレビューPNGに書き出す。
 
 文言はブースパネル（docs/パネル/panel.tpl.html）と同じにし、見せ方はスライド向けに組む（1枚に1つのこと）。
-  表紙 → CASE 1（重複）→ CASE 2（組み合わせ）→ Overlai → できること×3 → 使い方 → 目指すこと → 締め
-CASE はメンバーの実体験（エピソード）、使い方はパネルの「しくみ」にあたる。
+  表紙 → CASE 1（重複）→ CASE 2（組み合わせ）→ Overlai → できること×3 → 使い方×2 → 目指すこと → 締め
+CASE はメンバーの実体験（エピソード）。使い方1（店で選ぶ）はパネルの「しくみ」、使い方2（家で使う）は
+ルーティンの流れ（登録 → 順番と助言 → 毎日の表示・服薬の記録）。
 エピソードの順は、パネルの「できること」の順（重複 → 組み合わせ → 順番）に合わせる。
 できることの各スライドは、エピソードで浮かんだ迷いから始めて、その答えとして実機の画面を大きく見せる。
 目指すこと・締めは、作り直す前の版の2枚を戻したもの（ユーザー判断）。
@@ -163,8 +164,8 @@ SLIDES.append(dict(notes='井上は、風邪薬を買って帰ったら、似た
 
 # 2. エピソード2：組み合わせ（→ できること2・3）
 SLIDES.append(dict(notes=(
-    '濱田と杉本は、病院で処方された薬を使っています。化粧水を手に取ったとき、'
-    '使っていいのか、どっちが先か、迷いました。'
+    '病院で処方された薬を使う濱田と杉本は、化粧水を前に、'
+    '使っていいのか、どっちが先か迷いました。'
 ), items=episode(
     2, '組み合わせの迷い', '濱田・杉本｜肌が弱く、病院で処方された薬を使っている', 'people-2.png',
     'ある日、ドラッグストアで化粧水を手に取って、手が止まった。',
@@ -195,8 +196,7 @@ def venn(x, y, s):
 
 
 SLIDES.append(dict(notes=(
-    'どちらも、店では家の薬と見比べられません。そこで作ったのがOverlaiです。'
-    '店で成分表示を撮るだけで、買うべきかの目安がわかります。'
+    'そこで作ったのがOverlaiです。店で成分表示を撮るだけで、買うべきかの目安がわかります。'
 ), items=[
     *brand(X0, 1.55, 72)[0],
     text(X0, 3.25, 6, line_h(18), 'Overlay（重ねる）＋ AI', 18, MUTED),
@@ -244,32 +244,79 @@ for i, (doubt, h3, sub, shot, sig, rings, note) in enumerate(CASES):
     SLIDES.append(dict(notes=note, items=items))
 
 
-# 7. しくみ（やることが主役。うれしいことは一回り小さくし、縦線でぶら下げる）
-STEPS = [
-    ('家で', '薬・化粧品を撮って登録', 'AIが成分表示を読み取る',
-     '自分の体質も登録できる', '肌質や年代、悩みを登録すると、\n使い方の助言がパーソナライズされる'),
-    ('店で', '気になる商品を撮る', 'AIが家のものと照らし合わせる',
-     '撮るだけで、すぐ確かめられる', '商品名の入力も検索もいらない\n店先で成分表示を1枚撮れば済む'),
-    ('その場で', '買うべきかの目安が出る', '3色の判定と、成分名つきの理由',
-     '理由に根拠と出典を添える', '根拠の薄い推測は、最初から出さない\n表示された理由は、安心して読める'),
-]
+# 7〜8. 使い方（店で選ぶ・家で使うの2枚）
+# やることが主役。右の列は、そのステップにぶら下がるもの（一回り小さくし、縦線を付ける）
 ROW0, PITCH, DOT = 2.15, 1.7, 0.5
-BX = 7.1  # うれしいことの列
-items = [label('使い方', y=0.6), text(X0, 1.05, 11, line_h(30), '家で一度登録すれば、店では撮るだけ。', 30, INK, bold=True)]
-items.append(rect(X0 + DOT / 2 - 0.0125, ROW0 + 0.02 + DOT / 2, 0.025, PITCH * 2, PALE, shape='rect'))  # 番号をつなぐ線
-for i, (when, act, ai, ph, pp) in enumerate(STEPS):
-    y = ROW0 + i * PITCH
+BX = 7.1  # 右の列
+
+
+def benefit(head, body):
+    """うれしいこと（見出しと2行の説明）"""
+    def draw(x, y, w):
+        return [text(x, y + 0.06, w, line_h(22), head, 22, INK, bold=True),
+                text(x, y + 0.58, w, line_h(18, 1.0, 2), body, 18, MUTED)]
+    return draw
+
+
+def points(*lines):
+    """うれしいこと（1行ずつ。説明は付けない）"""
+    def draw(x, y, w):
+        # 「で始まる行は、括弧の左の空きぶんだけ左へ出して頭をそろえる
+        return [text(x - (0.14 if ln.startswith('「') else 0), y + 0.1 + i * 0.52, w, line_h(21), ln, 21, INK, bold=True)
+                for i, ln in enumerate(lines)]
+    return draw
+
+
+def chips(*rows):
+    """登録するものを札で並べる（うれしいことの代わりに、何を入れるかを見せる）"""
+    def draw(x, y, w):
+        out = []
+        for r, row in enumerate(rows):
+            cx = x
+            for c in row:
+                cw = width_of(c, 17, True) + 0.4
+                out.append(rect(cx, y + 0.1 + r * 0.52, cw, 0.42, MIST, radius=0.21, label=c, size=17, color=NAVY))
+                cx += cw + 0.14
+        return out
+    return draw
+
+
+def howto(tag, title, steps, notes):
+    items = [label(tag, y=0.6), text(X0, 1.05, 11, line_h(30), title, 30, INK, bold=True)]
+    items.append(rect(X0 + DOT / 2 - 0.0125, ROW0 + 0.02 + DOT / 2, 0.025, PITCH * 2, PALE, shape='rect'))  # 番号をつなぐ線
     tx = X0 + DOT + 0.3
-    items += [
-        rect(X0, y + 0.02, DOT, DOT, NAVY, radius=DOT / 2, label=str(i + 1), size=18, color=WHITE),
-        text(tx, y + 0.04, 3, line_h(17), when, 17, MUTED, bold=True),
-        text(tx, y + 0.45, BX - tx - 0.2, line_h(28), act, 28, NAVY, bold=True),
-        text(tx, y + 1.02, BX - tx - 0.2, line_h(17), ai, 17, MUTED),
-        rect(BX, y + 0.1, 0.05, 1.2, PALE, shape='rect'),
-        text(BX + 0.3, y + 0.06, X1 - BX - 0.3, line_h(22), ph, 22, INK, bold=True),
-        text(BX + 0.3, y + 0.58, X1 - BX - 0.3, line_h(18, 1.0, 2), pp, 18, MUTED),
-    ]
-SLIDES.append(dict(notes='家で一度登録すれば、店では撮るだけ。理由には出典を添えます。', items=items))
+    for i, (when, act, sub, right) in enumerate(steps):
+        y = ROW0 + i * PITCH
+        items += [
+            rect(X0, y + 0.02, DOT, DOT, NAVY, radius=DOT / 2, label=str(i + 1), size=18, color=WHITE),
+            text(tx, y + 0.04, 3, line_h(17), when, 17, MUTED, bold=True),
+            text(tx, y + 0.45, BX - tx - 0.2, line_h(28), act, 28, NAVY, bold=True),
+            text(tx, y + 1.02, BX - tx - 0.2, line_h(17), sub, 17, MUTED),
+            rect(BX, y + 0.1, 0.05, 1.2, PALE, shape='rect'),
+            *right(BX + 0.3, y, X1 - BX - 0.3),
+        ]
+    SLIDES.append(dict(notes=notes, items=items))
+
+
+howto('使い方 1｜店で選ぶ', '家で一度登録すれば、店では撮るだけ。', [
+    ('家で', '薬・化粧品を撮って登録', 'AIが成分表示を読み取る',
+     benefit('自分の体質も登録できる', '肌質や年代、悩みを登録すると、\n使い方の助言がパーソナライズされる')),
+    ('店で', '気になる商品を撮る', 'AIが家のものと照らし合わせる',
+     benefit('撮るだけで、すぐ確かめられる', '商品名の入力も検索もいらない\n店先で成分表示を1枚撮れば済む')),
+    ('その場で', '買うべきかの目安が出る', '3色の判定と、成分名つきの理由',
+     benefit('理由に根拠と出典を添える', '根拠の薄い推測は、最初から出さない\n表示された理由は、安心して読める')),
+], '家で一度登録すれば、店では撮るだけ。理由には出典を添えます。')
+
+# 家で使う側。順番は剤形で決まり（lib/routine.ts）、AIが書くのは助言の言葉だけ。「AIが順番を決める」と書かないこと
+# ①は、うれしいことの代わりに登録するものを札で見せる（体質は撮らずに選んで入れる）
+howto('使い方 2｜家で使う', '登録した薬と体質から、毎日の使い方がわかる。', [
+    ('家で', '薬・化粧品と体質を登録', '薬・化粧品は撮るだけ、体質は設定から',
+     chips(('飲み薬', '塗り薬', '化粧品'), ('肌質', '頭皮', '年代', '性別', '悩み'))),
+    ('アプリが', '自分に合った使い方を考える', '順番は剤形で決め、助言はAIが書く',
+     points('「朝は手早く」などの悩みも反映')),
+    ('毎日', '順番と使い方が表示される', 'その日に使うものが、使う順に並ぶ',
+     points('薬を使ったかをチェックリストで記録', '手順ごとに、細かい使い方の説明')),
+], '登録した薬と体質から、毎日の使う順番と使い方も案内します。')
 
 
 # 8. 目指すこと（作り直す前の版の1枚。店頭の判定だけでなく、買う・塗る・飲むの全部で「重ねる前に確かめる」）
