@@ -80,7 +80,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 | AI出力スキーマ | `lib/schemas.ts` |
 | データ構造 | `lib/types.ts` |
 | localStorage | `lib/storage.ts` |
-| ルールベースの判定 | `lib/routine.ts` `lib/expiry.ts` `lib/cleanser.ts` `lib/categories.ts` |
+| ルールベースの判定 | `lib/routine.ts` `lib/expiry.ts` `lib/cleanser.ts` `lib/categories.ts` `lib/course.ts` `lib/stockOps.ts` |
 | ルーティンの区分 | `lib/routine.ts`（組み込み2つ＋ユーザーが作る区分） |
 | リクエストの検証 | `lib/request.ts`（3つのAPIで共有） |
 | APIのエラー応答・ウォームアップ | `lib/api.ts`（`fail` / `upstreamFailure` / `warmUp`。route に文言を書かない） |
