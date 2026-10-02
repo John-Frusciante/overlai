@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { fail, upstreamFailure, warmUp } from '@/lib/api';
 import { guard } from '@/lib/guard';
 import { MOCK_FIXTURES, isSignal } from '@/lib/mock';
-import { parseDataUrl, sanitizeStock } from '@/lib/request';
+import { parseAnalyzeInput, sanitizeStock } from '@/lib/request';
+import type { ExtractionResult } from '@/lib/types';
 import { verifyJudgement } from '@/lib/verify';
 import { extractIngredients, judgeAgainstStock } from '@/lib/llm';
 
@@ -29,16 +30,17 @@ export async function POST(req: Request) {
   const blocked = guard(req, 'analyze');
   if (blocked) return blocked;
 
-  let body: { image?: unknown; stock?: unknown; demo?: unknown };
+  let body: { image?: unknown; extraction?: unknown; stock?: unknown; demo?: unknown };
   try {
     body = await req.json();
   } catch {
     return fail('INVALID_IMAGE', 'リクエストの形式が正しくありません', 400);
   }
 
-  const image = parseDataUrl(body.image);
-  if (!image) {
-    return fail('INVALID_IMAGE', '画像を読み込めませんでした。選び直してください', 400);
+  // 画像から読み取るか、読み取り済みの成分で判定だけをやり直すか（lib/request.ts）
+  const input = parseAnalyzeInput(body);
+  if (input.kind === 'invalid') {
+    return fail('INVALID_IMAGE', input.message, 400);
   }
 
   // 在庫が空のときは「不正」ではなく、登録を促す案内にする
@@ -73,11 +75,20 @@ export async function POST(req: Request) {
 
   try {
     // ── ステップ1: 成分抽出（Vision） ────────────────────────────────
-    // 呼び出しは失敗したプロバイダを自動で次に落とす（lib/llm.ts）
-    const extracted = await extractIngredients(image);
-    const extraction = extracted.value;
-    if (!extraction) {
-      return fail('UPSTREAM_ERROR', '成分の解析に失敗しました', 500);
+    // 呼び出しは失敗したプロバイダを自動で次に落とす（lib/llm.ts）。
+    // 判定だけのやり直し（「もう家に無い」）では、前回の読み取り結果を使って飛ばす。
+    // 読み取りをやり直すと成分が前回と変わりうるため（Issue #35）
+    let extraction: ExtractionResult;
+    let extractFellBack = false;
+    if (input.kind === 'extraction') {
+      extraction = input.extraction;
+    } else {
+      const extracted = await extractIngredients(input.image);
+      if (!extracted.value) {
+        return fail('UPSTREAM_ERROR', '成分の解析に失敗しました', 500);
+      }
+      extraction = extracted.value;
+      extractFellBack = Boolean(extracted.fellBackFrom);
     }
 
     // ingredients が空なら照合できない。confidence は条件に含めない（§8.1）
@@ -112,7 +123,7 @@ export async function POST(req: Request) {
       elapsed_ms: Date.now() - started,
       // 実際に判定を返したプロバイダ。フォールバックが起きると第一候補とは変わる
       provider: judged.provider,
-      fell_back: Boolean(extracted.fellBackFrom ?? judged.fellBackFrom),
+      fell_back: extractFellBack || Boolean(judged.fellBackFrom),
     });
   } catch (err) {
     return upstreamFailure(err, 'analyze', '解析サービスでエラーが発生しました');

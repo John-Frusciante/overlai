@@ -1,4 +1,14 @@
-import type { AgeBand, DoseTime, Gender, Profile, ScalpType, SkinType, StockItem } from './types';
+import { ExtractionSchema } from './schemas';
+import type {
+  AgeBand,
+  DoseTime,
+  ExtractionResult,
+  Gender,
+  Profile,
+  ScalpType,
+  SkinType,
+  StockItem,
+} from './types';
 
 /** リクエスト入力の検証 — 設計仕様書 §8.3（クライアント由来の入力として扱う） */
 
@@ -53,6 +63,55 @@ export function sanitizeStock(input: unknown): StockItem[] | null {
           : undefined,
     };
   });
+}
+
+export const MAX_INGREDIENTS = 30;
+
+/**
+ * 読み取り済みの成分（判定だけをやり直すとき）。**端末から来た値として扱う。**
+ *
+ * 本来はサーバーが画像から作るものだが、やり直しでは端末が前回の結果を送り返してくる。
+ * カテゴリと剤形は列挙値だけを通し（処方薬を名乗らせない）、長さと件数は在庫と同じく切る。
+ * 成分が空になったら、そのまま返して route に「読み取れなかった」と言わせる。
+ */
+export function sanitizeExtraction(input: unknown): ExtractionResult | null {
+  const parsed = ExtractionSchema.safeParse(input);
+  if (!parsed.success) return null;
+  const e = parsed.data;
+  return {
+    product_name: e.product_name === null ? null : clip(e.product_name),
+    category: e.category,
+    form: e.form,
+    ingredients: e.ingredients
+      .slice(0, MAX_INGREDIENTS)
+      .map(clip)
+      .filter((s) => s.trim().length > 0),
+    confidence: e.confidence,
+  };
+}
+
+export type AnalyzeInput =
+  | { kind: 'image'; image: { mediaType: MediaType; data: string } }
+  | { kind: 'extraction'; extraction: ExtractionResult }
+  | { kind: 'invalid'; message: string };
+
+/**
+ * 判定APIの入力を振り分ける。`extraction` があれば読み取り（ステップ1）を飛ばす。
+ *
+ * `extraction` が壊れていたら、画像があっても**画像に落とさず弾く**。
+ * 黙って読み取りからやり直すと、端末の想定（判定だけのやり直し）と結果がずれる。
+ */
+export function parseAnalyzeInput(body: { image?: unknown; extraction?: unknown }): AnalyzeInput {
+  if (body.extraction !== undefined) {
+    const extraction = sanitizeExtraction(body.extraction);
+    return extraction
+      ? { kind: 'extraction', extraction }
+      : { kind: 'invalid', message: '読み取り結果の形式が正しくありません。もう一度撮ってください' };
+  }
+  const image = parseDataUrl(body.image);
+  return image
+    ? { kind: 'image', image }
+    : { kind: 'invalid', message: '画像を読み込めませんでした。選び直してください' };
 }
 
 const DOSE_TIMES: DoseTime[] = ['朝', '昼', '夜'];
