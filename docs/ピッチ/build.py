@@ -262,33 +262,21 @@ def benefits(*pairs):
     return draw
 
 
-def chips(*rows):
-    """登録するものを札で並べる（①には、うれしいことの代わりに何を入れるかを見せる）"""
-    def draw(x, y, w):
-        out = []
-        for r, row in enumerate(rows):
-            cx = x
-            for c in row:
-                cw = width_of(c, 17, True) + 0.4
-                out.append(rect(cx, y + 0.1 + r * 0.52, cw, 0.42, MIST, radius=0.21, label=c, size=17, color=NAVY))
-                cx += cw + 0.14
-        return out, 0.1 + len(rows) * 0.52
-    return draw
-
-
 def howto(tag, title, steps, notes, top=1.95, min_pitch=1.7, gap=0.3, bx=7.3):
-    """左に番号つきの3段（やること）、右の列（bx から）にぶら下がるもの。段の高さは右の列に合わせて伸びる"""
+    """左に番号つきの3段（やること）、右の列（bx から）にぶら下がるもの。段の高さは右の列に合わせて伸びる。
+    right が None の段は、右の列を空けて縦線も引かない"""
     items = [label(tag, y=0.55), text(X0, 0.97, 11, line_h(30), title, 30, INK, bold=True)]
     tx = X0 + DOT + 0.3
     y, centers = top, []
     for i, (when, act, sub, right) in enumerate(steps):
-        ritems, rh = right(bx + 0.3, y, X1 - bx - 0.3)
+        ritems, rh = right(bx + 0.3, y, X1 - bx - 0.3) if right else ([], 0)
+        if right:
+            items.append(rect(bx, y + 0.1, 0.05, max(1.2, rh), PALE, shape='rect'))
         items += [
             rect(X0, y + 0.02, DOT, DOT, NAVY, radius=DOT / 2, label=str(i + 1), size=18, color=WHITE),
             text(tx, y + 0.04, 3, line_h(17), when, 17, MUTED, bold=True),
             text(tx, y + 0.45, bx - tx - 0.2, line_h(28), act, 28, NAVY, bold=True),
             text(tx, y + 1.02, bx - tx - 0.2, line_h(17), sub, 17, MUTED),
-            rect(bx, y + 0.1, 0.05, max(1.2, rh), PALE, shape='rect'),
             *ritems,
         ]
         centers.append(y + 0.02 + DOT / 2)
@@ -308,11 +296,11 @@ howto('使い方 1｜店で選ぶ', '家で一度登録すれば、店では撮�
 ], '家で一度登録すれば、店では撮るだけ。理由には出典を添えます。')
 
 # 家で使う側。順番は剤形で決まり（lib/routine.ts）、AIが書くのは助言の言葉だけ。「AIが順番を決める」と書かないこと
-# ①は、うれしいことの代わりに登録するものを札で見せる（体質は撮らずに設定から入れる）
+# ①は右の列を空ける（ぶら下げるものが無い。体質は撮らずに設定から入れる）
 # ③の「順番の理由」は lib/routine.ts の剤形ごとの説明、「コツ」はAIの一言、記録は服薬（朝・昼・夜、直近7日）
 howto('使い方 2｜家で使う', '登録した薬と体質から、毎日の使い方がわかる。', [
     ('家で', '薬・化粧品と体質を登録', '薬・化粧品は撮るだけ、体質は設定から',
-     chips(('飲み薬', '塗り薬', '化粧品'), ('肌質', '頭皮', '年代', '性別', '悩み'))),
+     None),
     ('アプリが', 'その人に合った使い方を考える', '順番は剤形で決め、助言はAIが書く',
      benefits(('悩みまで入れて、パーソナライズ', '体質・年代・性別のほかに、\n朝は手早く済ませたい、といった悩みも'))),
     ('毎日', '順番と使い方が表示される', 'その日に使うものが、使う順に並ぶ',
