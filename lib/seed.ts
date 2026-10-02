@@ -53,6 +53,8 @@ export const SEED_STOCK: StockItem[] = [
     isPrescription: true,
     remaining: { count: 3, unit: '錠' },
     dose: { times: ['朝'], perTime: 1 },
+    // 3日前から7日分 → 最後に飲む日は3日後。残3錠・朝1錠と揃えてある
+    course: { startedAt: daysAgo(3), days: 7 },
     expiresAt: daysLater(90),
   },
   {
