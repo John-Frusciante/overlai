@@ -9,6 +9,7 @@ import type {
 } from './types';
 import { SEED_STOCK } from './seed';
 import { replaceWith } from './stockOps';
+import { isCourse } from './course';
 
 /**
  * 永続化層 — 設計仕様書 §10.1
@@ -429,7 +430,10 @@ export function importBackup(text: string): ImportResult {
     return { ok: false, reason: 'ストックのデータが入っていません' };
   }
 
-  const stock = backup.stock.filter(isStockItem);
+  // 飲む期間が壊れていたら、その欄だけ落として読み込む（画面を落とさない）
+  const stock = backup.stock
+    .filter(isStockItem)
+    .map((i) => (i.course === undefined || isCourse(i.course) ? i : { ...i, course: undefined }));
   if (stock.length === 0) {
     return { ok: false, reason: '読み込めるストックがありませんでした' };
   }

@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
 import { SEED_STOCK } from '../lib/seed';
 import { ABSORPTION_RULES, INTERACTION_RULES, matchesIngredient } from '../lib/knowledge';
-import { endedCourses } from '../lib/course';
+import { endedCourses, localDateKey } from '../lib/course';
 
 /**
  * シードデータの決まりごと — デモが崩れる置き方を防ぐ
@@ -17,7 +17,7 @@ const ORAL = PRESCRIPTIONS.filter((i) => i.form === '錠剤' || i.form === 'カ�
 describe('シードデータ', () => {
   it('展示の初期化直後に「飲み終わりましたか」が出ない', () => {
     // 見本に戻した直後から終わった薬が並ぶと、来場者に最初に見せる画面が崩れる
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDateKey();
     assert.deepEqual(endedCourses(SEED_STOCK, today), []);
   });
 

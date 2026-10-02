@@ -6,7 +6,9 @@ import {
   endedCourses,
   extendCourse,
   formatMonthDay,
+  isCourse,
   lastDay,
+  localDateKey,
   parseDays,
 } from '../lib/course';
 import type { StockItem } from '../lib/types';
@@ -88,5 +90,28 @@ describe('表示', () => {
   it('月日だけを出す', () => {
     assert.equal(formatMonthDay('2026-10-14'), '10月14日');
     assert.equal(formatMonthDay('2026-01-05'), '1月5日');
+  });
+});
+
+describe('今日の日付', () => {
+  it('端末の暦で数える（日本の朝9時前に前日にならない）', () => {
+    // 端末のタイムゾーンでの 10/2 8:00。UTC だとまだ 10/1 になる時間帯
+    assert.equal(localDateKey(new Date(2026, 9, 2, 8, 0)), '2026-10-02');
+    assert.equal(localDateKey(new Date(2026, 0, 5, 23, 59)), '2026-01-05');
+  });
+});
+
+describe('壊れた飲む期間', () => {
+  it('形の正しいものだけを飲む期間として認める', () => {
+    assert.equal(isCourse({ startedAt: '2026-10-01', days: 14 }), true);
+    assert.equal(isCourse({ startedAt: 'x', days: 14 }), false);
+    assert.equal(isCourse({ startedAt: '2026-10-01', days: '14' }), false);
+    assert.equal(isCourse({ startedAt: '2026-10-01', days: 0 }), false);
+    assert.equal(isCourse(null), false);
+  });
+
+  it('壊れていても落ちずに「聞かない」にする', () => {
+    const broken = item({ course: { startedAt: 'x', days: 14 } });
+    assert.equal(courseEnded(broken, '2026-10-20'), false);
   });
 });

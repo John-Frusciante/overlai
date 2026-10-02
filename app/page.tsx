@@ -9,7 +9,7 @@ import { StockList } from '@/components/StockList';
 import { ConfirmRemove } from '@/components/ConfirmRemove';
 import { ButtonLink } from '@/components/ui/Button';
 import { useIsClient, useStoredState } from '@/lib/client';
-import { endedCourses, extendCourse, parseDays } from '@/lib/course';
+import { endedCourses, extendCourse, localDateKey, parseDays } from '@/lib/course';
 import { collectAlerts, lowStock } from '@/lib/expiry';
 import {
   loadCollapsed,
@@ -18,7 +18,6 @@ import {
   removeStock,
   resetAll,
   saveCollapsed,
-  todayKey,
   updateStock,
 } from '@/lib/storage';
 import { SEED_STOCK } from '@/lib/seed';
@@ -57,14 +56,14 @@ export default function MyStockPage() {
   const low = useMemo(() => (isClient ? lowStock(stock) : []), [isClient, stock]);
   /** 処方の終わる日を過ぎた薬。日付に依存するのでクライアントでだけ求める */
   const ended = useMemo(
-    () => (isClient ? endedCourses(stock, todayKey()) : []),
+    () => (isClient ? endedCourses(stock, localDateKey()) : []),
     [isClient, stock],
   );
 
   const onRemove = useCallback((id: string) => setStock(removeStock(id)), [setStock]);
   const onExtend = useCallback(
     (id: string, days: number) =>
-      setStock(updateStock(id, { course: extendCourse(days, todayKey()) })),
+      setStock(updateStock(id, { course: extendCourse(days, localDateKey()) })),
     [setStock],
   );
 

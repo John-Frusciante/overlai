@@ -13,6 +13,7 @@ import {
 } from '@/lib/client';
 import { coverCrop, toResizedDataUrl } from '@/lib/image';
 import { insertStock, loadProfile, loadStock, removeStock, savePendingScan } from '@/lib/storage';
+import { restoreRemoval, snapshotRemoval, type Removal } from '@/lib/removal';
 import { SEED_STOCK } from '@/lib/seed';
 import type { AnalyzeResponse, ApiErrorBody, Profile, StockItem } from '@/lib/types';
 
@@ -65,11 +66,7 @@ function Scanner() {
   /** 判定だけをやり直している最中か（「もう家に無い」） */
   const [rejudging, setRejudging] = useState(false);
   /** 直前に外したもの。「元に戻す」で在庫も判定も外す前に戻す */
-  const [removed, setRemoved] = useState<{
-    item: StockItem;
-    index: number;
-    before: AnalyzeResponse;
-  } | null>(null);
+  const [removed, setRemoved] = useState<Removal<AnalyzeResponse> | null>(null);
   /** 判定が今の在庫に合っていないときの説明 */
   const [stale, setStale] = useState<string | null>(null);
 
@@ -172,8 +169,8 @@ function Scanner() {
       const index = stock.findIndex((i) => i.id === item.id);
       const next = removeStock(item.id);
       setStock(next);
-      // 「元に戻す」で戻せるのは直前の1件だけ。判定も直前のものに戻す
-      setRemoved({ item, index, before: result });
+      // 「元に戻す」で戻せるのは直前の1件だけ。判定も直前のもの（古かったならそのことも）に戻す
+      setRemoved(snapshotRemoval(item, index, result, stale));
 
       if (next.length === 0) {
         setStale('照合する在庫がなくなりました');
@@ -193,16 +190,17 @@ function Scanner() {
         );
       }
     },
-    [result, rejudging, stock, setStock, requestJudgement],
+    [result, rejudging, stale, stock, setStock, requestJudgement],
   );
 
   /** 直前に外したものを戻し、判定も外す前に戻す。AIは呼ばない */
   const undoRemove = useCallback(() => {
     if (!removed || rejudging) return;
     setStock(insertStock(removed.item, removed.index));
-    setResult(removed.before);
+    const restored = restoreRemoval(removed);
+    setResult(restored.result);
+    setStale(restored.stale);
     setRemoved(null);
-    setStale(null);
   }, [removed, rejudging, setStock]);
 
   /** 「買ったので在庫に入れる」— 読み取り結果を持って追加画面へ */

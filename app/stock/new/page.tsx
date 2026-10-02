@@ -21,10 +21,9 @@ import {
   replaceStock,
   saveCustomCategories,
   saveCustomRoutines,
-  todayKey,
   updateStock,
 } from '@/lib/storage';
-import { formatMonthDay, lastDay, parseDays } from '@/lib/course';
+import { formatMonthDay, lastDay, localDateKey, parseDays } from '@/lib/course';
 import { inheritFrom, replacementCandidates } from '@/lib/stockOps';
 import {
   BUILTIN_ROUTINES,
@@ -367,7 +366,7 @@ function NewStockForm({ id, fromScan }: { id: string | null; fromScan: boolean }
       // 処方の内服だけが持つ。カテゴリを変えたら落とす（undefined でマージ時に消える）
       course:
         category === '処方薬' && days !== null
-          ? { startedAt: courseStart || todayKey(), days }
+          ? { startedAt: courseStart || localDateKey(), days }
           : undefined,
     };
     if (editId) updateStock(editId, values);
@@ -763,13 +762,13 @@ function NewStockForm({ id, fromScan }: { id: string | null; fromScan: boolean }
                     </span>
                     <input
                       type="date"
-                      value={courseStart || todayKey()}
+                      value={courseStart || localDateKey()}
                       onChange={(e) => setField('courseStart', e.target.value)}
                       className="w-full rounded-2xl border border-line bg-surface px-3.5 py-3 text-[15px] shadow-e1 outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(30,42,69,0.07)]"
                     />
                     <p className="mt-1.5 px-1 text-[12.5px] text-faint">
                       {formatMonthDay(
-                        lastDay({ startedAt: courseStart || todayKey(), days: parseDays(courseDays)! }),
+                        lastDay({ startedAt: courseStart || localDateKey(), days: parseDays(courseDays)! }),
                       )}
                       まで。過ぎたら、飲み終わったかをお聞きします。
                     </p>

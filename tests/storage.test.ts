@@ -22,6 +22,7 @@ import {
   toggleDose,
 } from '../lib/storage';
 import { SEED_STOCK } from '../lib/seed';
+import type { StockItem } from '../lib/types';
 
 /**
  * 初期化の漏れを見張る — ブース展示の「見本に戻す」（#25）
@@ -161,5 +162,19 @@ describe('書き出しと読み込み', () => {
     const result = importBackup(text);
     assert.ok(result.ok);
     assert.deepEqual(loadStock()[0].course, { startedAt: '2026-10-01', days: 14 });
+  });
+});
+
+describe('壊れた飲む期間の読み込み', () => {
+  it('形の正しくない course は落として読み込む（画面を落とさない）', () => {
+    const backup = exportBackup();
+    backup.stock[0] = {
+      ...backup.stock[0],
+      course: { startedAt: 'x', days: '14' } as unknown as StockItem['course'],
+    };
+    const result = importBackup(JSON.stringify(backup));
+    assert.ok(result.ok);
+    assert.equal(loadStock()[0].course, undefined);
+    assert.equal(loadStock()[0].name, backup.stock[0].name);
   });
 });
