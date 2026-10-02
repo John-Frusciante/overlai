@@ -109,15 +109,22 @@ def label(s, y=0.75, align='left'):
     return text(X0 if align == 'left' else 0, y, 8 if align == 'left' else W, line_h(20), s, 20, BLUE, bold=True, align=align)
 
 
-def phone(path, x, y, h, rings=(), sig=NAVY):
-    """実機の画面を白い枠に入れ、見てほしい所を囲む。rings は (left, top, width, height, 札) を画像に対する割合で"""
+def phone(path, x, y, h, rings=(), sig=NAVY, cover=None):
+    """実機の画面を白い枠に入れ、見てほしい所を囲む。rings は (left, top, width, height, 札) を画像に対する割合で。
+    札の下には白い帯を敷き、アプリ側の見出しの切れ端が札の横からのぞかないようにする。
+    cover=(top, bottom, 色) を渡すと、画像のその高さの範囲を画面の地の色で塗りつぶす（札と重なる見出しを消す）"""
     im = image(path, x, y, h=h)
     p = 0.09
     out = [rect(x - p, y - p, im['w'] + 2 * p, h + 2 * p, WHITE, radius=0.22, line=LINE), im]
+    if cover:
+        top, bottom, color = cover
+        out.append(rect(x + 0.04, y + h * top, im['w'] - 0.08, h * (bottom - top), color, shape='rect'))
     for l, t, w, hh, label in rings:
         rx, ry, rw, rh = x + im['w'] * l, y + h * t, im['w'] * w, h * hh
         out.append(rect(rx, ry, rw, rh, None, radius=0.06, line=sig, line_w=2.25))
         tw = width_of(label, 16, True) + 0.2
+        if not cover:  # 地を塗りつぶした画面では帯は要らない
+            out.append(rect(rx - 0.03, ry - 0.36, max(tw, rw) + 0.03, 0.33, WHITE, shape='rect'))
         out.append(rect(rx - 0.03, ry - 0.36, tw, 0.33, sig, radius=0.05, label=label, size=16, color=WHITE))
     return out, im['w']
 
@@ -164,7 +171,7 @@ SLIDES.append(dict(notes='井上は、風邪薬を買って帰ったら、似た
 
 # 2. エピソード2：組み合わせ（→ できること2・3）
 SLIDES.append(dict(notes=(
-    '病院で処方された薬を使う濱田と杉本は、化粧水を買うとき、'
+    '処方薬を使う濱田と杉本は、化粧水を買うとき、'
     '使っていいのか、どっちが先か迷いました。'
 ), items=episode(
     2, '組み合わせの迷い', '濱田・杉本｜肌が弱く、病院で処方された薬を使っている', 'people-2.png',
@@ -196,7 +203,7 @@ def venn(x, y, s):
 
 
 SLIDES.append(dict(notes=(
-    'そこで作ったのがOverlaiです。店で成分表示を撮るだけで、買うべきかの目安がわかります。'
+    'そこで作ったのがOverlaiです。成分表示を撮るだけで、AIが家の薬と照らし合わせ、買うべきかの目安を出します。'
 ), items=[
     *brand(X0, 1.55, 72)[0],
     text(X0, 3.25, 6, line_h(18), 'Overlay（重ねる）＋ AI', 18, MUTED),
@@ -225,7 +232,7 @@ CASES = [
      'red-real.png', RED, [(0.035, 0.504, 0.42, 0.044, '店の商品'), (0.035, 0.796, 0.93, 0.094, '家の薬')],
      '使っている薬との相性も、買う前にわかります。'),
     ('薬と化粧品、どっちが先？', '薬や化粧品を使う順番や、\n詳しい使い方がわかる', '処方薬と化粧品を一緒に使う日も、\nどれから、どう塗ればいいか迷わない',
-     'routine-crop.jpg', NAVY, [(0.018, 0.096, 0.13, 0.734, '塗る順番')],
+     'routine-crop.jpg', NAVY, [(0.018, 0.096, 0.13, 0.734, '塗る順番')],  # 上の見出し2行は札と重なるので消す（下の cover）
      '塗る順番まで案内します。'),
 ]
 PH = 6.3  # 画面の高さ
@@ -237,7 +244,8 @@ for i, (doubt, h3, sub, shot, sig, rings, note) in enumerate(CASES):
         rect(X0, 2.45, 0.6, 0.05, NAVY, shape='rect'),
         text(X0, 2.75, 7.5, line_h(36, 1.0, 2), h3, 36, INK, bold=True),
         text(X0, 4.4, 7.5, line_h(20, 1.0, 2), sub, 20, MUTED),
-        *phone(shot, X1 - 0.35 - iw, 0.6, PH, rings, sig)[0],
+        *phone(shot, X1 - 0.35 - iw, 0.6, PH, rings, sig,
+               cover=(0.008, 0.09, 'F7F8FA') if shot == 'routine-crop.jpg' else None)[0],
     ]
     if shot != 'routine-crop.jpg':  # 判定の画面にだけ、3色の意味を添える
         items += legend(X0, 6.45)
@@ -262,10 +270,10 @@ def benefits(*pairs):
     return draw
 
 
-def howto(tag, title, steps, notes, top=1.95, min_pitch=1.7, gap=0.3, bx=7.3):
+def howto(tag, title, steps, notes, top=2.15, min_pitch=1.7, gap=0.3, bx=7.3):
     """左に番号つきの3段（やること）、右の列（bx から）にぶら下がるもの。段の高さは右の列に合わせて伸びる。
     right が None の段は、右の列を空けて縦線も引かない"""
-    items = [label(tag, y=0.55), text(X0, 0.97, 11, line_h(30), title, 30, INK, bold=True)]
+    items = [label(tag), text(X0, 1.17, 11, line_h(30), title, 30, INK, bold=True)]
     tx = X0 + DOT + 0.3
     y, centers = top, []
     for i, (when, act, sub, right) in enumerate(steps):
@@ -306,7 +314,7 @@ howto('使い方 2｜家で使う', '登録した薬と体質から、毎日の�
      benefits(('手順ごとに、使い方の説明が付く', 'その順番にする理由と、\n使うときのコツがわかる'))),
     ('毎日', '順番と使い方が表示される', 'その日に使うものが、使う順に並ぶ',
      benefits(('薬を使ったかをチェックで記録', '朝・昼・夜ごとにチェックを付けて、\n7日分を見返せる'))),
-], '登録した薬と体質から、毎日の使う順番と使い方も案内します。')
+], '家では、悩みに合わせた使い方のコツもAIが添えます。')
 
 
 # 8. 目指すこと（作り直す前の版の1枚。店頭の判定だけでなく、買う・塗る・飲むの全部で「重ねる前に確かめる」）
@@ -333,7 +341,7 @@ br, bw = brand(0, 2.3, 80)
 for it in br:
     it['x'] += (W - bw) / 2
 SLIDES.append(dict(notes='Overlai。' + SLOGAN, items=[
-    text(0, 1.2, W, line_h(26), '店頭で撮るだけで、家の薬や化粧品と重ねて判定する。', 26, MUTED, align='center'),
+    text(0, 1.2, W, line_h(26), '店で撮るだけで、家の薬・化粧品と重ねて判定する。', 26, MUTED, align='center'),
     *br,
     text(0, 4.45, W, line_h(34), SLOGAN, 34, NAVY, bold=True, align='center'),
     text(0.9, 6.62, 9, line_h(15), '鈴鹿工業高等専門学校　' + TEAM, 15, MUTED),
