@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useCallback, useRef, useState } from 'react';
+import { Suspense, useCallback, useMemo, useRef, useState } from 'react';
 import { Camera, Check, Loader2, Plus, X } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -13,13 +13,19 @@ import {
 import { toResizedDataUrl } from '@/lib/image';
 import {
   addStock,
+  clearPendingScan,
   loadCustomCategories,
   loadCustomRoutines,
+  loadPendingScan,
   loadStock,
+  replaceStock,
   saveCustomCategories,
   saveCustomRoutines,
+  todayKey,
   updateStock,
 } from '@/lib/storage';
+import { formatMonthDay, lastDay, parseDays } from '@/lib/course';
+import { inheritFrom, replacementCandidates } from '@/lib/stockOps';
 import {
   BUILTIN_ROUTINES,
   MAX_ROUTINE_LENGTH,
@@ -85,6 +91,10 @@ interface Draft {
   perTime: string;
   remainingCount: string;
   remainingUnit: string;
+  /** 処方の何日分（空なら聞かない） */
+  courseDays: string;
+  /** 飲み始めた日。空なら今日として保存する */
+  courseStart: string;
 }
 
 const EMPTY_DRAFT: Draft = {
@@ -99,12 +109,34 @@ const EMPTY_DRAFT: Draft = {
   perTime: '1',
   remainingCount: '',
   remainingUnit: '錠',
+  courseDays: '',
+  courseStart: '',
 };
 
-/** `?id=` が付いていれば、そのアイテムの値から始める。無ければ空の入力欄 */
-function loadDraft(id: string | null): { editId: string | null; draft: Draft } {
+/**
+ * `?id=` が付いていれば、そのアイテムの値から始める。
+ * `?from=scan` なら、判定カードから渡された読み取り結果から始める（Issue #35）。
+ * どちらでもなければ空の入力欄。
+ */
+function loadDraft(
+  id: string | null,
+  fromScan: boolean,
+): { editId: string | null; draft: Draft } {
   const item = id ? loadStock().find((i) => i.id === id) : undefined;
-  if (!item) return { editId: null, draft: EMPTY_DRAFT };
+  if (!item) {
+    const scan = fromScan ? loadPendingScan() : null;
+    if (!scan) return { editId: null, draft: EMPTY_DRAFT };
+    return {
+      editId: null,
+      draft: {
+        ...EMPTY_DRAFT,
+        name: scan.product_name ?? '',
+        category: toStockCategory(scan.category),
+        form: toItemForm(scan.form),
+        ingredients: scan.ingredients.join('、'),
+      },
+    };
+  }
 
   return {
     editId: item.id,
@@ -120,6 +152,8 @@ function loadDraft(id: string | null): { editId: string | null; draft: Draft } {
       perTime: String(item.dose?.perTime ?? 1),
       remainingCount: item.remaining ? String(item.remaining.count) : '',
       remainingUnit: item.remaining?.unit ?? '錠',
+      courseDays: item.course ? String(item.course.days) : '',
+      courseStart: item.course?.startedAt ?? '',
     },
   };
 }
@@ -143,20 +177,22 @@ export default function NewStockPage() {
 }
 
 function NewStockRoute() {
-  const id = useSearchParams().get('id');
+  const params = useSearchParams();
+  const id = params.get('id');
+  const fromScan = params.get('from') === 'scan';
   // 編集対象が変わったら入力欄を作り直す。`?id=` だけが変わる遷移では
   // このコンポーネントは作り直されないため、key で明示する
-  return <NewStockForm key={id ?? 'new'} id={id} />;
+  return <NewStockForm key={id ?? (fromScan ? 'scan' : 'new')} id={id} fromScan={fromScan} />;
 }
 
-function NewStockForm({ id }: { id: string | null }) {
+function NewStockForm({ id, fromScan }: { id: string | null; fromScan: boolean }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
 
   // 写真を選んでいるあいだに抽出APIの関数を起こしておく（#24）
   useWarmUp('/api/extract');
 
-  const [{ editId, draft }, setDraftState] = useStoredState(() => loadDraft(id), {
+  const [{ editId, draft }, setDraftState] = useStoredState(() => loadDraft(id, fromScan), {
     editId: null as string | null,
     draft: EMPTY_DRAFT,
   });
@@ -172,6 +208,8 @@ function NewStockForm({ id }: { id: string | null }) {
     perTime,
     remainingCount,
     remainingUnit,
+    courseDays,
+    courseStart,
   } = draft;
 
   const setField = useCallback(
@@ -193,6 +231,27 @@ function NewStockForm({ id }: { id: string | null }) {
   const [customRoutines, setCustomRoutines] = useStoredState<string[]>(loadCustomRoutines, []);
   const [newRoutine, setNewRoutine] = useState<string | null>(null);
   const [routineError, setRoutineError] = useState('');
+
+  /** 入れ替える古いもの（スキャンから来たときだけ選べる） */
+  const [replaceId, setReplaceId] = useState<string | null>(null);
+  const [stockNow] = useStoredState(loadStock, []);
+  const candidates = useMemo(
+    () => (fromScan && !editId ? replacementCandidates(stockNow, form) : []),
+    [fromScan, editId, stockNow, form],
+  );
+
+  /** 入れ替え先を選んだら、カテゴリと区分を古いほうから入力欄へ写す（ここから変えられる） */
+  const chooseReplace = useCallback(
+    (targetId: string | null) => {
+      setReplaceId(targetId);
+      const old = targetId ? stockNow.find((i) => i.id === targetId) : undefined;
+      if (!old) return;
+      const inherited = inheritFrom(old);
+      setField('category', inherited.category);
+      setField('routine', inherited.routine ?? '');
+    },
+    [stockNow, setField],
+  );
 
   const [reading, setReading] = useState(false);
   const [readError, setReadError] = useState('');
@@ -275,6 +334,7 @@ function NewStockForm({ id }: { id: string | null }) {
     // undefined を渡すと updateStock のマージで消える（lib/storage.ts）
     const oral = takesDose(form, category);
     const count = Number(remainingCount);
+    const days = parseDays(courseDays);
 
     const values = {
       name: name.trim(),
@@ -304,9 +364,17 @@ function NewStockForm({ id }: { id: string | null }) {
         oral && remainingCount.trim() !== '' && Number.isFinite(count) && count >= 0
           ? { count: Math.round(count), unit: remainingUnit.trim() || '錠' }
           : undefined,
+      // 処方の内服だけが持つ。カテゴリを変えたら落とす（undefined でマージ時に消える）
+      course:
+        category === '処方薬' && days !== null
+          ? { startedAt: courseStart || todayKey(), days }
+          : undefined,
     };
     if (editId) updateStock(editId, values);
+    // 剤形を変えて候補から外れたなら、入れ替えずに足す
+    else if (replaceId && candidates.some((c) => c.id === replaceId)) replaceStock(replaceId, values);
     else addStock(values);
+    if (fromScan) clearPendingScan();
     router.push('/');
   }, [
     editId,
@@ -321,6 +389,11 @@ function NewStockForm({ id }: { id: string | null }) {
     perTime,
     remainingCount,
     remainingUnit,
+    courseDays,
+    courseStart,
+    replaceId,
+    candidates,
+    fromScan,
     router,
   ]);
 
@@ -337,6 +410,32 @@ function NewStockForm({ id }: { id: string | null }) {
           キャンセル
         </button>
       </header>
+
+      {/* 入れ替え — 同じ剤形の古いものを外して、その位置に入れる（Issue #35） */}
+      {candidates.length > 0 && (
+        <section className="mt-6 rounded-2xl border border-line bg-surface p-4 shadow-e1">
+          <p className="text-[13.5px] font-semibold text-ink">入れ替えるものを選ぶ（任意）</p>
+          <p className="mt-1 text-[12.5px] leading-relaxed text-faint">
+            使い切ったものと入れ替えると、ルーティンの位置とカテゴリを引き継ぎます。
+          </p>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {[null, ...candidates].map((c) => (
+              <button
+                key={c?.id ?? 'none'}
+                type="button"
+                onClick={() => chooseReplace(c?.id ?? null)}
+                className={`rounded-full px-3.5 py-2 text-[13.5px] font-medium transition-colors ${
+                  replaceId === (c?.id ?? null)
+                    ? 'bg-brand text-white'
+                    : 'border border-line bg-surface text-muted active:bg-surface-sunken'
+                }`}
+              >
+                {c ? c.name : '入れ替えない'}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 成分の読み取り */}
       <button
@@ -640,6 +739,44 @@ function NewStockForm({ id }: { id: string | null }) {
                 />
               </div>
             </Field>
+
+            {/* 処方の飲む期間 — 終わる日の翌日に「飲み終わりましたか」と聞く（Issue #35） */}
+            {category === '処方薬' && (
+              <Field label="何日分（任意・袋に書いてある日数）">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={365}
+                    value={courseDays}
+                    onChange={(e) => setField('courseDays', e.target.value)}
+                    placeholder="14"
+                    className="w-24 rounded-2xl border border-line bg-surface px-3.5 py-3 text-[15px] tabular-nums shadow-e1 outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(30,42,69,0.07)]"
+                  />
+                  <span className="text-[14px] text-muted">日分</span>
+                </div>
+                {parseDays(courseDays) !== null && (
+                  <>
+                    <span className="mb-1.5 mt-3 block px-1 text-xs font-semibold tracking-wide text-muted">
+                      飲み始めた日
+                    </span>
+                    <input
+                      type="date"
+                      value={courseStart || todayKey()}
+                      onChange={(e) => setField('courseStart', e.target.value)}
+                      className="w-full rounded-2xl border border-line bg-surface px-3.5 py-3 text-[15px] shadow-e1 outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(30,42,69,0.07)]"
+                    />
+                    <p className="mt-1.5 px-1 text-[12.5px] text-faint">
+                      {formatMonthDay(
+                        lastDay({ startedAt: courseStart || todayKey(), days: parseDays(courseDays)! }),
+                      )}
+                      まで。過ぎたら、飲み終わったかをお聞きします。
+                    </p>
+                  </>
+                )}
+              </Field>
+            )}
           </div>
         )}
       </div>
