@@ -1,7 +1,8 @@
 """本選1分ピッチのスライドを pptx とプレビューPNGに書き出す。
 
 文言はブースパネル（docs/パネル/panel.tpl.html）と同じにし、見せ方はスライド向けに組む（1枚に1つのこと）。
-  表紙 → エピソード1（重複）→ エピソード2（組み合わせ）→ Overlai → できること×3 → しくみ → 目指すこと → 締め
+  表紙 → CASE 1（重複）→ CASE 2（組み合わせ）→ Overlai → できること×3 → 使い方 → 目指すこと → 締め
+CASE はメンバーの実体験（エピソード）、使い方はパネルの「しくみ」にあたる。
 エピソードの順は、パネルの「できること」の順（重複 → 組み合わせ → 順番）に合わせる。
 できることの各スライドは、エピソードで浮かんだ迷いから始めて、その答えとして実機の画面を大きく見せる。
 目指すこと・締めは、作り直す前の版の2枚を戻したもの（ユーザー判断）。
@@ -143,7 +144,7 @@ def episode(no, kind, who, people, scene, doubts):
     ppl = image(people, 0, 0, h=2.75)
     ppl['x'], ppl['y'] = X1 + 0.3 - ppl['w'], H - ppl['h']
     out = [
-        label(f'エピソード {no}｜{kind}'),
+        label(f'CASE {no}｜{kind}'),
         text(X0, 1.25, 11.5, line_h(18), who, 18, MUTED),
         text(X0, 1.8, 11.8, line_h(26), scene, 26, INK, bold=True),
         cl, ppl,
@@ -255,7 +256,7 @@ STEPS = [
 ]
 ROW0, PITCH, DOT = 2.15, 1.7, 0.5
 BX = 7.1  # うれしいことの列
-items = [label('しくみ', y=0.6), text(X0, 1.05, 11, line_h(30), '家で一度登録すれば、店では撮るだけ。', 30, INK, bold=True)]
+items = [label('使い方', y=0.6), text(X0, 1.05, 11, line_h(30), '家で一度登録すれば、店では撮るだけ。', 30, INK, bold=True)]
 items.append(rect(X0 + DOT / 2 - 0.0125, ROW0 + 0.02 + DOT / 2, 0.025, PITCH * 2, PALE, shape='rect'))  # 番号をつなぐ線
 for i, (when, act, ai, ph, pp) in enumerate(STEPS):
     y = ROW0 + i * PITCH
