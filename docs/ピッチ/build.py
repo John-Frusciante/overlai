@@ -1,12 +1,12 @@
 """本選1分ピッチのスライドを pptx とプレビューPNGに書き出す。
 
-流れと文言はブースパネル（docs/パネル/panel.tpl.html）と同じにし、その前に2つのエピソードを置く。
-  表紙 → エピソード1（重複）→ エピソード2（組み合わせ）→ アプリの一文と重なりの図 → できること → しくみ → 締め
+文言はブースパネル（docs/パネル/panel.tpl.html）と同じにし、見せ方はスライド向けに組む（1枚に1つのこと）。
+  表紙 → エピソード1（重複）→ エピソード2（組み合わせ）→ Overlai → できること×3 → しくみ → 目指すこと → 締め
 エピソードの順は、パネルの「できること」の順（重複 → 組み合わせ → 順番）に合わせる。
+できることの各スライドは、エピソードで浮かんだ迷いから始めて、その答えとして実機の画面を大きく見せる。
+目指すこと・締めは、作り直す前の版の2枚を戻したもの（ユーザー判断）。
 
-パネルで決めたことを、ここでも守る。
-- 色は紺と灰色で組む。判定の3色（青・黄・赤）は凡例と実機の画面の中にだけ出す
-- 塗りつぶした紺は「重なり」の図と、最後の「お試しください」の帯の2か所に絞る
+パネルで決めたことのうち、ここでも守るもの。
 - 説明は使う人にとってうれしいことを書く。開発者向けの補足は載せない
 - しくみは「やること」が主役で、「うれしいこと」はその横にぶら下げる（一回り小さく、縦線を付ける）
 - 実機の画面には、どこを見ればいいかの囲みを付ける（位置はパネルと同じ割合）
@@ -45,6 +45,7 @@ MIN_PT = 14  # 投影で読める下限
 # パネルと同じ色
 NAVY, INK, MUTED, PALE, LINE, MIST, WHITE = '1B2A4A', '0F172A', '475569', 'C9D0DB', 'D9DFE7', 'F2F4F7', 'FFFFFF'
 BLUE, AMBER, RED = '2563EB', 'D97706', 'DC2626'
+FAINT, CANVAS = '94A3B8', 'F5F7FA'
 SQ_A, SQ_B = 'E4E7EC', 'BCC3CE'  # 重なりの図の二つの四角
 
 SLOGAN = '重ねる前に、重ねて見る。'
@@ -101,36 +102,36 @@ def brand(x, y, size, color=NAVY):
         s * 1.02 + width_of('Overlai', size)
 
 
-def heading(title):
-    """段落見出し。パネルの h2 と同じく、下に紺の線を引く"""
-    return [text(X0, 0.5, 6, line_h(26), title, 26, NAVY, bold=True),
-            rect(X0, 1.08, X1 - X0, 0.022, NAVY, shape='rect')]
+def label(s, y=0.75, align='left'):
+    """スライドの左上（または中央）に置く小さな見出し"""
+    return text(X0 if align == 'left' else 0, y, 8 if align == 'left' else W, line_h(20), s, 20, BLUE, bold=True, align=align)
 
 
 def phone(path, x, y, h, rings=(), sig=NAVY):
     """実機の画面を白い枠に入れ、見てほしい所を囲む。rings は (left, top, width, height, 札) を画像に対する割合で"""
     im = image(path, x, y, h=h)
-    p = 0.08
-    out = [rect(x - p, y - p, im['w'] + 2 * p, h + 2 * p, WHITE, radius=0.14, line=LINE), im]
+    p = 0.09
+    out = [rect(x - p, y - p, im['w'] + 2 * p, h + 2 * p, WHITE, radius=0.22, line=LINE), im]
     for l, t, w, hh, label in rings:
         rx, ry, rw, rh = x + im['w'] * l, y + h * t, im['w'] * w, h * hh
-        out.append(rect(rx, ry, rw, rh, None, radius=0.05, line=sig, line_w=1.75))
-        tw = width_of(label, 14, True) + 0.16
-        out.append(rect(rx - 0.02, ry - 0.31, tw, 0.28, sig, radius=0.04, label=label, size=14, color=WHITE))
+        out.append(rect(rx, ry, rw, rh, None, radius=0.06, line=sig, line_w=2.25))
+        tw = width_of(label, 16, True) + 0.2
+        out.append(rect(rx - 0.03, ry - 0.36, tw, 0.33, sig, radius=0.05, label=label, size=16, color=WHITE))
     return out, im['w']
 
 
 # ── スライド ────────────────────────────────────────
 SLIDES = []
+TEAM = '井上 高志・濱田 圭太郎・杉本 隼都'
 
-# 0. 表紙（スローガンは、アプリを出す4枚目まで取っておく）
+# 0. 表紙（スローガンは、目指すことと締めまで取っておく）
 SLIDES.append(dict(notes='鈴鹿高専の、Overlaiです。', items=[
     image('logo-faint.png', 7.75, 1.05, h=5.4),
     text(X0, 0.75, 9, line_h(16), 'ユメカタリ 学生生成AIコンテスト 2026｜開発部門', 16, MUTED),
     *brand(X0, 2.45, 80)[0],
     text(X0, 4.3, 8, line_h(22), 'Overlay（重ねる）＋ AI', 22, MUTED),
     text(X0, 6.0, 8, line_h(16), '鈴鹿工業高等専門学校', 16, MUTED, bold=True),
-    text(X0, 6.4, 8, line_h(16), '井上 高志・濱田 圭太郎・杉本 隼都', 16, MUTED),
+    text(X0, 6.4, 8, line_h(16), TEAM, 16, MUTED),
 ]))
 
 
@@ -142,7 +143,7 @@ def episode(no, kind, who, people, scene, doubts):
     ppl = image(people, 0, 0, h=2.75)
     ppl['x'], ppl['y'] = X1 + 0.3 - ppl['w'], H - ppl['h']
     out = [
-        text(X0, 0.75, 9, line_h(20), f'エピソード {no}｜{kind}', 20, NAVY, bold=True),
+        label(f'エピソード {no}｜{kind}'),
         text(X0, 1.25, 11.5, line_h(18), who, 18, MUTED),
         text(X0, 1.8, 11.8, line_h(26), scene, 26, INK, bold=True),
         cl, ppl,
@@ -152,14 +153,14 @@ def episode(no, kind, who, people, scene, doubts):
     return out
 
 
-# 1. エピソード1：重複（→ できること①）
+# 1. エピソード1：重複（→ できること1）
 SLIDES.append(dict(notes='井上は、風邪薬を買って帰ったら、似た薬がもう家にありました。', items=episode(
     1, '重複の迷い', '井上｜店頭に立つと、家にある薬を思い出せない', 'people-1.png',
     '風邪薬を買って帰ると、似たような薬がもう家にあった。',
     ['家に、同じような薬あったっけ？', '名前は違うけど、中身は同じ？'],
 )))
 
-# 2. エピソード2：組み合わせ（→ できること②③）
+# 2. エピソード2：組み合わせ（→ できること2・3）
 SLIDES.append(dict(notes=(
     '濱田と杉本は、ステロイドの塗り薬を使っています。化粧水を手に取ったとき、'
     '使っていいのか、どっちが先か、迷いました。'
@@ -170,7 +171,7 @@ SLIDES.append(dict(notes=(
 )))
 
 
-# 3. アプリの一文（パネルの見出しと同じ）
+# 3. Overlai（アプリの一文と、重なりの図）
 def venn(x, y, s):
     """ロゴと同じ二つの四角を重ね、重なった所が判定になることを図で見せる"""
     a, off, ov, r = 0.7 * s, 0.3 * s, 0.4 * s, 0.117 * s
@@ -192,21 +193,19 @@ def venn(x, y, s):
     return out
 
 
-TOP = 1.05
-br, bw = brand(X0, TOP, 34)
 SLIDES.append(dict(notes=(
-    'どちらも、家の薬と見比べられれば迷わずに済みます。そこで作ったのがOverlaiです。'
+    'どちらも、店では家の薬と見比べられません。そこで作ったのがOverlaiです。'
     '店で成分表示を撮るだけで、買うべきかの目安がわかります。'
 ), items=[
-    *br,
-    text(X0 + bw + 0.3, TOP + 34 / 72 * 1.5 * 0.5 - line_h(16) / 2 + 0.06, 4, line_h(16), 'Overlay（重ねる）＋ AI', 16, MUTED),
-    text(X0, TOP + 0.95, 7.6, line_h(72, 0.95, 2), '重ねる前に、\n重ねて見る。', 72, NAVY, bold=True, spacing=0.95),
-    text(X0, TOP + 4.2, 11.5, line_h(26, 1.0, 2), '店で成分表示を撮るだけで、家の薬・化粧品と比べて\n「買うべきか」の目安がわかるアプリ。', 26, INK, bold=True),
-    *venn(X1 - 4.0, TOP, 4.0),
+    text(X0, 1.0, 6, line_h(22), 'そこで作ったのが', 22, MUTED, bold=True),
+    *brand(X0, 1.6, 72)[0],
+    text(X0, 3.3, 6, line_h(18), 'Overlay（重ねる）＋ AI', 18, MUTED),
+    text(X0, 4.25, 7.6, line_h(30, 1.0, 3), '店で成分表示を撮るだけで、\n家の薬・化粧品と比べて\n「買うべきか」の目安がわかる。', 30, INK, bold=True),
+    *venn(X1 - 4.0, 1.75, 4.0),
 ]))
 
 
-# 4. できること（パネルと同じ3列。画面の囲みもパネルと同じ位置）
+# 4〜6. できること（1枚に1つ。エピソードの迷いから始め、答えを実機の画面で見せる）
 def legend(x, y):
     """3色の意味。アプリの判定の見出しと同じ言葉を使う"""
     out = [text(x, y, 1.6, line_h(15), '判定は3色', 15, MUTED, bold=True)]
@@ -218,30 +217,34 @@ def legend(x, y):
     return out
 
 
-GAP = 0.45
-COL = (X1 - X0 - 2 * GAP) / 3
 CASES = [
-    ('名前が違っても、\n同じ働きの薬に気づける', '風邪薬と頭痛薬のように、別の薬でも\n成分がかぶっていれば知らせる',
-     'yellow-real.png', 'B45309', [(0.05, 0.513, 0.29, 0.043, '重複する成分'), (0.035, 0.67, 0.93, 0.122, '家の薬')]),
-    ('使っている薬との相性が、\n買う前にわかる', '飲み薬だけでなく、塗り薬や\n化粧品との組み合わせも確かめられる',
-     'red-real.png', RED, [(0.035, 0.504, 0.42, 0.044, '店の商品'), (0.035, 0.796, 0.93, 0.094, '家の薬')]),
-    ('薬や化粧品を使う順番や、\n詳しい使い方がわかる', '処方薬と化粧品を一緒に使う日も、\nどれから、どう塗ればいいか迷わない',
-     'routine-crop.jpg', NAVY, [(0.018, 0.096, 0.13, 0.734, '塗る順番')]),
+    ('名前は違うけど、中身は同じ？', '名前が違っても、\n同じ働きの薬に気づける', '風邪薬と頭痛薬のように、別の薬でも\n成分がかぶっていれば知らせる',
+     'yellow-real.png', 'B45309', [(0.05, 0.513, 0.29, 0.043, '重複する成分'), (0.035, 0.67, 0.93, 0.122, '家の薬')],
+     '名前が違っても、同じ働きの薬に気づけます。'),
+    ('薬を塗った肌に、使っていい？', '使っている薬との相性が、\n買う前にわかる', '飲み薬だけでなく、塗り薬や\n化粧品との組み合わせも確かめられる',
+     'red-real.png', RED, [(0.035, 0.504, 0.42, 0.044, '店の商品'), (0.035, 0.796, 0.93, 0.094, '家の薬')],
+     '使っている薬との相性も、買う前にわかります。'),
+    ('薬と化粧品、どっちが先？', '薬や化粧品を使う順番や、\n詳しい使い方がわかる', '処方薬と化粧品を一緒に使う日も、\nどれから、どう塗ればいいか迷わない',
+     'routine-crop.jpg', NAVY, [(0.018, 0.096, 0.13, 0.734, '塗る順番')],
+     '塗る順番まで案内します。'),
 ]
-items = heading('できること')
-for i, (h3, sub, shot, sig, rings) in enumerate(CASES):
-    x = X0 + i * (COL + GAP)
-    items += [text(x, 1.3, COL, line_h(20, 1.0, 2), h3, 20, INK, bold=True),
-              text(x, 2.15, COL, line_h(15, 1.0, 2), sub, 15, MUTED)]
-    items += phone(shot, x + 0.08, 3.03, 3.55, rings, sig)[0]
-items += legend(X0, 6.9)
-SLIDES.append(dict(notes=(
-    '名前が違っても同じ働きの薬に気づけて、使っている薬との相性も買う前にわかります。'
-    '塗る順番まで案内します。'
-), items=items))
+PH = 6.3  # 画面の高さ
+for i, (doubt, h3, sub, shot, sig, rings, note) in enumerate(CASES):
+    iw = image(shot, 0, 0, h=PH)['w']
+    items = [
+        label(f'できること {i + 1}'),
+        text(X0, 1.75, 7.5, line_h(22), f'「{doubt}」', 22, FAINT, bold=True),
+        rect(X0, 2.45, 0.6, 0.05, NAVY, shape='rect'),
+        text(X0, 2.75, 7.5, line_h(36, 1.0, 2), h3, 36, INK, bold=True),
+        text(X0, 4.4, 7.5, line_h(20, 1.0, 2), sub, 20, MUTED),
+        *phone(shot, X1 - 0.35 - iw, 0.6, PH, rings, sig)[0],
+    ]
+    if shot != 'routine-crop.jpg':  # 判定の画面にだけ、3色の意味を添える
+        items += legend(X0, 6.45)
+    SLIDES.append(dict(notes=note, items=items))
 
 
-# 5. しくみ（やることが主役。うれしいことは一回り小さくし、縦線でぶら下げる）
+# 7. しくみ（やることが主役。うれしいことは一回り小さくし、縦線でぶら下げる）
 STEPS = [
     ('家で', '薬・化粧品を撮って登録', 'AIが成分表示を読み取る',
      '自分の体質も登録できる', '肌質や年代、悩みを登録すると、\n使い方の助言がパーソナライズされる'),
@@ -250,9 +253,9 @@ STEPS = [
     ('その場で', '買うべきかの目安が出る', '3色の判定と、成分名つきの理由',
      '理由に根拠と出典を添える', '根拠の薄い推測は、最初から出さない\n表示された理由は、安心して読める'),
 ]
-ROW0, PITCH, DOT = 1.5, 1.85, 0.5
+ROW0, PITCH, DOT = 2.15, 1.7, 0.5
 BX = 7.1  # うれしいことの列
-items = heading('しくみ')
+items = [label('しくみ', y=0.6), text(X0, 1.05, 11, line_h(30), '家で一度登録すれば、店では撮るだけ。', 30, INK, bold=True)]
 items.append(rect(X0 + DOT / 2 - 0.0125, ROW0 + 0.02 + DOT / 2, 0.025, PITCH * 2, PALE, shape='rect'))  # 番号をつなぐ線
 for i, (when, act, ai, ph, pp) in enumerate(STEPS):
     y = ROW0 + i * PITCH
@@ -266,29 +269,40 @@ for i, (when, act, ai, ph, pp) in enumerate(STEPS):
         text(BX + 0.3, y + 0.06, X1 - BX - 0.3, line_h(22), ph, 22, INK, bold=True),
         text(BX + 0.3, y + 0.58, X1 - BX - 0.3, line_h(18, 1.0, 2), pp, 18, MUTED),
     ]
-SLIDES.append(dict(notes='家で一度登録すれば、店では撮るだけです。根拠の薄い推測は出さず、理由には出典を添えます。', items=items))
+SLIDES.append(dict(notes='家で一度登録すれば、店では撮るだけ。理由には出典を添えます。', items=items))
 
 
-# 6. 締め（パネルの最後の帯と同じ）
-br, bw = brand(0, 1.0, 60)
+# 8. 目指すこと（作り直す前の版の1枚。店頭の判定だけでなく、買う・塗る・飲むの全部で「重ねる前に確かめる」）
+def pillar(x, head, sub, tag):
+    return [
+        rect(x, 3.05, 3.72, 2.75, CANVAS, radius=0.25),
+        text(x + 0.4, 3.4, 3.1, line_h(26), head, 26, NAVY, bold=True),
+        text(x + 0.4, 4.15, 3.1, line_h(18, 1.0, 2), sub, 18, MUTED),
+        text(x + 0.4, 5.2, 3.1, line_h(14), tag, 14, BLUE, bold=True),
+    ]
+
+
+SLIDES.append(dict(notes='買い重ねる前に。塗り重ねる前に。一緒に飲む前に。', items=[
+    label('Overlai が目指すこと', y=0.95, align='center'),
+    text(0, 1.5, W, line_h(54), SLOGAN, 54, NAVY, bold=True, align='center'),
+    *pillar(0.9, '買い重ねる前に', 'もう家にある？\n名前違いの同じ薬は？', '重複'),
+    *pillar(4.81, '塗り重ねる前に', '一緒に使っていい？\nどれを先に塗る？', '組み合わせ・塗る順番'),
+    *pillar(8.72, '一緒に飲む前に', '今飲んでいる薬と\n一緒で大丈夫？', '飲み合わせ'),
+    text(0, 6.25, W, line_h(20), '肌の治療を続ける人も、家族の薬を買う人も、店頭で迷わない毎日へ。', 20, MUTED, bold=True, align='center'),
+]))
+
+# 9. 締め（作り直す前の版の1枚）
+br, bw = brand(0, 2.3, 80)
 for it in br:
     it['x'] += (W - bw) / 2
-BAND_Y, BAND_H, QR = 4.3, 2.45, 1.85
-qx = X1 - 0.3 - QR
-school = '鈴鹿工業高等専門学校'
-SLIDES.append(dict(notes=SLOGAN + 'ぜひ、お試しください。', items=[
+SLIDES.append(dict(notes='Overlai。' + SLOGAN, items=[
+    text(0, 1.2, W, line_h(26), '店頭で撮るだけで、家の薬や化粧品と重ねて判定する。', 26, MUTED, align='center'),
     *br,
-    text(0, 2.75, W, line_h(36), SLOGAN, 36, NAVY, bold=True, align='center'),
-    rect(X0, BAND_Y, X1 - X0, BAND_H, NAVY, radius=0.2),
-    text(X0 + 0.6, BAND_Y + 0.28, 8, line_h(32), 'ぜひ、お試しください', 32, WHITE, bold=True),
-    text(X0 + 0.6, BAND_Y + 1.0, 8.6, line_h(17), 'インストール不要。見本の薬・化粧品が入った状態で開きます', 17, PALE),
-    rect(X0 + 0.6, BAND_Y + 1.52, qx - 0.6 - X0 - 0.6, 0.012, '4D5972', shape='rect'),
-    text(X0 + 0.6, BAND_Y + 1.64, 8, line_h(14), 'ユメカタリ 学生生成AIコンテスト 2026｜開発部門', 14, PALE),
-    text(X0 + 0.6, BAND_Y + 1.64 + line_h(14), width_of(school, 14, True) + 0.1, line_h(14), school, 14, WHITE, bold=True),
-    text(X0 + 0.6 + width_of(school, 14, True) + 0.25, BAND_Y + 1.64 + line_h(14), 5, line_h(14),
-         '井上 高志・濱田 圭太郎・杉本 隼都', 14, PALE),
-    rect(qx, BAND_Y + (BAND_H - QR) / 2, QR, QR, WHITE, radius=0.08),
-    image('qr.png', qx + 0.06, BAND_Y + (BAND_H - QR) / 2 + 0.06, h=QR - 0.12),
+    text(0, 4.45, W, line_h(34), SLOGAN, 34, NAVY, bold=True, align='center'),
+    text(0.9, 6.62, 9, line_h(15), '鈴鹿工業高等専門学校　' + TEAM, 15, MUTED),
+    rect(11.28, 4.9, 1.4, 1.4, WHITE, radius=0.12, line=LINE),
+    image('qr.png', 11.33, 4.95, h=1.3),
+    text(10.98, 6.4, 2.0, line_h(14), '実機を試す', 14, MUTED, align='center'),
 ]))
 
 
