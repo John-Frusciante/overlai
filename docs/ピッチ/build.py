@@ -16,8 +16,8 @@ CASE はメンバーの実体験（エピソード）。使い方1（店で選�
 
   uv run --with python-pptx --with pillow python docs/ピッチ/build.py
 
-プレビューは Noto Sans JP の otf（Regular・Bold）がある場合だけ作る。置き場所は環境変数 NOTO_DIR か、
-このフォルダ。PREVIEW_DIR を渡すと、1枚ずつの PNG もそこに書き出す。
+プレビュー（preview.png）と送る用のPDFは、Noto Sans JP の otf（Regular・Bold）がある場合だけ作る。
+置き場所は環境変数 NOTO_DIR か、このフォルダ。PREVIEW_DIR を渡すと、1枚ずつの PNG もそこに書き出す。
 Googleスライドに取り込んだあとはそちらが正本。ここは作り直すときに使う。
 """
 import os
@@ -425,7 +425,7 @@ def px(v):
     return round(v * DPI)
 
 
-def render(i, s):
+def render(i, s, report=True):
     img = Image.new('RGB', (px(W), px(H)), '#' + WHITE)
     d = ImageDraw.Draw(img)
     issues = []
@@ -465,7 +465,7 @@ def render(i, s):
                 yy += pitch
             if yy > box[3] + 2:
                 issues.append(f'縦にはみ出し: {it["body"][:16]}')
-    for msg in issues:
+    for msg in issues if report else []:
         print(f'  ! スライド{i + 1}: {msg}')
     return img
 
@@ -484,6 +484,11 @@ if HAVE_FONTS:
     for i, pg in enumerate(pages):
         sheet.paste(pg.resize((tw, th), Image.LANCZOS), (gap + (i % 2) * (tw + gap), gap + (i // 2) * (th + gap)))
     sheet.save(HERE / 'preview.png')
+    # 送る用のPDF。プレビューと同じ描き方を2倍の細かさで描く（このMacには pptx を PDF にするソフトが無いため）。
+    # Googleスライドで仕上げたあとは、そちらから書き出したPDFに差し替える
+    DPI = 288
+    hi = [render(i, s, report=False) for i, s in enumerate(SLIDES)]
+    hi[0].save(HERE / 'Overlai_本選ピッチ.pdf', save_all=True, append_images=hi[1:], resolution=DPI, quality=95)
 else:
     print('Noto Sans JP の otf が無いのでプレビューは作りません（NOTO_DIR で場所を渡せる）')
 total = sum(len(s['notes']) for s in SLIDES)
