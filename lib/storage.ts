@@ -1,5 +1,14 @@
-import type { DoseLog, DoseTime, Profile, RoutineAdvice, RoutineKind, StockItem } from './types';
+import type {
+  DoseLog,
+  DoseTime,
+  ExtractionResult,
+  Profile,
+  RoutineAdvice,
+  RoutineKind,
+  StockItem,
+} from './types';
 import { SEED_STOCK } from './seed';
+import { replaceWith } from './stockOps';
 
 /**
  * 永続化層 — 設計仕様書 §10.1
@@ -59,9 +68,13 @@ export function saveStock(items: StockItem[]): void {
   write(STOCK_KEY, items);
 }
 
+function newId(): string {
+  return `stk-${Date.now().toString(36)}`;
+}
+
 export function addStock(item: Omit<StockItem, 'id'>): StockItem[] {
   const items = loadStock();
-  const next = [...items, { ...item, id: `stk-${Date.now().toString(36)}` }];
+  const next = [...items, { ...item, id: newId() }];
   saveStock(next);
   return next;
 }
@@ -84,6 +97,29 @@ export function moveCategory(from: string, to: string): StockItem[] {
 
 export function removeStock(id: string): StockItem[] {
   const next = loadStock().filter((i) => i.id !== id);
+  saveStock(next);
+  return next;
+}
+
+/**
+ * 古いものを新しいものに入れ替える。**位置はそのまま。**
+ * 並び順の引き継ぎは lib/stockOps.ts の `replaceWith` が決める。
+ * 古いものが見つからなければ（別タブで消したなど）普通に足す。
+ */
+export function replaceStock(oldId: string, item: Omit<StockItem, 'id'>): StockItem[] {
+  const items = loadStock();
+  const old = items.find((i) => i.id === oldId);
+  if (!old) return addStock(item);
+  const next = items.map((i) => (i.id === oldId ? replaceWith(old, item, newId()) : i));
+  saveStock(next);
+  return next;
+}
+
+/** 外したものを元の位置に戻す（判定カードの「元に戻す」） */
+export function insertStock(item: StockItem, index: number): StockItem[] {
+  const items = loadStock().filter((i) => i.id !== item.id);
+  const at = Math.max(0, Math.min(index, items.length));
+  const next = [...items.slice(0, at), item, ...items.slice(at)];
   saveStock(next);
   return next;
 }
@@ -425,4 +461,42 @@ function isStockItem(v: unknown): v is StockItem {
     typeof i.form === 'string' &&
     Array.isArray(i.ingredients)
   );
+}
+
+// ── スキャン結果の受け渡し ─────────────────────────────────────────
+
+/**
+ * 判定カードの「買ったので在庫に入れる」から追加画面へ、読み取り結果を渡す。
+ *
+ * URL に載せると成分の一覧で長くなり、履歴にも残る。sessionStorage ならタブを
+ * 閉じれば消える。読んでも消さず、保存したときに消す（追加画面を開き直しても入力が残る）。
+ */
+const PENDING_SCAN_KEY = 'overlai.pendingScan.v1';
+
+export function savePendingScan(extraction: ExtractionResult): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.setItem(PENDING_SCAN_KEY, JSON.stringify(extraction));
+  } catch {
+    /* 渡せなくても、空の追加画面になるだけ */
+  }
+}
+
+export function loadPendingScan(): ExtractionResult | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.sessionStorage.getItem(PENDING_SCAN_KEY);
+    return raw ? (JSON.parse(raw) as ExtractionResult) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearPendingScan(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.removeItem(PENDING_SCAN_KEY);
+  } catch {
+    /* 消せなくても致命的ではない */
+  }
 }
