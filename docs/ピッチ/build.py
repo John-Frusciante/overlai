@@ -150,7 +150,8 @@ def episode(no, kind, who, people, scene, doubts):
     cl = image('cloud.png', 0.45, 2.55, w=8.5)
     cx, cy = cl['x'] + 0.495 * cl['w'], cl['y'] + 0.49 * cl['h']  # 吹き出しの本体の中心
     ppl = image(people, 0, 0, h=2.75)
-    ppl['x'], ppl['y'] = X1 + 0.3 - ppl['w'], H - ppl['h']
+    # 人物は吹き出しのしっぽのすぐ右に置く（1人のときに右端まで離れないように）
+    ppl['x'], ppl['y'] = min(X1 + 0.3 - ppl['w'], 8.9), H - ppl['h']
     out = [
         label(f'CASE {no}｜{kind}'),
         text(X0, 1.25, 11.5, line_h(18), who, 18, MUTED),
