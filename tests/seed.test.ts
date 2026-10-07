@@ -1,7 +1,8 @@
 import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
-import { SEED_STOCK } from '../lib/seed';
+import { SEED_STOCK, seedStock } from '../lib/seed';
 import { ABSORPTION_RULES, INTERACTION_RULES, matchesIngredient } from '../lib/knowledge';
+import { endedCourses, localDateKey } from '../lib/course';
 
 /**
  * シードデータの決まりごと — デモが崩れる置き方を防ぐ
@@ -14,6 +15,22 @@ const PRESCRIPTIONS = SEED_STOCK.filter((i) => i.isPrescription);
 const ORAL = PRESCRIPTIONS.filter((i) => i.form === '錠剤' || i.form === 'カプセル');
 
 describe('シードデータ', () => {
+  it('展示の初期化直後に「飲み終わりましたか」が出ない', () => {
+    // 見本に戻した直後から終わった薬が並ぶと、来場者に最初に見せる画面が崩れる
+    const today = localDateKey();
+    assert.deepEqual(endedCourses(SEED_STOCK, today), []);
+  });
+
+  it('見本はその日を基準に作り直せる（展示端末を何日も開いたままでも崩れない）', () => {
+    const later = new Date();
+    later.setDate(later.getDate() + 30);
+    assert.deepEqual(endedCourses(seedStock(later), localDateKey(later)), []);
+  });
+
+  it('処方の飲む期間の見本が1つはある（機能の見本として）', () => {
+    assert.ok(SEED_STOCK.some((i) => i.course));
+  });
+
   it('処方の内服に NSAIDs を置かない', () => {
     // 置くと、市販イブプロフェン製剤のスキャンが🔴の条件にも該当し、
     // デモの主役である🟡が不安定になる（AGENTS.md 制約1）

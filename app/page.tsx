@@ -3,12 +3,14 @@
 import { Suspense, useCallback, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { AlertTriangle, Clock, Plus, Settings } from 'lucide-react';
+import { AlertTriangle, Clock, Pill, Plus, Settings } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
 import { StockList } from '@/components/StockList';
+import { ConfirmRemove } from '@/components/ConfirmRemove';
 import { ButtonLink } from '@/components/ui/Button';
 import { useIsClient, useStoredState } from '@/lib/client';
-import { collectAlerts, lowStock } from '@/lib/expiry';
+import { extendCourse, localDateKey, parseDays } from '@/lib/course';
+import { upkeepAlerts } from '@/lib/upkeep';
 import {
   loadCollapsed,
   loadCustomCategories,
@@ -16,10 +18,11 @@ import {
   removeStock,
   resetAll,
   saveCollapsed,
+  updateStock,
 } from '@/lib/storage';
 import { SEED_STOCK } from '@/lib/seed';
 import { overlaySymbolPath } from '@/lib/ui';
-import type { ExpiryAlert } from '@/lib/types';
+import type { ExpiryAlert, StockItem } from '@/lib/types';
 
 /**
  * 見出しの長押しで初期化の確認を出すまでの時間。
@@ -46,13 +49,21 @@ export default function MyStockPage() {
    * ハイドレーションが壊れるため、クライアントで描画されてからだけ求める。
    */
   const isClient = useIsClient();
-  const alerts: ExpiryAlert[] = useMemo(
-    () => (isClient ? collectAlerts(stock) : []),
+  // 処方の終わり・期限・残量。同じ品は1行にまとめる（lib/upkeep.ts）
+  const { ended, expiry: alerts, low } = useMemo(
+    () =>
+      isClient
+        ? upkeepAlerts(stock, localDateKey())
+        : { ended: [] as StockItem[], expiry: [] as ExpiryAlert[], low: [] as StockItem[] },
     [isClient, stock],
   );
-  const low = useMemo(() => (isClient ? lowStock(stock) : []), [isClient, stock]);
 
   const onRemove = useCallback((id: string) => setStock(removeStock(id)), [setStock]);
+  const onExtend = useCallback(
+    (id: string, days: number) =>
+      setStock(updateStock(id, { course: extendCourse(days, localDateKey()) })),
+    [setStock],
+  );
 
   const onToggleCategory = useCallback((category: string) => {
     setCollapsed((prev) => {
@@ -119,6 +130,9 @@ export default function MyStockPage() {
             家にある<span className="font-semibold tabular-nums text-ink">{stock.length}</span>
             件を基準に判定します
           </p>
+          <p className="mt-1 text-[12px] leading-relaxed text-faint">
+            在庫は、店頭でスキャンしたときや期限が近づいたときに見直せます
+          </p>
         </div>
         <Link
           href="/settings"
@@ -129,16 +143,30 @@ export default function MyStockPage() {
         </Link>
       </header>
 
-      {/* 期限・残量のアラート */}
-      {(alerts.length > 0 || low.length > 0) && (
+      {/* 処方の終わり・期限・残量のアラート */}
+      {(ended.length > 0 || alerts.length > 0 || low.length > 0) && (
         <section className="stagger mt-7 space-y-2">
+          {ended.map((item, i) => (
+            <CourseRow
+              key={`course-${item.id}`}
+              item={item}
+              index={i}
+              onFinish={() => onRemove(item.id)}
+              onExtend={(days) => onExtend(item.id, days)}
+            />
+          ))}
           {alerts.slice(0, 3).map((a, i) => (
-            <AlertRow key={a.itemId} alert={a} index={i} />
+            <AlertRow
+              key={a.itemId}
+              alert={a}
+              index={ended.length + i}
+              onUsedUp={() => onRemove(a.itemId)}
+            />
           ))}
           {low.map((item, i) => (
             <div
               key={item.id}
-              style={{ '--i': alerts.length + i } as React.CSSProperties}
+              style={{ '--i': ended.length + alerts.length + i } as React.CSSProperties}
               className="flex gap-3 rounded-2xl bg-amber-50 p-4"
             >
               <Clock size={16} className="mt-0.5 shrink-0 text-amber-700" strokeWidth={2.2} />
@@ -234,7 +262,16 @@ export default function MyStockPage() {
 }
 
 /** 期限アラート。残り日数を30日の目盛りで視覚化する */
-function AlertRow({ alert, index }: { alert: ExpiryAlert; index: number }) {
+function AlertRow({
+  alert,
+  index,
+  onUsedUp,
+}: {
+  alert: ExpiryAlert;
+  index: number;
+  onUsedUp: () => void;
+}) {
+  const [confirming, setConfirming] = useState(false);
   const expired = alert.level === 'expired';
   const ratio = expired ? 0 : Math.max(0.04, Math.min(1, alert.daysLeft / 30));
 
@@ -280,7 +317,114 @@ function AlertRow({ alert, index }: { alert: ExpiryAlert; index: number }) {
               style={{ width: `${ratio * 100}%` }}
             />
           </div>
+
+          {confirming ? (
+            <ConfirmRemove onConfirm={onUsedUp} onCancel={() => setConfirming(false)} />
+          ) : (
+            <button
+              onClick={() => setConfirming(true)}
+              className={`mt-2.5 text-[12.5px] font-semibold underline underline-offset-2 ${
+                expired ? 'text-red-700' : 'text-amber-900'
+              }`}
+            >
+              使い切った
+            </button>
+          )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 処方の終わる日を過ぎた薬 — 「飲み終わりましたか」（Issue #35）
+ *
+ * 自動では外さない。やめた後もしばらく併用に注意が要る薬があり、
+ * 本当に飲み終わったかは本人にしか分からない。
+ * 「まだ飲んでいる」なら、あと何日分かを本人に聞いて数え直す。
+ */
+function CourseRow({
+  item,
+  index,
+  onFinish,
+  onExtend,
+}: {
+  item: StockItem;
+  index: number;
+  onFinish: () => void;
+  onExtend: (days: number) => void;
+}) {
+  const [mode, setMode] = useState<'ask' | 'confirm' | 'extend'>('ask');
+  const [days, setDays] = useState('');
+  const parsed = parseDays(days);
+
+  return (
+    <div
+      style={{ '--i': index } as React.CSSProperties}
+      className="flex gap-3 rounded-2xl bg-sky-50 p-4"
+    >
+      <Pill size={16} className="mt-0.5 shrink-0 text-sky-700" strokeWidth={2.2} />
+      <div className="min-w-0 flex-1">
+        <p className="text-[13px] font-semibold text-sky-900">飲み終わりましたか？</p>
+        <p className="mt-0.5 text-[12.5px] leading-relaxed text-sky-800">
+          {item.name}は、登録した日数を過ぎています
+        </p>
+
+        {mode === 'ask' && (
+          <div className="mt-3 flex gap-2">
+            <button
+              onClick={() => setMode('confirm')}
+              className="flex-1 rounded-xl bg-sky-700 py-2.5 text-[13px] font-semibold text-white transition-transform active:scale-[0.98]"
+            >
+              飲み終わった
+            </button>
+            <button
+              onClick={() => setMode('extend')}
+              className="flex-1 rounded-xl bg-surface py-2.5 text-[13px] font-medium text-sky-900 transition-transform active:scale-[0.98]"
+            >
+              まだ飲んでいる
+            </button>
+          </div>
+        )}
+
+        {mode === 'confirm' && (
+          <ConfirmRemove onConfirm={onFinish} onCancel={() => setMode('ask')} />
+        )}
+
+        {mode === 'extend' && (
+          <div className="mt-3">
+            <p className="text-[12.5px] font-semibold text-sky-900">
+              今日の分を含めて、あと何日分ありますか？
+            </p>
+            <div className="mt-1.5 flex gap-2">
+              <input
+                autoFocus
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={365}
+                value={days}
+                onChange={(e) => setDays(e.target.value)}
+                aria-label="あと何日分"
+                className="w-20 rounded-xl border border-line bg-surface px-3 py-2 text-[14px] tabular-nums outline-none focus:border-brand"
+              />
+              <span className="self-center text-[13px] text-sky-800">日分</span>
+              <button
+                onClick={() => parsed !== null && onExtend(parsed)}
+                disabled={parsed === null}
+                className="ml-auto rounded-xl bg-sky-700 px-4 py-2 text-[13px] font-semibold text-white transition-transform active:scale-[0.98] disabled:opacity-40"
+              >
+                保存
+              </button>
+            </div>
+            <button
+              onClick={() => setMode('ask')}
+              className="mt-2 text-[12px] text-sky-800 underline underline-offset-2"
+            >
+              やめる
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

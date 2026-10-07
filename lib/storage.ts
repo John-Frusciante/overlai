@@ -1,5 +1,15 @@
-import type { DoseLog, DoseTime, Profile, RoutineAdvice, RoutineKind, StockItem } from './types';
-import { SEED_STOCK } from './seed';
+import type {
+  DoseLog,
+  DoseTime,
+  ExtractionResult,
+  Profile,
+  RoutineAdvice,
+  RoutineKind,
+  StockItem,
+} from './types';
+import { seedStock } from './seed';
+import { replaceWith } from './stockOps';
+import { isCourse } from './course';
 
 /**
  * 永続化層 — 設計仕様書 §10.1
@@ -49,8 +59,9 @@ function remove(key: string): void {
 export function loadStock(): StockItem[] {
   const items = read<StockItem[]>(STOCK_KEY, []);
   if (!Array.isArray(items) || items.length === 0) {
-    write(STOCK_KEY, SEED_STOCK);
-    return SEED_STOCK;
+    const seed = seedStock();
+    write(STOCK_KEY, seed);
+    return seed;
   }
   return items;
 }
@@ -59,9 +70,13 @@ export function saveStock(items: StockItem[]): void {
   write(STOCK_KEY, items);
 }
 
+function newId(): string {
+  return `stk-${Date.now().toString(36)}`;
+}
+
 export function addStock(item: Omit<StockItem, 'id'>): StockItem[] {
   const items = loadStock();
-  const next = [...items, { ...item, id: `stk-${Date.now().toString(36)}` }];
+  const next = [...items, { ...item, id: newId() }];
   saveStock(next);
   return next;
 }
@@ -89,6 +104,29 @@ export function removeStock(id: string): StockItem[] {
 }
 
 /**
+ * 古いものを新しいものに入れ替える。**位置はそのまま。**
+ * 並び順の引き継ぎは lib/stockOps.ts の `replaceWith` が決める。
+ * 古いものが見つからなければ（別タブで消したなど）普通に足す。
+ */
+export function replaceStock(oldId: string, item: Omit<StockItem, 'id'>): StockItem[] {
+  const items = loadStock();
+  const old = items.find((i) => i.id === oldId);
+  if (!old) return addStock(item);
+  const next = items.map((i) => (i.id === oldId ? replaceWith(old, item, newId()) : i));
+  saveStock(next);
+  return next;
+}
+
+/** 外したものを元の位置に戻す（判定カードの「元に戻す」） */
+export function insertStock(item: StockItem, index: number): StockItem[] {
+  const items = loadStock().filter((i) => i.id !== item.id);
+  const at = Math.max(0, Math.min(index, items.length));
+  const next = [...items.slice(0, at), item, ...items.slice(at)];
+  saveStock(next);
+  return next;
+}
+
+/**
  * 端末の中身をすべて見本の状態に戻す。
  *
  * ブース展示で来場者が次々に触るとき、前の人の在庫・服薬記録・肌質が残っていると
@@ -96,15 +134,18 @@ export function removeStock(id: string): StockItem[] {
  * 「在庫だけ戻す」では足りず、**このファイルが持つ鍵をすべて**初期化する。
  * 鍵を増やしたらここにも足すこと（tests/storage.test.ts が見張っている）。
  */
-export function resetAll(): StockItem[] {
-  saveStock(SEED_STOCK);
+export function resetAll(today = new Date()): StockItem[] {
+  const seed = seedStock(today);
+  saveStock(seed);
   write(DOSE_KEY, []);
   write(PROFILE_KEY, {});
   write(COLLAPSED_KEY, []);
   write(CATEGORY_KEY, []);
   write(ROUTINE_KEY, []);
   remove(ADVICE_KEY);
-  return SEED_STOCK;
+  // 前の来場者がスキャンした商品を、次の人の追加画面に出さない（sessionStorage 側）
+  clearPendingScan();
+  return seed;
 }
 
 /** このファイルが管理している鍵。初期化の漏れをテストで確かめるために公開する */
@@ -393,7 +434,10 @@ export function importBackup(text: string): ImportResult {
     return { ok: false, reason: 'ストックのデータが入っていません' };
   }
 
-  const stock = backup.stock.filter(isStockItem);
+  // 飲む期間が壊れていたら、その欄だけ落として読み込む（画面を落とさない）
+  const stock = backup.stock
+    .filter(isStockItem)
+    .map((i) => (i.course === undefined || isCourse(i.course) ? i : { ...i, course: undefined }));
   if (stock.length === 0) {
     return { ok: false, reason: '読み込めるストックがありませんでした' };
   }
@@ -425,4 +469,42 @@ function isStockItem(v: unknown): v is StockItem {
     typeof i.form === 'string' &&
     Array.isArray(i.ingredients)
   );
+}
+
+// ── スキャン結果の受け渡し ─────────────────────────────────────────
+
+/**
+ * 判定カードの「買ったので在庫に入れる」から追加画面へ、読み取り結果を渡す。
+ *
+ * URL に載せると成分の一覧で長くなり、履歴にも残る。sessionStorage ならタブを
+ * 閉じれば消える。読んでも消さず、保存したときに消す（追加画面を開き直しても入力が残る）。
+ */
+const PENDING_SCAN_KEY = 'overlai.pendingScan.v1';
+
+export function savePendingScan(extraction: ExtractionResult): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.setItem(PENDING_SCAN_KEY, JSON.stringify(extraction));
+  } catch {
+    /* 渡せなくても、空の追加画面になるだけ */
+  }
+}
+
+export function loadPendingScan(): ExtractionResult | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.sessionStorage.getItem(PENDING_SCAN_KEY);
+    return raw ? (JSON.parse(raw) as ExtractionResult) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearPendingScan(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.removeItem(PENDING_SCAN_KEY);
+  } catch {
+    /* 消せなくても致命的ではない */
+  }
 }

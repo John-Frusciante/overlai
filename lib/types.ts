@@ -48,6 +48,17 @@ export type ItemForm =
 export type DoseTime = '朝' | '昼' | '夜';
 
 /**
+ * 処方の飲む期間。袋に書いてある「14日分」をそのまま持つ。
+ * 終わる日は持たず、毎回 `lib/course.ts` で求める（2つの値がずれないように）。
+ */
+export interface Course {
+  /** 飲み始めた日（ISO日付） */
+  startedAt: string;
+  /** 何日分か */
+  days: number;
+}
+
+/**
  * ルーティンの区分。ユーザーが作った名前（「朝のスキンケア」など）も入る。
  *
  * 組み込みの2つだけ内部キー（`inbath` / `outbath`）を使い、表示名は
@@ -71,6 +82,8 @@ export interface StockItem {
   remaining?: { count: number; unit: string };
   /** 服用タイミング。指定があると今日のルーティンに並ぶ */
   dose?: { times: DoseTime[]; perTime: number };
+  /** 処方の飲む期間。終わる日の翌日に「飲み終わりましたか」と聞く（lib/course.ts） */
+  course?: Course;
   /** 開封日（ISO日付）。酸化目安の起点 */
   openedAt?: string;
   /** 使用期限（ISO日付） */

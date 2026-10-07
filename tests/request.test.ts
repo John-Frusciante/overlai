@@ -4,7 +4,9 @@ import {
   MAX_FIELD_LEN,
   MAX_PROFILE_NOTE,
   MAX_STOCK_ITEMS,
+  parseAnalyzeInput,
   parseDataUrl,
+  sanitizeExtraction,
   sanitizeProfile,
   sanitizeStock,
 } from '../lib/request';
@@ -94,5 +96,84 @@ describe('プロフィールの検証', () => {
   it('空の自由記述は持たない', () => {
     assert.equal(sanitizeProfile({ note: '  ' }).note, undefined);
     assert.equal(sanitizeProfile(null).note, undefined);
+  });
+});
+
+describe('読み取り済みの成分の受け取り', () => {
+  const extraction = {
+    product_name: 'イブクイック頭痛薬',
+    category: '市販薬',
+    form: '錠剤',
+    ingredients: ['イブプロフェン', '無水カフェイン'],
+    confidence: 'high',
+  };
+
+  it('正しい形ならそのまま通す', () => {
+    assert.deepEqual(sanitizeExtraction(extraction), extraction);
+  });
+
+  it('列挙外のカテゴリ・剤形は通さない（処方薬を名乗らせない）', () => {
+    assert.equal(sanitizeExtraction({ ...extraction, category: '処方薬' }), null);
+    assert.equal(sanitizeExtraction({ ...extraction, form: '注射' }), null);
+  });
+
+  it('形が違えば通さない', () => {
+    assert.equal(sanitizeExtraction(null), null);
+    assert.equal(sanitizeExtraction('イブ'), null);
+    assert.equal(sanitizeExtraction({ ...extraction, ingredients: 'イブプロフェン' }), null);
+  });
+
+  it('長さと件数を切る', () => {
+    const long = 'あ'.repeat(MAX_FIELD_LEN + 50);
+    const result = sanitizeExtraction({
+      ...extraction,
+      product_name: long,
+      ingredients: [long, ...Array.from({ length: 100 }, (_, i) => `成分${i}`)],
+    });
+    assert.equal(result?.product_name?.length, MAX_FIELD_LEN);
+    assert.equal(result?.ingredients.length, 30);
+    assert.equal(result?.ingredients[0].length, MAX_FIELD_LEN);
+  });
+
+  it('空の成分名は落とす', () => {
+    const result = sanitizeExtraction({ ...extraction, ingredients: ['', '  ', 'イブプロフェン'] });
+    assert.deepEqual(result?.ingredients, ['イブプロフェン']);
+  });
+});
+
+describe('判定APIの入力の振り分け', () => {
+  const extraction = {
+    product_name: null,
+    category: '市販薬',
+    form: '錠剤',
+    ingredients: ['イブプロフェン'],
+    confidence: 'medium',
+  };
+
+  it('extraction があれば読み取りを飛ばす', () => {
+    const input = parseAnalyzeInput({ extraction });
+    assert.equal(input.kind, 'extraction');
+  });
+
+  it('両方あれば extraction を優先する', () => {
+    const input = parseAnalyzeInput({ extraction, image: 'data:image/jpeg;base64,AAAA' });
+    assert.equal(input.kind, 'extraction');
+  });
+
+  it('画像だけなら読み取りから', () => {
+    const input = parseAnalyzeInput({ image: 'data:image/jpeg;base64,AAAA' });
+    assert.equal(input.kind, 'image');
+  });
+
+  it('extraction が壊れていたら画像に落とさず弾く', () => {
+    const input = parseAnalyzeInput({
+      extraction: { ...extraction, category: '処方薬' },
+      image: 'data:image/jpeg;base64,AAAA',
+    });
+    assert.equal(input.kind, 'invalid');
+  });
+
+  it('どちらも無ければ弾く', () => {
+    assert.equal(parseAnalyzeInput({}).kind, 'invalid');
   });
 });
