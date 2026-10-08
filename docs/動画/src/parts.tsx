@@ -189,7 +189,55 @@ export const Phone = ({
             ))}
           </div>
         )}
+        {/* 画面収録には録画中の印と撮った時刻が写るので、きれいな状態バーで覆う */}
+        {media?.kind === "video" && <StatusBar w={w} />}
       </div>
+    </div>
+  );
+};
+
+/** 状態バー（iPhone の画面収録の上端 186/2622 と同じ高さ） */
+const StatusBar = ({ w }: { w: number }) => {
+  const h = (SCREEN_H * 186) / 2622;
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: 0,
+        right: 0,
+        top: 0,
+        height: h,
+        background: C.white,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: `0 ${w * 0.09}px`,
+        fontFamily: FONT,
+        fontWeight: 600,
+        fontSize: 19,
+        color: C.ink,
+      }}
+    >
+      <span style={{ width: w * 0.2, textAlign: "center" }}>9:41</span>
+      <span style={{ width: w * 0.3, height: 26, borderRadius: 13, background: "#000" }} />
+      <span style={{ width: w * 0.2, display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 3 }}>
+        {[7, 10, 13, 16].map((bh) => (
+          <span key={bh} style={{ width: 4, height: bh, borderRadius: 1, background: C.ink }} />
+        ))}
+        <span
+          style={{
+            marginLeft: 6,
+            width: 26,
+            height: 13,
+            borderRadius: 4,
+            border: `2px solid ${C.ink}`,
+            padding: 1.5,
+            display: "flex",
+          }}
+        >
+          <span style={{ flex: 1, borderRadius: 1.5, background: C.ink }} />
+        </span>
+      </span>
     </div>
   );
 };
