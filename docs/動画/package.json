@@ -1,0 +1,21 @@
+{
+  "name": "overlai-booth-video",
+  "private": true,
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "remotion render Booth out/Overlai_ブース動画.mp4",
+    "still": "remotion still Booth out/still.png"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.527",
+    "@remotion/google-fonts": "4.0.527",
+    "@remotion/transitions": "4.0.527",
+    "remotion": "4.0.527",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "typescript": "^5"
+  }
+}

@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // テストのコンパイル出力（npm test が毎回作り直す）
     ".test-build/**",
+    // ブース動画（Remotion）は別の package.json で動く
+    "docs/動画/**",
   ]),
 ]);
 

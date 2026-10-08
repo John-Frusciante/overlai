@@ -1,0 +1,4 @@
+node_modules/
+out/
+# フォントは fonts.sh で取ってくる（9MB あるのでコミットしない）
+public/fonts/
