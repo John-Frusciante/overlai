@@ -2,3 +2,6 @@ node_modules/
 out/
 # フォントは fonts.sh で取ってくる（9MB あるのでコミットしない）
 public/fonts/
+# 撮った録画（重いのでコミットしない）。raw/ に全部置き、使う区間だけ public/footage/ に切り出す
+raw/
+public/footage/
