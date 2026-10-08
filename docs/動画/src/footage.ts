@@ -29,7 +29,10 @@ export type Media = {
 // 録画は raw/ の元ファイルから、使うものだけを H.264（幅720）にして public/footage/ に置いている
 const IPHONE = 720 / 1566;
 
-export const FOOTAGE: Record<"register" | "scan" | "yellow" | "red" | "routine" | "personal", Media | null> = {
+export const FOOTAGE: Record<
+  "register" | "stock" | "dose" | "scan" | "blue" | "yellow" | "red" | "evidence" | "routine" | "personal",
+  Media | null
+> = {
   // R1 家で：ハダラボモイスト化粧水d を撮って登録する
   register: {
     kind: "video",
@@ -42,16 +45,41 @@ export const FOOTAGE: Record<"register" | "scan" | "yellow" | "red" | "routine" 
       { from: 22.5, to: 31, rate: 8 }, // 追加して一覧へ
     ],
   },
+  // マイストックの一覧（開封後の目安・残りわずかの知らせ → 種類ごとの一覧）
+  stock: {
+    kind: "video",
+    src: "footage/r0-stock.mp4",
+    aspect: IPHONE,
+    cuts: [{ from: 0.3, to: 16.5, rate: 2 }],
+  },
+  // 登録：ディアナチュラ ビタミンC。飲む時間（朝・夜）と1回の量まで設定して一覧へ
+  dose: {
+    kind: "video",
+    src: "footage/r1b-dose.mp4",
+    aspect: IPHONE,
+    cuts: [
+      { from: 23.6, to: 26.0, rate: 3 }, // 読み取り結果
+      { from: 26.0, to: 34.8, rate: 2.4 }, // 飲むタイミングと1回の量
+      { from: 34.8, to: 40 }, // 一覧へ
+    ],
+  },
   // R2 店で：カロナールA の成分表示を撮って、判定が出るまで
   scan: {
     kind: "video",
     src: "footage/r2-scan-yellow.mp4",
     aspect: IPHONE,
     cuts: [
-      { from: 0.5, to: 8.4, rate: 2.2 }, // 棚から箱を取って撮る
-      { from: 8.4, to: 16.9, rate: 5 }, // 読み取り → 家の在庫と照合
+      { from: 0.5, to: 8.4, rate: 2.5 }, // 棚から箱を取って撮る
+      { from: 8.4, to: 16.9, rate: 6 }, // 読み取り → 家の在庫と照合
       { from: 16.9, to: 19 }, // 判定カードが出る
     ],
+  },
+  // 🔵 化粧水（保湿中心）。家の処方薬とも化粧水とも重ならない
+  blue: {
+    kind: "video",
+    src: "footage/r3b-blue.mp4",
+    aspect: IPHONE,
+    cuts: [{ from: 15.8, to: 21.7 }],
   },
   // R3 🟡 カロナールA（アセトアミノフェン）× 家のイブA錠（イブプロフェン）。同じ解熱鎮痛の用途
   yellow: {
@@ -65,14 +93,21 @@ export const FOOTAGE: Record<"register" | "scan" | "yellow" | "red" | "routine" 
     kind: "video",
     src: "footage/r4-red.mp4",
     aspect: IPHONE,
-    cuts: [{ from: 20.9, to: 29.3, rate: 1.2 }],
+    cuts: [{ from: 20.9, to: 24.4, rate: 0.55 }],
+  },
+  // 🔴の続き：「根拠を見る」を開き、エタノール・メントール・カンフルの理由と PMDA への入り口を見せる
+  evidence: {
+    kind: "video",
+    src: "footage/r4-red.mp4",
+    aspect: IPHONE,
+    cuts: [{ from: 24.4, to: 28.4, rate: 0.45 }],
   },
   // R5 今日のルーティン（服薬チェック → 洗う順番・塗る順番）
   routine: {
     kind: "video",
     src: "footage/r5-routine.mp4",
     aspect: IPHONE,
-    cuts: [{ from: 0.5, to: 12, rate: 1.9 }],
+    cuts: [{ from: 0.5, to: 11.9, rate: 1.6 }],
   },
   // R6 肌質の設定で悩みを書く → ルーティンのAIの一言がその悩みに沿う
   personal: {

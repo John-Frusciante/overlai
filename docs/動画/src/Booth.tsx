@@ -31,7 +31,7 @@ const SCENES: { id: string; d: number; next: "fade" | "slide"; el: (d: number) =
   { id: "hook", d: sec(5.5), next: "fade", el: () => <Hook /> },
   { id: "logo", d: sec(5.0), next: "fade", el: () => <Logo /> },
   {
-    id: "register", d: sec(8.0),
+    id: "register", d: sec(8.5),
     next: "slide",
     el: (d) => (
       <Feature
@@ -46,7 +46,37 @@ const SCENES: { id: string; d: number; next: "fade" | "slide"; el: (d: number) =
     ),
   },
   {
-    id: "scan", d: sec(8.7),
+    id: "stock", d: sec(8.5),
+    next: "slide",
+    el: (d) => (
+      <Feature
+        tag="STEP 1｜家で"
+        title={["家にあるものが、", <><Mark color="#C7D2FE" delay={30}>ひと目で</Mark>わかる</>]}
+        sub={"開封後の目安や、残りが少ないものも\n知らせてくれる。"}
+        media={FOOTAGE.stock}
+        waiting="マイストック"
+        accent={C.navy}
+        duration={d}
+      />
+    ),
+  },
+  {
+    id: "dose", d: sec(6.0),
+    next: "slide",
+    el: (d) => (
+      <Feature
+        tag="STEP 1｜家で"
+        title={["飲む薬やサプリは、", <>飲む<Mark color="#C7D2FE" delay={30}>時間と量</Mark>も</>]}
+        sub={"朝・昼・夜のどこで飲むかと、1回の量を登録。\n毎日のチェックに使われる。"}
+        media={FOOTAGE.dose}
+        waiting="飲む時間の登録"
+        accent={C.navy}
+        duration={d}
+      />
+    ),
+  },
+  {
+    id: "scan", d: sec(7.5),
     next: "slide",
     el: (d) => (
       <Feature
@@ -62,7 +92,23 @@ const SCENES: { id: string; d: number; next: "fade" | "slide"; el: (d: number) =
     ),
   },
   {
-    id: "yellow", d: sec(6.8),
+    id: "blue", d: sec(5.2),
+    next: "slide",
+    el: (d) => (
+      <Feature
+        tag="判定は3色"
+        title={["問題がなさそうなら、", <><Mark color="#BFDBFE" delay={30}>青</Mark>で知らせる</>]}
+        sub={"家にあるものと重ならず、\n組み合わせの心配も見つからないとき。"}
+        media={FOOTAGE.blue}
+        waiting="🔵の判定画面"
+        accent={C.blue}
+        duration={d}
+        extra={<Verdict color={C.blue} label="買っても問題なさそう" delay={sec(1.2)} />}
+      />
+    ),
+  },
+  {
+    id: "yellow", d: sec(7.2),
     next: "slide",
     el: (d) => (
       <Feature
@@ -78,7 +124,7 @@ const SCENES: { id: string; d: number; next: "fade" | "slide"; el: (d: number) =
     ),
   },
   {
-    id: "red", d: sec(5.8),
+    id: "red", d: sec(6.4),
     next: "slide",
     el: (d) => (
       <Feature
@@ -94,7 +140,22 @@ const SCENES: { id: string; d: number; next: "fade" | "slide"; el: (d: number) =
     ),
   },
   {
-    id: "routine", d: sec(6.0),
+    id: "evidence", d: sec(9.0),
+    next: "slide",
+    el: (d) => (
+      <Feature
+        tag="安全のために"
+        title={["理由には、", <><Mark color="#C7D2FE" delay={30}>成分名と出典</Mark>を添える</>]}
+        sub={"家のどの薬と、どの成分が関係するかを示す。\n成分をたどれない理由は表示しない。"}
+        media={FOOTAGE.evidence}
+        waiting="根拠の画面"
+        accent={C.navy}
+        duration={d}
+      />
+    ),
+  },
+  {
+    id: "routine", d: sec(7.0),
     next: "slide",
     el: (d) => (
       <Feature
@@ -109,7 +170,7 @@ const SCENES: { id: string; d: number; next: "fade" | "slide"; el: (d: number) =
     ),
   },
   {
-    id: "personal", d: sec(6.4),
+    id: "personal", d: sec(7.2),
     next: "fade",
     el: (d) => (
       <Feature
