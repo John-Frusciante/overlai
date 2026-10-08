@@ -5,6 +5,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { gate } from "./gate.mjs";
 
 const HERE = join(dirname(fileURLToPath(import.meta.url)), "..");
 const MODEL = "gemini-3.8-flash-tts";
@@ -69,7 +70,8 @@ for (const { scene, text } of lines) {
   const data = await speak(text);
   const b64 = data.candidates?.[0]?.content?.parts?.find((p) => p.inlineData)?.inlineData?.data;
   if (!b64) throw new Error(`${scene}: 音声が返ってこない ${JSON.stringify(data).slice(0, 300)}`);
-  const pcm = Buffer.from(b64, "base64");
+  // 文の切れ目の息のノイズを消してから書き出す
+  const pcm = gate(Buffer.from(b64, "base64"), RATE);
   writeFileSync(join(HERE, `public/narration/${scene}.wav`), wav(pcm));
   console.log(`${scene}\t${(pcm.length / 2 / RATE).toFixed(2)}秒\t${text}`);
 }
