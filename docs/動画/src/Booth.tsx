@@ -66,7 +66,7 @@ const SCENES: { d: number; next: "fade" | "slide"; el: (d: number) => ReactEleme
       <Feature
         tag="できること 1｜重複"
         title={["名前が違っても、", <>同じ<Mark color="#FDE68A" delay={30}>働きの薬</Mark>に気づける</>]}
-        sub={"風邪薬と頭痛薬のように、別の薬でも\n成分がかぶっていれば知らせる。"}
+        sub={"解熱鎮痛薬どうしのように、成分が違っても\n同じ用途の薬が家にあれば知らせる。"}
         media={FOOTAGE.yellow}
         waiting="R3 🟡の判定画面"
         accent={C.amber}
@@ -118,7 +118,7 @@ const SCENES: { d: number; next: "fade" | "slide"; el: (d: number) => ReactEleme
         waiting={"R6\n悩みを書く →\nAIの一言が変わる"}
         accent={C.blue}
         duration={d}
-        extra={<NoteCard text="夜は時間がないので手早く済ませたいです。" delay={sec(1.4)} />}
+        extra={<NoteCard text="朝は時間がないため手早く済ませたいです。" delay={sec(1.4)} />}
       />
     ),
   },

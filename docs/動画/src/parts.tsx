@@ -3,6 +3,7 @@ import {
   Easing,
   Img,
   OffthreadVideo,
+  Series,
   interpolate,
   spring,
   staticFile,
@@ -179,13 +180,7 @@ export const Phone = ({
         ) : (
           <div style={{ position: "absolute", inset: 0, transform: `scale(${zoom})`, transformOrigin: "50% 30%" }}>
             {media.kind === "video" ? (
-              <OffthreadVideo
-                src={staticFile(media.src)}
-                trimBefore={sec(media.from ?? 0)}
-                playbackRate={media.rate ?? 1}
-                muted
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
+              <Clips media={media} duration={duration} />
             ) : (
               <Img src={staticFile(media.src)} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             )}
@@ -196,6 +191,33 @@ export const Phone = ({
         )}
       </div>
     </div>
+  );
+};
+
+/** 録画の区間を順につなぐ。最後の区間は場面の終わりまで流す */
+const Clips = ({ media, duration }: { media: Media; duration: number }) => {
+  const cuts = media.cuts ?? [{ from: 0, to: Infinity }];
+  let used = 0;
+  return (
+    <Series>
+      {cuts.map((c, i) => {
+        const rate = c.rate ?? 1;
+        const last = i === cuts.length - 1;
+        const len = last ? Math.max(1, duration - used) : Math.max(1, sec((c.to - c.from) / rate));
+        used += len;
+        return (
+          <Series.Sequence key={i} durationInFrames={len}>
+            <OffthreadVideo
+              src={staticFile(media.src)}
+              trimBefore={sec(c.from)}
+              playbackRate={rate}
+              muted
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          </Series.Sequence>
+        );
+      })}
+    </Series>
   );
 };
 
