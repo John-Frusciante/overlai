@@ -66,6 +66,7 @@ function Preview() {
           stock={stock}
           profile={profile}
           onClose={() => setSignal(null)}
+          onHome={() => setSignal(null)}
         />
       )}
     </main>

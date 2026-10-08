@@ -433,6 +433,7 @@ function Scanner() {
             setStale(null);
             setPhase('idle');
           }}
+          onHome={() => router.push('/')}
         />
       )}
     </main>

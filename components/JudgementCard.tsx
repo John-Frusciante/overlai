@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   ChevronDown,
   ExternalLink,
+  House,
   Loader2,
   PackagePlus,
   Stethoscope,
@@ -41,6 +42,7 @@ export function JudgementCard({
   pending = false,
   removed = null,
   stale = null,
+  onHome,
 }: {
   result: AnalyzeResponse;
   stock: StockItem[];
@@ -56,6 +58,8 @@ export function JudgementCard({
   removed?: { name: string; onUndo: () => void } | null;
   /** 判定が今の在庫に合っていないときの説明。あれば色を灰色にする */
   stale?: string | null;
+  /** 下の大きなボタン。判定を読み終えたあとの行き先 */
+  onHome: () => void;
 }) {
   const [open, setOpen] = useState(false);
   /** ヒーローが画面から出たか。出たら細いヘッダーに切り替える */
@@ -407,11 +411,27 @@ export function JudgementCard({
         </p>
       </div>
 
-      {/* 相談導線 — 全判定色で常設（FR-10） */}
+      {/* 相談導線 — 全判定色で常設（FR-10）。
+          以前は「相談する」ボタンだったが、押しても行き先が無かった。
+          押して何も起きないボタンは置かず、相談の呼びかけは文で常に見せる。
+          相談が勧められる判定（🔴は必ず。lib/verify.ts）では、呼びかけを強める */}
       <div className="fixed inset-x-0 bottom-0 border-t border-line bg-surface/92 px-5 pb-safe pt-3 backdrop-blur-xl">
-        <button className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand py-3.5 text-[15px] font-semibold text-white shadow-e2 transition-transform active:scale-[0.985] active:bg-brand-soft">
-          <Stethoscope size={17} strokeWidth={2} />
-          薬剤師・皮膚科に相談する
+        <p
+          className={`mb-2.5 flex items-center justify-center gap-1.5 text-[12.5px] ${
+            judgement.consult_recommended ? 'font-semibold text-ink' : 'text-muted'
+          }`}
+        >
+          <Stethoscope size={14} strokeWidth={2} className="shrink-0" />
+          {judgement.consult_recommended
+            ? '使う前に、薬剤師・皮膚科への相談をおすすめします'
+            : '気になるときは、薬剤師・皮膚科にご相談ください'}
+        </p>
+        <button
+          onClick={onHome}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand py-3.5 text-[15px] font-semibold text-white shadow-e2 transition-transform active:scale-[0.985] active:bg-brand-soft"
+        >
+          <House size={17} strokeWidth={2} />
+          ホームに戻る
         </button>
       </div>
 
