@@ -4,7 +4,7 @@ import { slide } from "@remotion/transitions/slide";
 import type { ReactElement } from "react";
 import { AbsoluteFill, Audio, interpolate, staticFile } from "remotion";
 import { BGM, FOOTAGE } from "./footage";
-import { End, Feature, Hook, Logo, Mark, Pillars, Verdict } from "./scenes";
+import { End, Feature, Hook, Logo, Mark, NoteCard, Pillars, Verdict } from "./scenes";
 import { C, FONT, sec } from "./theme";
 
 const T = 12; // 場面のつなぎ（フレーム）
@@ -26,10 +26,10 @@ const Legend = () => (
 
 // 場面の並びと長さ。ここを入れ替えれば構成が変わる
 const SCENES: { d: number; next: "fade" | "slide"; el: (d: number) => ReactElement }[] = [
-  { d: sec(5.5), next: "fade", el: () => <Hook /> },
+  { d: sec(5), next: "fade", el: () => <Hook /> },
   { d: sec(4), next: "fade", el: () => <Logo /> },
   {
-    d: sec(8),
+    d: sec(7),
     next: "slide",
     el: (d) => (
       <Feature
@@ -44,7 +44,7 @@ const SCENES: { d: number; next: "fade" | "slide"; el: (d: number) => ReactEleme
     ),
   },
   {
-    d: sec(8),
+    d: sec(7.5),
     next: "slide",
     el: (d) => (
       <Feature
@@ -60,7 +60,7 @@ const SCENES: { d: number; next: "fade" | "slide"; el: (d: number) => ReactEleme
     ),
   },
   {
-    d: sec(8),
+    d: sec(7),
     next: "slide",
     el: (d) => (
       <Feature
@@ -76,7 +76,7 @@ const SCENES: { d: number; next: "fade" | "slide"; el: (d: number) => ReactEleme
     ),
   },
   {
-    d: sec(8),
+    d: sec(7),
     next: "slide",
     el: (d) => (
       <Feature
@@ -92,8 +92,8 @@ const SCENES: { d: number; next: "fade" | "slide"; el: (d: number) => ReactEleme
     ),
   },
   {
-    d: sec(8.5),
-    next: "fade",
+    d: sec(7),
+    next: "slide",
     el: (d) => (
       <Feature
         tag="できること 3｜使う順番"
@@ -106,8 +106,24 @@ const SCENES: { d: number; next: "fade" | "slide"; el: (d: number) => ReactEleme
       />
     ),
   },
-  { d: sec(6), next: "fade", el: () => <Pillars /> },
-  { d: sec(7.2), next: "fade", el: () => <End /> },
+  {
+    d: sec(8),
+    next: "fade",
+    el: (d) => (
+      <Feature
+        tag="できること 4｜パーソナライズ"
+        title={["悩みまで伝えると、", <>その人に<Mark color="#BFDBFE" delay={30}>合った使い方</Mark>に</>]}
+        sub={"肌質や年代に加えて、自分の言葉で書いた悩みも\nAIの一言に反映される。"}
+        media={FOOTAGE.personal}
+        waiting={"R6\n悩みを書く →\nAIの一言が変わる"}
+        accent={C.blue}
+        duration={d}
+        extra={<NoteCard text="夜は時間がないので手早く済ませたいです。" delay={sec(1.4)} />}
+      />
+    ),
+  },
+  { d: sec(5), next: "fade", el: () => <Pillars /> },
+  { d: sec(6.1), next: "fade", el: () => <End /> },
 ];
 
 export const TOTAL = SCENES.reduce((a, s) => a + s.d, 0) - T * (SCENES.length - 1);

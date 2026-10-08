@@ -24,7 +24,7 @@ export type Media = {
 };
 
 // null の場面は「素材待ち」の札を出す
-export const FOOTAGE: Record<"register" | "scan" | "yellow" | "red" | "routine", Media | null> = {
+export const FOOTAGE: Record<"register" | "scan" | "yellow" | "red" | "routine" | "personal", Media | null> = {
   // R1 家で：薬・化粧品を撮って登録する
   register: null,
   // R2 店で：商品の成分表示を撮って、判定が出るまで
@@ -56,6 +56,8 @@ export const FOOTAGE: Record<"register" | "scan" | "yellow" | "red" | "routine",
     aspect: 1170 / 2420,
     rings: [{ l: 0.018, t: 0.096, w: 0.13, h: 0.734, label: "塗る順番", at: 1.8 }],
   },
+  // R6 肌質の設定で悩みを書く → ルーティンに戻ると、AIの一言がその悩みに沿って変わる
+  personal: null,
 };
 
 // BGM。public/ に置いたファイル名を書く（null なら無音）

@@ -225,6 +225,39 @@ export const Feature = ({
 
 export { Mark, Verdict };
 
+/** 自分の言葉で書いた悩み（肌質の設定の「気になっていること」）を、入力欄の形で見せる */
+export const NoteCard = ({ text, delay }: { text: string; delay: number }) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const p = spring({ frame: frame - delay, fps, config: { damping: 15 } });
+  // 一文字ずつ打ち込まれるように見せる
+  const shown = Math.floor(interpolate(frame, [delay + 8, delay + 8 + text.length * 2], [0, text.length], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  }));
+  return (
+    <div
+      style={{
+        width: 820,
+        padding: "22px 30px",
+        borderRadius: 24,
+        background: C.white,
+        border: `2px solid ${C.line}`,
+        boxShadow: "0 12px 30px rgba(27, 42, 74, 0.08)",
+        transform: `translateY(${(1 - p) * 40}px)`,
+        opacity: p,
+        ...base,
+      }}
+    >
+      <div style={{ fontSize: 22, fontWeight: 700, color: C.faint }}>気になっていること</div>
+      <div style={{ marginTop: 8, fontSize: 30, fontWeight: 500, color: C.ink, lineHeight: 1.6, minHeight: 48 }}>
+        {text.slice(0, shown)}
+        <span style={{ opacity: Math.floor(frame / 15) % 2 ? 0 : 1, color: C.blue }}>｜</span>
+      </div>
+    </div>
+  );
+};
+
 // ---------------------------------------------------------------- 8. 目指すこと
 
 const Pillar = ({ head, body, delay }: { head: string; body: string; delay: number }) => {
