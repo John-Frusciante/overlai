@@ -88,5 +88,7 @@ export const FOOTAGE: Record<"register" | "scan" | "yellow" | "red" | "routine" 
   },
 };
 
-// BGM。public/ に置いたファイル名を書く（null なら無音）
-export const BGM: string | null = null;
+// BGM。public/ に置いたファイル名を書く（null なら無音）。
+// 「週末京都現実逃避」written by しゃろう（OpenTracks・旧DOVA-SYNDROME）のトラック2（ループ用）
+// https://opentracks.com/bgm/detail/10943 からダウンロードし、public/audio/bgm.mp3 として置く
+export const BGM: string | null = "audio/bgm.mp3";

@@ -41,7 +41,11 @@ register: { kind: "video", src: "footage/r1.mov", aspect: 1179 / 2556, from: 2, 
 
 `from` は録画の何秒目から使うか、`rate` は再生速度。R2 のAI待ちを詰めるときは `rate` を上げる。
 
-BGM は `public/` に mp3 を置き、`src/footage.ts` の `BGM` にファイル名を書く。DOVA-SYNDROME など、クレジット表記なしで使えるフリー音源を選ぶ。
+## BGM を用意する
+
+曲は「週末京都現実逃避」（作曲：しゃろう）。[OpenTracks（旧DOVA-SYNDROME）の配布ページ](https://opentracks.com/bgm/detail/10943/download)で「トラック2（ループ）」を選んでダウンロードし、`public/audio/bgm.mp3` として置く。置かないと書き出しが失敗する。
+
+mp3 はコミットしない（`.gitignore` 済み）。サイトの規約が音源ファイルそのものの配布を禁じているため。イベントでの使用は認められていて、クレジット表記もいらない。
 
 ## 見る・書き出す
 

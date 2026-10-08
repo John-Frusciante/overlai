@@ -152,7 +152,8 @@ export const Booth = () => (
       <Audio
         src={staticFile(BGM)}
         volume={(f) =>
-          interpolate(f, [0, 20, TOTAL - 40, TOTAL], [0, 0.6, 0.6, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })
+          // 頭は短く入り、最後は締めの場面に合わせてゆっくり消す（ループ再生でつなぎ目を目立たせない）
+          interpolate(f, [0, 10, TOTAL - 60, TOTAL - 6], [0, 0.5, 0.5, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })
         }
       />
     )}
