@@ -4,7 +4,7 @@ import { slide } from "@remotion/transitions/slide";
 import type { ReactElement } from "react";
 import { AbsoluteFill, Audio, Sequence, interpolate, staticFile } from "remotion";
 import narration from "../narration.json";
-import { BGM, FOOTAGE } from "./footage";
+import { BGM, FOOTAGE, clipSeconds } from "./footage";
 import { End, Feature, Hook, Logo, Mark, NoteCard, Pillars, Verdict } from "./scenes";
 import { C, FONT, sec } from "./theme";
 
@@ -31,7 +31,7 @@ const SCENES: { id: string; d: number; next: "fade" | "slide"; el: (d: number) =
   { id: "hook", d: sec(5.7), next: "fade", el: () => <Hook /> },
   { id: "logo", d: sec(5.0), next: "fade", el: () => <Logo /> },
   {
-    id: "register", d: sec(8.5),
+    id: "register", d: sec(clipSeconds(FOOTAGE.register)),
     next: "slide",
     el: (d) => (
       <Feature
@@ -46,7 +46,7 @@ const SCENES: { id: string; d: number; next: "fade" | "slide"; el: (d: number) =
     ),
   },
   {
-    id: "stock", d: sec(8.5),
+    id: "stock", d: sec(clipSeconds(FOOTAGE.stock)),
     next: "slide",
     el: (d) => (
       <Feature
@@ -61,7 +61,7 @@ const SCENES: { id: string; d: number; next: "fade" | "slide"; el: (d: number) =
     ),
   },
   {
-    id: "dose", d: sec(6.0),
+    id: "dose", d: sec(clipSeconds(FOOTAGE.dose)),
     next: "slide",
     el: (d) => (
       <Feature
@@ -76,7 +76,7 @@ const SCENES: { id: string; d: number; next: "fade" | "slide"; el: (d: number) =
     ),
   },
   {
-    id: "scan", d: sec(7.5),
+    id: "scan", d: sec(clipSeconds(FOOTAGE.scan)),
     next: "slide",
     el: (d) => (
       <Feature
@@ -92,7 +92,7 @@ const SCENES: { id: string; d: number; next: "fade" | "slide"; el: (d: number) =
     ),
   },
   {
-    id: "blue", d: sec(5.2),
+    id: "blue", d: sec(clipSeconds(FOOTAGE.blue)),
     next: "slide",
     el: (d) => (
       <Feature
@@ -108,7 +108,7 @@ const SCENES: { id: string; d: number; next: "fade" | "slide"; el: (d: number) =
     ),
   },
   {
-    id: "yellow", d: sec(7.2),
+    id: "yellow", d: sec(clipSeconds(FOOTAGE.yellow)),
     next: "slide",
     el: (d) => (
       <Feature
@@ -124,7 +124,7 @@ const SCENES: { id: string; d: number; next: "fade" | "slide"; el: (d: number) =
     ),
   },
   {
-    id: "red", d: sec(6.4),
+    id: "red", d: sec(clipSeconds(FOOTAGE.red)),
     next: "slide",
     el: (d) => (
       <Feature
@@ -140,7 +140,7 @@ const SCENES: { id: string; d: number; next: "fade" | "slide"; el: (d: number) =
     ),
   },
   {
-    id: "evidence", d: sec(9.0),
+    id: "evidence", d: sec(clipSeconds(FOOTAGE.evidence)),
     next: "slide",
     el: (d) => (
       <Feature
@@ -155,7 +155,7 @@ const SCENES: { id: string; d: number; next: "fade" | "slide"; el: (d: number) =
     ),
   },
   {
-    id: "routine", d: sec(7.0),
+    id: "routine", d: sec(clipSeconds(FOOTAGE.routine)),
     next: "slide",
     el: (d) => (
       <Feature
@@ -170,7 +170,7 @@ const SCENES: { id: string; d: number; next: "fade" | "slide"; el: (d: number) =
     ),
   },
   {
-    id: "personal", d: sec(7.2),
+    id: "personal", d: sec(clipSeconds(FOOTAGE.personal)),
     next: "fade",
     el: (d) => (
       <Feature
