@@ -9,7 +9,7 @@ import { gate } from "./gate.mjs";
 
 const HERE = join(dirname(fileURLToPath(import.meta.url)), "..");
 const MODEL = "gemini-3.8-flash-tts";
-const RATE = 24000; // Gemini TTS は 24kHz・16bit・モノラルの PCM を返す
+const RATE = 24000; // 生の PCM で返ってきたときの標本化周波数（24kHz・16bit・モノラル）
 
 const env = readFileSync(join(HERE, "../../.env.local"), "utf8");
 const key = env.match(/^GEMINI_API_KEY=(.*)$/m)?.[1]?.trim().replace(/^["']|["']$/g, "");
@@ -19,7 +19,32 @@ const { voice, lines } = JSON.parse(readFileSync(join(HERE, "narration.json"), "
 const only = process.argv.slice(2);
 mkdirSync(join(HERE, "public/narration"), { recursive: true });
 
-function wav(pcm) {
+/**
+ * 返ってきた音声から PCM だけを取り出す。
+ * モデルによって、生の PCM を返すものと WAV ファイルごと返すものがある。gemini-3.8-flash-tts は後者で、
+ * 末尾に生成元を示すメタデータ（IPTC の digitalSourceType など）の塊が付いている。
+ * これを PCM として扱うと、頭のヘッダーと末尾のメタデータが「ザッ」という雑音になる（実際になった）。
+ */
+function pcmFrom(buf) {
+  if (buf.toString("ascii", 0, 4) !== "RIFF") return { pcm: buf, rate: RATE };
+  let off = 12, rate = RATE, pcm = null;
+  while (off + 8 <= buf.length) {
+    const id = buf.toString("ascii", off, off + 4);
+    const size = buf.readUInt32LE(off + 4);
+    if (id === "fmt ") {
+      const channels = buf.readUInt16LE(off + 10);
+      const bits = buf.readUInt16LE(off + 22);
+      if (channels !== 1 || bits !== 16) throw new Error(`想定外の形式: ${channels}ch ${bits}bit`);
+      rate = buf.readUInt32LE(off + 12);
+    }
+    if (id === "data") pcm = buf.subarray(off + 8, off + 8 + size);
+    off += 8 + size + (size & 1);
+  }
+  if (!pcm) throw new Error("WAV に data が無い");
+  return { pcm, rate };
+}
+
+function wav(pcm, rate) {
   const h = Buffer.alloc(44);
   h.write("RIFF", 0);
   h.writeUInt32LE(36 + pcm.length, 4);
@@ -27,8 +52,8 @@ function wav(pcm) {
   h.writeUInt32LE(16, 16);
   h.writeUInt16LE(1, 20); // PCM
   h.writeUInt16LE(1, 22); // モノラル
-  h.writeUInt32LE(RATE, 24);
-  h.writeUInt32LE(RATE * 2, 28);
+  h.writeUInt32LE(rate, 24);
+  h.writeUInt32LE(rate * 2, 28);
   h.writeUInt16LE(2, 32);
   h.writeUInt16LE(16, 34);
   h.write("data", 36);
@@ -70,8 +95,9 @@ for (const { scene, text } of lines) {
   const data = await speak(text);
   const b64 = data.candidates?.[0]?.content?.parts?.find((p) => p.inlineData)?.inlineData?.data;
   if (!b64) throw new Error(`${scene}: 音声が返ってこない ${JSON.stringify(data).slice(0, 300)}`);
+  const { pcm: raw, rate } = pcmFrom(Buffer.from(b64, "base64"));
   // 文の切れ目の息のノイズを消してから書き出す
-  const pcm = gate(Buffer.from(b64, "base64"), RATE);
-  writeFileSync(join(HERE, `public/narration/${scene}.wav`), wav(pcm));
-  console.log(`${scene}\t${(pcm.length / 2 / RATE).toFixed(2)}秒\t${text}`);
+  const pcm = gate(raw, rate);
+  writeFileSync(join(HERE, `public/narration/${scene}.wav`), wav(pcm, rate));
+  console.log(`${scene}\t${(pcm.length / 2 / rate).toFixed(2)}秒\t${text}`);
 }
