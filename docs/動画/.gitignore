@@ -5,5 +5,5 @@ public/fonts/
 # 撮った録画（重いのでコミットしない）。raw/ に全部置き、使う区間だけ public/footage/ に切り出す
 raw/
 public/footage/
-# BGM（OpenTracks の素材）。ライセンス上、音源ファイルそのものを配布できないのでコミットしない
+# BGM を置く場所（いまは無音）。OpenTracks などの素材は規約上配布できないのでコミットしない
 public/audio/
