@@ -110,11 +110,11 @@ export const Hook = () => {
   return (
     <AbsoluteFill style={{ background: C.white }}>
       {people("img/people-1.png", 160, 360, 0)}
-      {people("img/people-2.png", 1330, 500, sec(1.5))}
-      <Bubble text="家に、同じような薬あったっけ？" x={700} y={300} tail={0.12} delay={sec(0.3)} />
-      <Bubble text="薬を塗った肌に、使っていい？" x={1200} y={560} tail={0.82} delay={sec(1.9)} />
+      {people("img/people-2.png", 1330, 500, sec(2.3))}
+      <Bubble text="家に、同じような薬あったっけ？" x={700} y={300} tail={0.12} delay={sec(1.0)} />
+      <Bubble text="薬を塗った肌に、使っていい？" x={1200} y={560} tail={0.82} delay={sec(2.6)} />
       <div style={{ position: "absolute", left: 0, right: 0, top: 120, textAlign: "center" }}>
-        <Reveal delay={sec(3.4)}>
+        <Reveal delay={sec(0.2)}>
           <span style={{ ...base, fontSize: 40, fontWeight: 700, color: C.muted }}>
             薬や化粧品を買うとき、こんな迷いはありませんか？
           </span>
@@ -259,6 +259,7 @@ export const NoteCard = ({ text, delay }: { text: string; delay: number }) => {
 };
 
 // ---------------------------------------------------------------- 8. 目指すこと
+// カードはナレーションの「買い重ねる前に／塗り重ねる前に／一緒に飲む前に」に合わせて出す
 
 const Pillar = ({ head, body, delay }: { head: string; body: string; delay: number }) => {
   const frame = useCurrentFrame();
@@ -290,9 +291,9 @@ export const Pillars = () => (
       <span style={{ ...base, fontSize: 92, fontWeight: 900, color: C.navy }}>重ねる前に、重ねて見る。</span>
     </Reveal>
     <div style={{ display: "flex", gap: 44, marginTop: 80 }}>
-      <Pillar head="買い重ねる前に" body={"もう家にある？\n名前違いの同じ薬は？"} delay={18} />
-      <Pillar head="塗り重ねる前に" body={"一緒に使っていい？\nどれを先に塗る？"} delay={26} />
-      <Pillar head="一緒に飲む前に" body={"今飲んでいる薬と\n一緒で大丈夫？"} delay={34} />
+      <Pillar head="買い重ねる前に" body={"もう家にある？\n名前違いの同じ薬は？"} delay={sec(0.4)} />
+      <Pillar head="塗り重ねる前に" body={"一緒に使っていい？\nどれを先に塗る？"} delay={sec(2.2)} />
+      <Pillar head="一緒に飲む前に" body={"今飲んでいる薬と\n一緒で大丈夫？"} delay={sec(4.0)} />
     </div>
   </AbsoluteFill>
 );

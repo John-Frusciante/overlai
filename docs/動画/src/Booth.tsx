@@ -2,12 +2,14 @@ import { linearTiming, TransitionSeries } from "@remotion/transitions";
 import { fade } from "@remotion/transitions/fade";
 import { slide } from "@remotion/transitions/slide";
 import type { ReactElement } from "react";
-import { AbsoluteFill, Audio, interpolate, staticFile } from "remotion";
+import { AbsoluteFill, Audio, Sequence, interpolate, staticFile } from "remotion";
+import narration from "../narration.json";
 import { BGM, FOOTAGE } from "./footage";
 import { End, Feature, Hook, Logo, Mark, NoteCard, Pillars, Verdict } from "./scenes";
 import { C, FONT, sec } from "./theme";
 
 const T = 12; // 場面のつなぎ（フレーム）
+const VOICE_IN = 6; // 場面が始まってからナレーションが入るまで（フレーム）
 
 const Legend = () => (
   <div style={{ display: "flex", gap: 28, fontFamily: FONT, fontSize: 28, fontWeight: 700, color: C.ink }}>
@@ -25,11 +27,11 @@ const Legend = () => (
 );
 
 // 場面の並びと長さ。ここを入れ替えれば構成が変わる
-const SCENES: { d: number; next: "fade" | "slide"; el: (d: number) => ReactElement }[] = [
-  { d: sec(5), next: "fade", el: () => <Hook /> },
-  { d: sec(4), next: "fade", el: () => <Logo /> },
+const SCENES: { id: string; d: number; next: "fade" | "slide"; el: (d: number) => ReactElement }[] = [
+  { id: "hook", d: sec(5.5), next: "fade", el: () => <Hook /> },
+  { id: "logo", d: sec(5.0), next: "fade", el: () => <Logo /> },
   {
-    d: sec(7),
+    id: "register", d: sec(8.0),
     next: "slide",
     el: (d) => (
       <Feature
@@ -44,7 +46,7 @@ const SCENES: { d: number; next: "fade" | "slide"; el: (d: number) => ReactEleme
     ),
   },
   {
-    d: sec(7.5),
+    id: "scan", d: sec(8.7),
     next: "slide",
     el: (d) => (
       <Feature
@@ -60,7 +62,7 @@ const SCENES: { d: number; next: "fade" | "slide"; el: (d: number) => ReactEleme
     ),
   },
   {
-    d: sec(7),
+    id: "yellow", d: sec(6.8),
     next: "slide",
     el: (d) => (
       <Feature
@@ -76,7 +78,7 @@ const SCENES: { d: number; next: "fade" | "slide"; el: (d: number) => ReactEleme
     ),
   },
   {
-    d: sec(7),
+    id: "red", d: sec(5.8),
     next: "slide",
     el: (d) => (
       <Feature
@@ -92,7 +94,7 @@ const SCENES: { d: number; next: "fade" | "slide"; el: (d: number) => ReactEleme
     ),
   },
   {
-    d: sec(7),
+    id: "routine", d: sec(6.0),
     next: "slide",
     el: (d) => (
       <Feature
@@ -107,7 +109,7 @@ const SCENES: { d: number; next: "fade" | "slide"; el: (d: number) => ReactEleme
     ),
   },
   {
-    d: sec(8),
+    id: "personal", d: sec(6.4),
     next: "fade",
     el: (d) => (
       <Feature
@@ -122,11 +124,18 @@ const SCENES: { d: number; next: "fade" | "slide"; el: (d: number) => ReactEleme
       />
     ),
   },
-  { d: sec(5), next: "fade", el: () => <Pillars /> },
-  { d: sec(6.1), next: "fade", el: () => <End /> },
+  { id: "pillars", d: sec(6.0), next: "fade", el: () => <Pillars /> },
+  { id: "end", d: sec(5.2), next: "fade", el: () => <End /> },
 ];
 
 export const TOTAL = SCENES.reduce((a, s) => a + s.d, 0) - T * (SCENES.length - 1);
+
+/** 各場面の頭のフレーム（つなぎで重なる分を引く） */
+const START: Record<string, number> = {};
+SCENES.reduce((at, s) => {
+  START[s.id] = at;
+  return at + s.d - T;
+}, 0);
 
 export const Booth = () => (
   <AbsoluteFill style={{ background: C.white }}>
@@ -148,6 +157,12 @@ export const Booth = () => (
         ];
       })}
     </TransitionSeries>
+    {/* ナレーション（Gemini TTS。scripts/tts.mjs で public/narration/ に作る） */}
+    {narration.lines.map(({ scene }) => (
+      <Sequence key={scene} from={START[scene] + VOICE_IN}>
+        <Audio src={staticFile(`narration/${scene}.wav`)} />
+      </Sequence>
+    ))}
     {BGM && (
       <Audio
         src={staticFile(BGM)}

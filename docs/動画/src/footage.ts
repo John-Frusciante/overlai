@@ -72,7 +72,7 @@ export const FOOTAGE: Record<"register" | "scan" | "yellow" | "red" | "routine" 
     kind: "video",
     src: "footage/r5-routine.mp4",
     aspect: IPHONE,
-    cuts: [{ from: 0.5, to: 12, rate: 1.65 }],
+    cuts: [{ from: 0.5, to: 12, rate: 1.9 }],
   },
   // R6 肌質の設定で悩みを書く → ルーティンのAIの一言がその悩みに沿う
   personal: {
@@ -80,9 +80,9 @@ export const FOOTAGE: Record<"register" | "scan" | "yellow" | "red" | "routine" 
     src: "footage/r6-personal.mp4",
     aspect: IPHONE,
     cuts: [
-      { from: 0.5, to: 4.0, rate: 2 }, // 肌・頭皮の状態を選ぶ
-      { from: 4.0, to: 15.0, rate: 5 }, // 悩みを打つ
-      { from: 16.8, to: 21.5, rate: 3 }, // ルーティンへ。AIが一言を書く
+      { from: 0.5, to: 4.0, rate: 3 }, // 肌・頭皮の状態を選ぶ
+      { from: 4.0, to: 15.0, rate: 6 }, // 悩みを打つ
+      { from: 16.8, to: 21.5, rate: 4 }, // ルーティンへ。AIが一言を書く
       { from: 21.5, to: 27 }, // 一言が出る
     ],
   },
