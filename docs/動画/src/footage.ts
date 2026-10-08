@@ -117,7 +117,7 @@ export const FOOTAGE: Record<
     kind: "video",
     src: "footage/r4-red.mp4",
     aspect: IPHONE,
-    cuts: [{ from: 24.0, to: 28.4, rate: 0.5 }],
+    cuts: [{ from: 24.0, to: 28.4, rate: 0.9 }],
   },
   // R5 今日のルーティン（服薬チェック → 洗う順番・塗る順番）
   routine: {
