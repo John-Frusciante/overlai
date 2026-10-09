@@ -357,29 +357,116 @@ export function therapeuticClassOf(ingredient: string): TherapeuticClass | null 
   );
 }
 
+// 規則の引き当ては**組み合わせの両側**で行う（lib/verify.ts が使う）。
+//
+// 以前は成分名1つだけで出典を引いていた。イブプロフェンは「抗凝固薬 × NSAIDs」の
+// 市販薬側に載っているため、成分重複の理由にまで、在庫に無いワルファリンの添付文書名が
+// 付いていた（Issue #42）。規則を名乗ってよいのは、店頭側と在庫側の両方が
+// その規則に当てはまり、理由に書かれた成分もその規則に載っているときだけ。
+
+const hasAny = (ingredients: string[], examples: string[]) =>
+  ingredients.some((i) => examples.some((e) => matchesIngredient(i, e)));
+
 /**
- * 成分名から、根拠として示せる出典を引く。
- *
- * 判定理由に一次情報のあたりを付けるために使う（lib/verify.ts）。
- * どの表にも載っていない成分なら null を返す — 出典を捏造しないため。
+ * 店頭商品と在庫の成分の組に当てはまる吸収阻害の規則（無ければ null）。
+ * 妨げる側はどちらにあってもよい（在庫の鉄剤 × 店頭の抗菌薬もありうる）。
  */
-export function sourceForIngredient(ingredient: string): string | null {
-  for (const rule of INTERACTION_RULES) {
-    if (
-      rule.stock.examples.some((e) => matchesIngredient(ingredient, e)) ||
-      rule.otc.examples.some((e) => matchesIngredient(ingredient, e))
-    ) {
-      return rule.source;
+export function findAbsorptionRule(
+  ingredient: string,
+  product: string[],
+  stock: string[],
+): AbsorptionRule | null {
+  return (
+    ABSORPTION_RULES.find(
+      (r) =>
+        hasAny([ingredient], [...r.agent.examples, ...r.affected.examples]) &&
+        ((hasAny(product, r.agent.examples) && hasAny(stock, r.affected.examples)) ||
+          (hasAny(stock, r.agent.examples) && hasAny(product, r.affected.examples))),
+    ) ?? null
+  );
+}
+
+/** 店頭商品と在庫の成分の組に当てはまる相互作用の規則（無ければ null） */
+export function findInteractionRule(
+  ingredient: string,
+  product: string[],
+  stock: string[],
+): InteractionRule | null {
+  return (
+    INTERACTION_RULES.find(
+      (r) =>
+        hasAny([ingredient], [...r.stock.examples, ...r.otc.examples]) &&
+        ((hasAny(stock, r.stock.examples) && hasAny(product, r.otc.examples)) ||
+          (hasAny(product, r.stock.examples) && hasAny(stock, r.otc.examples))),
+    ) ?? null
+  );
+}
+
+/**
+ * 表の例のうち、元素の名前だけのもの。理由の裏取りには使うが、AIの理由なしに
+ * こちらから警告を足すときには使わない。「ステアリン酸マグネシウム」のような
+ * 錠剤の添加物まで制酸剤として拾ってしまうため。
+ */
+const ELEMENT_ONLY = new Set(['鉄', 'カルシウム', 'マグネシウム', '亜鉛']);
+
+const hasSpecific = (ingredients: string[], examples: string[]) => {
+  const specific = examples.filter((e) => !ELEMENT_ONLY.has(e));
+  return ingredients.find((i) => specific.some((e) => matchesIngredient(i, e))) ?? null;
+};
+
+/** 店頭商品と在庫の組に表で当てはまる吸収阻害・相互作用（AIの理由が無くても拾う用） */
+export interface TableRisk {
+  type: '吸収阻害' | '相互作用';
+  /** 店頭商品の側で当てはまった成分 */
+  ingredient: string;
+  source: string;
+  /** 画面に出す一文。断定しない */
+  detail: string;
+}
+
+/**
+ * 店頭商品と在庫1件の組に、表の吸収阻害・相互作用が当てはまるか。
+ * 元素の名前だけの例は使わない（添加物を拾わないため）。
+ */
+export function tableRisksBetween(product: string[], stock: string[]): TableRisk[] {
+  const risks: TableRisk[] = [];
+  for (const r of ABSORPTION_RULES) {
+    const agentHere = hasSpecific(product, r.agent.examples);
+    const affectedThere = hasSpecific(stock, r.affected.examples);
+    const affectedHere = hasSpecific(product, r.affected.examples);
+    const agentThere = hasSpecific(stock, r.agent.examples);
+    const hit = agentHere && affectedThere ? agentHere : affectedHere && agentThere ? affectedHere : null;
+    if (hit) {
+      risks.push({
+        type: '吸収阻害',
+        ingredient: hit,
+        source: r.source,
+        detail: `${r.agent.label}と${r.affected.label}を一緒に使うと、${r.affected.label}の効きが落ちる可能性があります。`,
+      });
     }
   }
-  for (const rule of ABSORPTION_RULES) {
-    if (
-      rule.agent.examples.some((e) => matchesIngredient(ingredient, e)) ||
-      rule.affected.examples.some((e) => matchesIngredient(ingredient, e))
-    ) {
-      return rule.source;
+  for (const r of INTERACTION_RULES) {
+    const otcHere = hasSpecific(product, r.otc.examples);
+    const stockThere = hasSpecific(stock, r.stock.examples);
+    if (otcHere && stockThere) {
+      risks.push({
+        type: '相互作用',
+        ingredient: otcHere,
+        source: r.source,
+        detail: `${r.stock.label}と${r.otc.label}の組み合わせです。${r.risk}`,
+      });
     }
   }
+  return risks;
+}
+
+/** 理由の成分が属する同効薬の群に、店頭商品と在庫の両方が入っていればその群（無ければ null） */
+export function sharedTherapeuticClass(
+  ingredient: string,
+  product: string[],
+  stock: string[],
+): TherapeuticClass | null {
   const klass = therapeuticClassOf(ingredient);
-  return klass ? klass.source : null;
+  if (!klass) return null;
+  return hasAny(product, klass.ingredients) && hasAny(stock, klass.ingredients) ? klass : null;
 }

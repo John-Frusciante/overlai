@@ -108,13 +108,16 @@ export async function POST(req: Request) {
     }
 
     // 理由の裏取りと、安全に関わる値の上書き（lib/verify.ts）。
-    // 入力のどこにも無い成分名を挙げた理由は、根拠が確認できないものとして落とす
-    const { judgement, dropped } = verifyJudgement(raw, extraction, stock);
+    // 入力のどこにも無い成分名や、表に無い組み合わせを挙げた理由は落とし、残った理由に色をそろえる
+    const { judgement, dropped, adjusted } = verifyJudgement(raw, extraction, stock);
     if (dropped.length > 0) {
       console.warn(
         '[analyze] 根拠を辿れない理由を落としました',
-        dropped.map((d) => `${d.type}:${d.ingredient}`),
+        dropped.map((d) => `${d.type}:${d.ingredient}×${d.related_item}`),
       );
+    }
+    if (adjusted) {
+      console.warn(`[analyze] 裏取りした理由に合わせて色を変えました ${adjusted.from} → ${adjusted.to}`);
     }
 
     return NextResponse.json({

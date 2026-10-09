@@ -1,7 +1,14 @@
 import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
 import { SEED_STOCK, seedStock } from '../lib/seed';
-import { ABSORPTION_RULES, INTERACTION_RULES, matchesIngredient } from '../lib/knowledge';
+import {
+  ABSORPTION_RULES,
+  INTERACTION_RULES,
+  findAbsorptionRule,
+  findInteractionRule,
+  matchesIngredient,
+  sharedTherapeuticClass,
+} from '../lib/knowledge';
 import { endedCourses, localDateKey } from '../lib/course';
 
 /**
@@ -100,5 +107,42 @@ describe('シードデータ', () => {
       if (!item.dose) continue;
       assert.ok(item.remaining, `${item.name} に残量がありません`);
     }
+  });
+
+  // ── 本選の🟡デモ（docs/本選デモ手順.md ②）──────────────────────────
+  // 店頭で撮る商品の有効成分。成分が変わる商品に替えたら、ここも合わせる
+
+  const DEMO_YELLOW = { name: 'カロナールA', ingredients: ['アセトアミノフェン'] };
+  const SEED_INGREDIENTS = SEED_STOCK.flatMap((i) => i.ingredients);
+
+  it('🟡デモの商品が、シードと吸収阻害・相互作用を起こさない（#41）', () => {
+    for (const ingredient of DEMO_YELLOW.ingredients) {
+      assert.equal(
+        findAbsorptionRule(ingredient, DEMO_YELLOW.ingredients, SEED_INGREDIENTS),
+        null,
+        `${DEMO_YELLOW.name} がシードと吸収阻害を起こします（🟡デモが🔴に振れます）`,
+      );
+      assert.equal(
+        findInteractionRule(ingredient, DEMO_YELLOW.ingredients, SEED_INGREDIENTS),
+        null,
+        `${DEMO_YELLOW.name} がシードと相互作用を起こします（🟡デモが🔴に振れます）`,
+      );
+    }
+  });
+
+  it('🟡デモの商品が、家のイブA錠と同じ働きの薬として重なる', () => {
+    const ibuA = SEED_STOCK.find((i) => i.name === 'イブA錠');
+    assert.ok(ibuA, 'シードにイブA錠がありません');
+    assert.ok(
+      DEMO_YELLOW.ingredients.some((i) =>
+        sharedTherapeuticClass(i, DEMO_YELLOW.ingredients, ibuA!.ingredients),
+      ),
+    );
+  });
+
+  it('制酸剤入りの鎮痛薬は🟡デモに使えない（バファリン プレミアムDX が🔴になった理由）', () => {
+    // 乾燥水酸化アルミニウムゲルが、シードのミノサイクリンの吸収を妨げる。判定としては正しい
+    const bufferin = ['イブプロフェン', 'アセトアミノフェン', '乾燥水酸化アルミニウムゲル'];
+    assert.ok(findAbsorptionRule('乾燥水酸化アルミニウムゲル', bufferin, SEED_INGREDIENTS));
   });
 });

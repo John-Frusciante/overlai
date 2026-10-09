@@ -5,8 +5,10 @@ import {
   CONFLICT_RULES,
   INTERACTION_RULES,
   THERAPEUTIC_CLASSES,
+  findAbsorptionRule,
+  findInteractionRule,
   matchesIngredient,
-  sourceForIngredient,
+  sharedTherapeuticClass,
   therapeuticClassOf,
 } from '../lib/knowledge';
 
@@ -69,14 +71,39 @@ describe('薬の知識', () => {
     assert.ok(rule, 'シードの抗菌薬に対応する吸収阻害がありません');
   });
 
-  it('表に載っている成分からは出典を引ける', () => {
-    assert.ok(sourceForIngredient('ワルファリンカリウム'));
-    assert.ok(sourceForIngredient('ミノサイクリン塩酸塩'));
-    assert.ok(sourceForIngredient('イブプロフェン'));
+  it('規則は店頭と在庫の両側が当てはまるときだけ引ける', () => {
+    // 抗凝固薬が在庫にあるときだけ「抗凝固薬 × NSAIDs」になる
+    assert.ok(findInteractionRule('イブプロフェン', ['イブプロフェン'], ['ワルファリンカリウム']));
+    // イブプロフェンが規則に載っていても、相手がワルファリンでなければ名乗らない（Issue #42）
+    assert.equal(findInteractionRule('イブプロフェン', ['イブプロフェン'], ['イブプロフェン']), null);
+    assert.equal(
+      findInteractionRule('イブプロフェン', ['イブプロフェン'], ['ミノサイクリン塩酸塩']),
+      null,
+    );
   });
 
-  it('表に無い成分の出典は作らない', () => {
-    assert.equal(sourceForIngredient('ヘパリン類似物質'), null);
-    assert.equal(sourceForIngredient('コカミドプロピルベタイン'), null);
+  it('吸収阻害は妨げる側がどちらにあっても引ける', () => {
+    assert.ok(findAbsorptionRule('鉄', ['クエン酸第一鉄ナトリウム'], ['ミノサイクリン塩酸塩']));
+    assert.ok(findAbsorptionRule('ミノサイクリン', ['ミノサイクリン塩酸塩'], ['ヘム鉄']));
+    // 金属を含まない鎮痛薬と抗菌薬の組は表に無い（Issue #43）
+    assert.equal(
+      findAbsorptionRule('ミノサイクリン', ['イブプロフェン', 'アリルイソプロピルアセチル尿素'], ['ミノサイクリン塩酸塩']),
+      null,
+    );
+  });
+
+  it('規則に当てはまっても、理由の成分がその規則に無ければ名乗らない', () => {
+    assert.equal(
+      findAbsorptionRule('無水カフェイン', ['乾燥水酸化アルミニウムゲル', '無水カフェイン'], ['ミノサイクリン塩酸塩']),
+      null,
+    );
+  });
+
+  it('同効薬の群は両側に入っているときだけ引ける', () => {
+    assert.equal(
+      sharedTherapeuticClass('アセトアミノフェン', ['アセトアミノフェン'], ['イブプロフェン'])?.name,
+      '解熱鎮痛',
+    );
+    assert.equal(sharedTherapeuticClass('アセトアミノフェン', ['アセトアミノフェン'], ['ヘパリン類似物質']), null);
   });
 });
