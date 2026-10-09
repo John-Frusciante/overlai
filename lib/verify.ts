@@ -1,4 +1,5 @@
 import {
+  IRRITANT_INGREDIENTS,
   findAbsorptionRule,
   findInteractionRule,
   matchesIngredient,
@@ -23,7 +24,9 @@ import type { ExtractionResult, Judgement, Reason, Signal, StockItem } from './t
  *    - 成分重複 … その成分が店頭商品と相手の在庫の**両方**に入っていること
  *    - 吸収阻害・相互作用 … 店頭商品と相手の在庫の組が、手持ちの表（lib/knowledge.ts）に
  *      載っていること。プロンプトで「表に無い組み合わせを作るな」と縛っても守られないことがある
- *    - 効能重複・刺激リスク … 表は網羅ではないので、成分が辿れれば残す
+ *    - 刺激リスク … 店頭商品に入っている成分で、刺激成分の表（IRRITANT_INGREDIENTS）に
+ *      載っていること。外用薬の側の成分（ベタメタゾンなど）や保湿剤を挙げた理由は落とす
+ *    - 効能重複 … 表は網羅ではないので、成分が辿れれば残す
  * 3. **残った理由に出典を付ける。** 規則の出典を名乗るのは、その組み合わせが規則に
  *    当てはまるときだけ（Issue #42）。当てはまらなければ PMDA の検索の入り口だけを渡す。
  *
@@ -31,8 +34,8 @@ import type { ExtractionResult, Judgement, Reason, Signal, StockItem } from './t
  * までであり、**書かれた作用機序が正しいかは確かめられない**。理由の文面そのものの正しさは
  * 依然としてモデルの知識に依存している。だから出典を添えて、人が確かめられるようにする。
  *
- * ⚠ シグナル（🔵🟡🔴）は書き換えない。理由が全部落ちても色は下げない。
- * 安全側の判断を、検証が通らなかったという理由で緩めない。
+ * シグナル（🔵🟡🔴）は裏取りした理由にそろえる（reconcileSignal）。
+ * ⚠ ただし理由が一つも残らない🔴は🔴のまま。何も確かめられないときに安全側を緩めない。
  */
 
 /** PMDA 医薬品検索。成分名で添付文書を引ける公的な入り口 */
@@ -375,6 +378,11 @@ function checkPair(
         : { evidence: searchLink(traced), partners };
     }
     case '刺激リスク': {
+      // 刺激の元は店頭商品の側にある。外用薬の成分や保湿剤を挙げた理由は成り立たない
+      const inProduct = traceIngredient(reason.ingredient, product);
+      if (!inProduct || !IRRITANT_INGREDIENTS.some((i) => matchesIngredient(inProduct, i))) {
+        return null;
+      }
       // 刺激が問題になるのは、処方の外用薬を使っている部位。確かめに行く先も、
       // 刺激成分よりその外用薬の添付文書（使用上の注意）のほうが役に立つ
       const topical = partners.filter((p) => p.isPrescription && p.category === '処方薬(外用)');

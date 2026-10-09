@@ -186,6 +186,29 @@ describe('判定理由の裏取り', () => {
     // 経口ステロイドの規則（プレドニゾロン）を名乗らない
     assert.ok(!out.reasons[0].evidence!.label.includes('プレドニゾロン'));
   });
+
+  it('刺激の理由は、店頭商品にある刺激成分でなければ落とす（極潤 ヒアルロン液）', () => {
+    // 実測：刺激成分の無い化粧水で、外用薬の成分や保湿剤を刺激の理由に挙げた
+    const hyaluron: ExtractionResult = {
+      ...extraction,
+      category: 'スキンケア',
+      form: '化粧水',
+      ingredients: ['水', 'BG', 'グリセリン', 'ヒアルロン酸Na'],
+    };
+    const { judgement: out, dropped } = verifyJudgement(
+      judgement(
+        [
+          { type: '刺激リスク', ingredient: 'ベタメタゾン吉草酸エステル', detail: '刺激', related_item: 'ベタメタゾン吉草酸エステル軟膏（処方）' },
+          { type: '刺激リスク', ingredient: 'ヒアルロン酸Na', detail: '刺激', related_item: 'ベタメタゾン吉草酸エステル軟膏（処方）' },
+        ],
+        'red',
+      ),
+      hyaluron,
+      stock,
+    );
+    assert.equal(out.reasons.length, 0);
+    assert.equal(dropped.length, 2);
+  });
 });
 
 describe('組み合わせの裏取り（#43）', () => {
