@@ -16,7 +16,7 @@ AIを呼ぶにはキーが要る（§3）。キー無しでは判定APIがエラ
 | コマンド | 用途 |
 | :--- | :--- |
 | `npm run dev` | 開発サーバー |
-| `npm run check` | 型・lint・テスト82件。**コミット前に必ず通す** |
+| `npm run check` | 型・lint・テスト130件。**コミット前に必ず通す** |
 | `npm test` | テストだけ（TypeScript を CommonJS に落として `node --test` に渡す） |
 | `npx next build` | 本番ビルド |
 | `vercel --prod --yes` | 本番デプロイ |
@@ -271,7 +271,7 @@ Next の app-router は履歴の書き換えを `useInsertionEffect` で行う�
 
 1. `docs/STATUS.md` で現状を確認する
 2. 変更する（§5 の制約に触れていないか確認）
-3. **`npm run check` を通す**（型・lint・テスト82件）
+3. **`npm run check` を通す**（型・lint・テスト130件）
 4. ルールベースの判定を触ったら `tests/` にテストを足す
 5. 影響する画面を実際に開いて確認する
 6. `docs/STATUS.md` と `docs/ARCHITECTURE.md` を更新する
@@ -320,3 +320,4 @@ Next の app-router は履歴の書き換えを `useInsertionEffect` で行う�
 | 用語の意味 | [GLOSSARY.md](GLOSSARY.md) |
 | 応募先の評価軸・本選で聞かれそうなこと | [CONTEST.md](CONTEST.md) |
 | 何をテストすればいいか | [TESTING.md](TESTING.md) |
+| 本選のブースで何をどう見せるか | [本選デモ手順.md](本選デモ手順.md) |

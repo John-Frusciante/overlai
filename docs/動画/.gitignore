@@ -2,7 +2,8 @@ node_modules/
 out/
 # フォントは fonts.sh で取ってくる（9MB あるのでコミットしない）
 public/fonts/
-# 撮った録画（重いのでコミットしない）。raw/ に全部置き、使う区間だけ public/footage/ に切り出す
+# 撮った録画（重いのでコミットしない）。元ファイルは Google Drive の Overlai/動画素材 にある。
+# 切り出し直すときは raw/ に戻し、使う区間だけ public/footage/ に切り出す
 raw/
 public/footage/
 # BGM を置く場所（いまは無音）。OpenTracks などの素材は規約上配布できないのでコミットしない

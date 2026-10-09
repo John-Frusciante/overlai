@@ -56,13 +56,13 @@
 | なぜこれを作るのか（課題・競合・社会的インパクト） | [docs/企画書_Overlai_ユメカタリ2026.md](docs/企画書_Overlai_ユメカタリ2026.md) |
 | 用語の意味（医薬・化粧品・技術） | [docs/GLOSSARY.md](docs/GLOSSARY.md) |
 | 応募先の評価軸 | [docs/CONTEST.md](docs/CONTEST.md) |
-
 | 何をテストすればいいか | [docs/TESTING.md](docs/TESTING.md) |
+| 本選のブースで何をどう見せるか | [docs/本選デモ手順.md](docs/本選デモ手順.md) |
 
 **実装前に [docs/DEVELOPMENT.md §5「壊してはいけない制約」](docs/DEVELOPMENT.md) を読むこと。** 医療に隣接する領域のため、安全設計に関わる決定がいくつかある。
 
 ```bash
-npm run check   # 型・lint・自動テスト82件
+npm run check   # 型・lint・自動テスト130件
 ```
 
 ## セットアップ
@@ -134,7 +134,7 @@ Issue は [GitHub Issues](https://github.com/John-Frusciante/overlai/issues) で
 | マイルストーン | 期限 | 内容 |
 | :--- | :--- | :--- |
 | [デモ提出](https://github.com/John-Frusciante/overlai/milestone/1) | 2026-09-10 | **完了**。エントリーまでに必要なもの |
-| [本選](https://github.com/John-Frusciante/overlai/milestone/3) | 2026-10-01 | ブース展示と連続デモに耐えるための整備。**#23 #24 #25 は 9/15 に完了**、残りは当日の準備 |
+| [本選](https://github.com/John-Frusciante/overlai/milestone/3) | 2026-10-11 | ブース展示と連続デモに耐えるための整備。**#23 #24 #25 は 9/15 に完了**。10/8 に見つかった判定の不具合 #41〜#44 が残っている |
 | [将来構想](https://github.com/John-Frusciante/overlai/milestone/2) | — | 登録経路の追加、ネイティブ化、家族共有 |
 
 **本選はブース展示で来場者が実機を触る。** 会場のネットワークで動くこと、
@@ -161,6 +161,9 @@ Issue は [GitHub Issues](https://github.com/John-Frusciante/overlai/issues) で
 | :--- | :--- |
 | 作品概要書 | [docs/Overlai_作品概要書.pdf](docs/Overlai_作品概要書.pdf)（A4・3ページ） |
 | デモ動画・ピッチ動画 | 撮影手順は [docs/TESTING.md](docs/TESTING.md)、台本は[企画書の付録](docs/企画書_Overlai_ユメカタリ2026.md) |
+| 本選の1分ピッチ | [docs/ピッチ/](docs/ピッチ/)（`build.py` で pptx を生成。PDF も同じ場所） |
+| 本選のブースパネル | [docs/パネル/Overlai_ブースパネル.pdf](docs/パネル/Overlai_ブースパネル.pdf)（A4縦。運営がA1に拡大） |
+| 本選のブース動画 | [docs/動画/](docs/動画/)（Remotion で組む。書き出した mp4 と録画の元ファイルはコミットしていない） |
 | 公開URL | https://overlai-delta.vercel.app |
 
 日程と評価軸は [docs/CONTEST.md](docs/CONTEST.md) にまとめてある。

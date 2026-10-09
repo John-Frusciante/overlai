@@ -134,7 +134,7 @@ lib/
   image.ts              送信前リサイズ
   mock.ts               固定応答のフィクスチャ（`?demo=` と `/preview` 用）
 
-tests/                  自動テスト82件（node --test。追加の依存なし）
+tests/                  自動テスト130件（node --test。追加の依存なし）
   storage.test.ts       初期化（resetAll）の漏れ。鍵を足したら STORAGE_KEYS にも足す
   knowledge.test.ts     出典の有無と引き当て
   verify.test.ts        辿れない理由を落とすか
@@ -891,7 +891,7 @@ Tailwind の `@theme` に定義し、全画面で共有する。ニュートラ�
 | APIの入口の検査 | **実装済み**（本番ビルドで 403／429／200。実機の PWA が通ることも確認） |
 | ストックの書き出し・読み込み | **実装済み・確認済み** |
 | 撮影時の切り抜き | **実装済み・実機で確認済み** |
-| 自動テスト | **82件**（`npm test`。ルールベースの部分・シードの決まりごと・入口の検査・初期化の漏れ） |
+| 自動テスト | **130件**（`npm test`。ルールベースの部分・シードの決まりごと・入口の検査・初期化の漏れ） |
 | 在庫の追加・編集・削除 | **実装済み**（カメラ読み取り＋手入力。編集は `/stock/new?id=`、削除は編集モードから） |
 | カテゴリ別の折りたたみ | **実装済み**（開閉状態は localStorage に保存） |
 | JAHIS QR・レシート登録 | 未実装（登録経路としては優先度が低い） |
@@ -918,7 +918,7 @@ Tailwind の `@theme` に定義し、全画面で共有する。ニュートラ�
 ```bash
 npm install
 npm run dev              # .env.local のキーで起動（キー無しでは判定APIがエラーを返す）
-npm run check            # 型チェック + lint + テスト82件
+npm run check            # 型チェック + lint + テスト130件
 npm test                 # テストだけ
 npx next build           # 本番ビルド
 vercel --prod --yes      # デプロイ
