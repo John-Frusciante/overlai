@@ -186,13 +186,13 @@ const SCENES: { id: string; d: number; next: "fade" | "slide"; el: (d: number) =
     ),
   },
   { id: "pillars", d: sec(6.0), next: "fade", el: () => <Pillars /> },
-  { id: "end", d: sec(5.2), next: "fade", el: () => <End /> },
+  { id: "end", d: sec(5.2), next: "fade", el: (d) => <End duration={d} /> },
 ];
 
 export const TOTAL = SCENES.reduce((a, s) => a + s.d, 0) - T * (SCENES.length - 1);
 
 /** 各場面の頭のフレーム（つなぎで重なる分を引く） */
-const START: Record<string, number> = {};
+export const START: Record<string, number> = {};
 SCENES.reduce((at, s) => {
   START[s.id] = at;
   return at + s.d - T;

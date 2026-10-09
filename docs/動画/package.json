@@ -4,7 +4,8 @@
   "scripts": {
     "studio": "remotion studio",
     "render": "remotion render Booth out/Overlai_ブース動画.mp4",
-    "still": "remotion still Booth out/still.png"
+    "still": "remotion still Booth out/still.png",
+    "slides": "remotion render Slides out/slides --sequence --image-format=png && uv run --with pillow python scripts/slides_pdf.py"
   },
   "dependencies": {
     "@remotion/cli": "4.0.527",

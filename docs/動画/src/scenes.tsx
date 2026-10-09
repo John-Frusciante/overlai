@@ -300,11 +300,11 @@ export const Pillars = () => (
 
 // ---------------------------------------------------------------- 9. 締め
 
-export const End = () => {
+export const End = ({ duration }: { duration: number }) => {
   const frame = useCurrentFrame();
-  const { durationInFrames } = useVideoConfig();
-  // 最後は白へ抜けて、頭の白い場面へつなげる（ループ再生のため）
-  const out = interpolate(frame, [durationInFrames - 14, durationInFrames], [0, 1], {
+  // 最後は白へ抜けて、頭の白い場面へつなげる（ループ再生のため）。
+  // 長さは場面の長さで測る（動画全体の長さで測ると、スライドに切り出したときに白く抜けてしまう）
+  const out = interpolate(frame, [duration - 14, duration], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
