@@ -37,3 +37,6 @@ yarn-error.log*
 
 # ブース動画から作る PowerPoint（動画入りで重い。docs/動画 で npm run slides:pptx）
 /docs/ピッチ/動画版/*.pptx
+
+# ヘッドレス Chrome のプロファイル（docs/パネル で書き出したときに残り、一度コミットしてしまった）
+profm*/
