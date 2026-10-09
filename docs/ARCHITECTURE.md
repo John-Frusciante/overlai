@@ -135,7 +135,7 @@ lib/
   image.ts              送信前リサイズ
   mock.ts               固定応答のフィクスチャ（`?demo=` と `/preview` 用）
 
-tests/                  自動テスト130件（node --test。追加の依存なし）
+tests/                  自動テスト164件（node --test。追加の依存なし）
   storage.test.ts       初期化（resetAll）の漏れ。鍵を足したら STORAGE_KEYS にも足す
   knowledge.test.ts     出典の有無と引き当て
   verify.test.ts        辿れない理由・成り立たない組み合わせを落とすか、色をそろえるか

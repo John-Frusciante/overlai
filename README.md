@@ -62,7 +62,7 @@
 **実装前に [docs/DEVELOPMENT.md §5「壊してはいけない制約」](docs/DEVELOPMENT.md) を読むこと。** 医療に隣接する領域のため、安全設計に関わる決定がいくつかある。
 
 ```bash
-npm run check   # 型・lint・自動テスト130件
+npm run check   # 型・lint・自動テスト164件
 ```
 
 ## セットアップ
