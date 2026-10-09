@@ -32,6 +32,7 @@ import {
   validateRoutineName,
 } from '@/lib/routine';
 import { toItemForm, toStockCategory } from '@/lib/mapping';
+import { applyReadName, typeName as typedName, type NameOrigin, type NameState } from '@/lib/productName';
 import { BUILTIN_CATEGORIES, MAX_CATEGORY_LENGTH, validateCategoryName } from '@/lib/categories';
 import type {
   ApiErrorBody,
@@ -120,13 +121,14 @@ const EMPTY_DRAFT: Draft = {
 function loadDraft(
   id: string | null,
   fromScan: boolean,
-): { editId: string | null; draft: Draft } {
+): { editId: string | null; draft: Draft; nameOrigin: NameOrigin; suggestedName?: string } {
   const item = id ? loadStock().find((i) => i.id === id) : undefined;
   if (!item) {
     const scan = fromScan ? loadPendingScan() : null;
-    if (!scan) return { editId: null, draft: EMPTY_DRAFT };
+    if (!scan) return { editId: null, draft: EMPTY_DRAFT, nameOrigin: null };
     return {
       editId: null,
+      nameOrigin: scan.product_name ? 'read' : 'unread',
       draft: {
         ...EMPTY_DRAFT,
         name: scan.product_name ?? '',
@@ -139,6 +141,7 @@ function loadDraft(
 
   return {
     editId: item.id,
+    nameOrigin: null,
     draft: {
       name: item.name,
       category: item.category,
@@ -191,10 +194,16 @@ function NewStockForm({ id, fromScan }: { id: string | null; fromScan: boolean }
   // 写真を選んでいるあいだに抽出APIの関数を起こしておく（#24）
   useWarmUp('/api/extract');
 
-  const [{ editId, draft }, setDraftState] = useStoredState(() => loadDraft(id, fromScan), {
-    editId: null as string | null,
-    draft: EMPTY_DRAFT,
-  });
+  const [{ editId, draft, nameOrigin, suggestedName }, setDraftState] = useStoredState(
+    () => loadDraft(id, fromScan),
+    {
+      editId: null as string | null,
+      draft: EMPTY_DRAFT,
+      nameOrigin: null as NameOrigin,
+      /** 手で入れた名前があるときに読み取れた別の名前。上書きせず、選べるようにだけする */
+      suggestedName: undefined as string | undefined,
+    },
+  );
   const {
     name,
     category,
@@ -217,6 +226,30 @@ function NewStockForm({ id, fromScan }: { id: string | null; fromScan: boolean }
     },
     [setDraftState],
   );
+
+  /**
+   * 商品名の入れ替えはまとめてここを通す（Issue #40）。読み取った名前を入れてよいかは
+   * lib/productName.ts が決める。入力欄の値・どこから来たか・候補を1回で更新する
+   */
+  const setName = useCallback(
+    (decide: (current: NameState) => NameState) => {
+      setDraftState((prev) => {
+        const next = decide({
+          name: prev.draft.name,
+          origin: prev.nameOrigin,
+          suggested: prev.suggestedName,
+        });
+        return {
+          ...prev,
+          draft: { ...prev.draft, name: next.name },
+          nameOrigin: next.origin,
+          suggestedName: next.suggested,
+        };
+      });
+    },
+    [setDraftState],
+  );
+  const typeName = useCallback((value: string) => setName(() => typedName(value)), [setName]);
 
   /** ユーザーが追加したカテゴリ。この画面から新規作成もできる */
   const [customCategories, setCustomCategories] = useStoredState<string[]>(
@@ -315,7 +348,7 @@ function NewStockForm({ id, fromScan }: { id: string | null; fromScan: boolean }
         return;
       }
       const { extraction } = (await res.json()) as { extraction: ExtractionResult };
-      if (extraction.product_name) setField('name', extraction.product_name);
+      setName((current) => applyReadName(current, extraction.product_name));
       setField('category', toStockCategory(extraction.category));
       setField('form', toItemForm(extraction.form));
       setField('ingredients', extraction.ingredients.join('、'));
@@ -324,7 +357,7 @@ function NewStockForm({ id, fromScan }: { id: string | null; fromScan: boolean }
     } finally {
       setReading(false);
     }
-  }, [setField]);
+  }, [setField, setName]);
 
   const save = useCallback(() => {
     if (!name.trim()) return;
@@ -463,12 +496,48 @@ function NewStockForm({ id, fromScan }: { id: string | null; fromScan: boolean }
       {/* フォーム */}
       <div className="mt-7 space-y-5">
         <Field label="商品名">
-          <input
-            value={name}
-            onChange={(e) => setField('name', e.target.value)}
-            placeholder="例：しっとり化粧水"
-            className="w-full rounded-2xl border border-line bg-surface px-3.5 py-3 text-[15px] shadow-e1 outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(30,42,69,0.07)]"
-          />
+          <div className="relative">
+            <input
+              value={name}
+              onChange={(e) => typeName(e.target.value)}
+              placeholder="例：しっとり化粧水"
+              className={`w-full rounded-2xl border bg-surface py-3 pl-3.5 pr-11 text-[15px] shadow-e1 outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(30,42,69,0.07)] ${
+                nameOrigin === 'read' ? 'border-brand/40' : 'border-line'
+              }`}
+            />
+            {name && (
+              <button
+                type="button"
+                onClick={() => typeName('')}
+                aria-label="商品名を消して入れ直す"
+                className="absolute inset-y-0 right-1 flex w-10 items-center justify-center text-faint active:text-ink"
+              >
+                <X size={16} strokeWidth={2.2} />
+              </button>
+            )}
+          </div>
+          {nameOrigin === 'read' && (
+            <p className="mt-1.5 px-1 text-[12.5px] leading-relaxed text-brand-soft">
+              写真から読み取った商品名です。読み違えることがあるので、違っていたら直してください。
+            </p>
+          )}
+          {nameOrigin === 'unread' && (
+            <p className="mt-1.5 px-1 text-[12.5px] leading-relaxed text-muted">
+              商品名は読み取れませんでした。手で入力してください。
+            </p>
+          )}
+          {suggestedName && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 px-1 text-[12.5px] text-muted">
+              <span>写真からは「{suggestedName}」と読み取りました。</span>
+              <button
+                type="button"
+                onClick={() => setName(() => ({ name: suggestedName, origin: 'read' }))}
+                className="font-semibold text-brand underline underline-offset-2"
+              >
+                こちらにする
+              </button>
+            </div>
+          )}
         </Field>
 
         <Field label="カテゴリ">
