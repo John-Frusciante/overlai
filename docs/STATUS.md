@@ -194,6 +194,7 @@ GEMINI_API_KEY     → Google Gemini (gemini-3.5-flash / gemini-3.6-flash)
 | レシート一括登録 | 大 | [#19](https://github.com/John-Frusciante/overlai/issues/19) |
 | ネイティブアプリ化 | 大 | [#26](https://github.com/John-Frusciante/overlai/issues/26) |
 | 家族の薬箱の共有 | 大（**法的な整理が先**） | [#27](https://github.com/John-Frusciante/overlai/issues/27) |
+| 在庫登録で商品名を手入力にする（読み取った商品名の精度が低い） | 小 | [#40](https://github.com/John-Frusciante/overlai/issues/40) |
 
 **2026年9月9日に実装完了**：洗浄基剤 × 肌質（#14）／ PWA対応（#11）／ 在庫の編集（#16）／ 服薬履歴（#17）／
 マイストックのカテゴリ折りたたみ・項目タップでの編集／削除・削除の確認（#21）
