@@ -52,8 +52,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
     `lib/knowledge.ts` に**出典つき**で置く。出典を書けない組み合わせは足さない。
     プロンプト（`lib/prompts.ts`）がやるのは並べることだけ
 16. **`lib/verify.ts` の裏取りを外さない** — 理由に書かれた成分名が、店頭商品にも在庫にも
-    見当たらないことがある。辿れない理由は落とす。出典（`Reason.evidence`）は
-    **AIに書かせず**サーバー側で付ける。ここでシグナルを書き換えないこと
+    見当たらないことがある。表に無い組み合わせを理由にすることもある。辿れない理由は落とす。
+    出典（`Reason.evidence`）は**AIに書かせず**サーバー側で付け、規則の出典は組み合わせの
+    両側が当てはまるときだけ名乗る。色は裏取りした理由にそろえるが、
+    **理由が一つも残らない🔴は🔴のまま**にする（何も確かめられないときに安全側を緩めない）
 17. **`lib/guard.ts` の入口検査を外さない** — 外すと本番URLへの curl が通り、
     学校配布キーを第三者に使わせることになる。実機の PWA を弾かないよう
     `Origin` は自分のホストと突き合わせる（ローカル開発では素通り）
@@ -80,7 +82,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 | AI出力スキーマ | `lib/schemas.ts` |
 | データ構造 | `lib/types.ts` |
 | localStorage | `lib/storage.ts` |
-| ルールベースの判定 | `lib/routine.ts` `lib/expiry.ts` `lib/cleanser.ts` `lib/categories.ts` `lib/course.ts` `lib/stockOps.ts` |
+| ルールベースの判定 | `lib/routine.ts` `lib/expiry.ts` `lib/cleanser.ts` `lib/categories.ts` `lib/course.ts` `lib/stockOps.ts` `lib/productName.ts` |
 | ルーティンの区分 | `lib/routine.ts`（組み込み2つ＋ユーザーが作る区分） |
 | リクエストの検証 | `lib/request.ts`（3つのAPIで共有） |
 | APIのエラー応答・ウォームアップ | `lib/api.ts`（`fail` / `upstreamFailure` / `warmUp`。route に文言を書かない） |
