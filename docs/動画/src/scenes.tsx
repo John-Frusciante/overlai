@@ -300,11 +300,14 @@ export const Pillars = () => (
 
 // ---------------------------------------------------------------- 9. 締め
 
+/** 締めの最後に白へ抜けるフレーム数。スライドに貼る動画では、ここを切り落とす */
+export const END_FADE = 14;
+
 export const End = ({ duration }: { duration: number }) => {
   const frame = useCurrentFrame();
   // 最後は白へ抜けて、頭の白い場面へつなげる（ループ再生のため）。
   // 長さは場面の長さで測る（動画全体の長さで測ると、スライドに切り出したときに白く抜けてしまう）
-  const out = interpolate(frame, [duration - 14, duration], [0, 1], {
+  const out = interpolate(frame, [duration - END_FADE, duration], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });

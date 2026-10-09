@@ -1,6 +1,7 @@
-import { Sequence, useCurrentFrame } from "remotion";
-import { Booth, START } from "./Booth";
-import { sec } from "./theme";
+import { AbsoluteFill, Sequence, useCurrentFrame } from "remotion";
+import { Booth, SCENES, START } from "./Booth";
+import { END_FADE } from "./scenes";
+import { C, sec } from "./theme";
 
 // 1分ピッチ用のスライド（お試し）。動画（Booth）の場面を、テロップと画面がそろった瞬間で止めて1枚ずつ切り出す。
 // at は場面の頭から何秒後で止めるか。スマホ画面に何が映るかは src/footage.ts の cuts で決まる
@@ -28,4 +29,16 @@ export const Slides = () => {
       <Booth />
     </Sequence>
   );
+};
+
+// スライドに貼る動画（PowerPoint 版）。場面を1つずつ、前後のつなぎを含めずに書き出す。
+// つなぎはスライドの切り替えが受け持つ。締めは最後に白へ抜ける部分を落とし、QR が映ったまま止める
+export const CLIPS = SLIDES.map(({ id }, i) => {
+  const s = SCENES.find((x) => x.id === id)!;
+  return { name: `Clip-${String(i + 1).padStart(2, "0")}-${id}`, id, d: id === "end" ? s.d - END_FADE : s.d };
+});
+
+export const Clip = ({ id }: { id: string }) => {
+  const s = SCENES.find((x) => x.id === id)!;
+  return <AbsoluteFill style={{ background: C.white }}>{s.el(s.d)}</AbsoluteFill>;
 };

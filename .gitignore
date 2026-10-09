@@ -34,3 +34,6 @@ yarn-error.log*
 
 # テストのビルド先
 /.test-build
+
+# ブース動画から作る PowerPoint（動画入りで重い。docs/動画 で npm run slides:pptx）
+/docs/ピッチ/動画版/*.pptx

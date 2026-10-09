@@ -85,3 +85,16 @@ npm run render    # out/Overlai_ブース動画.mp4 に書き出す（30秒ほ�
 ```
 
 構成（場面の順番・長さ・テロップ）は `src/Booth.tsx`、場面ごとの見た目は `src/scenes.tsx` にある。色と文言はピッチ（`docs/ピッチ/build.py`）とそろえている。
+
+## 1分ピッチ用のスライドにする（お試し）
+
+この動画の場面から11枚を選び、スライドにできる。書き出し先は `docs/ピッチ/動画版/` で、PDF と PowerPoint の2種類がある。
+
+```sh
+npm run slides         # PDF（各場面を1コマ止めた静止画）
+npm run slides:pptx    # PowerPoint（各場面の動画を1枚に1本ずつ貼る。1分ほどかかる）
+```
+
+使う場面と、PDF で止める瞬間は `src/Slides.tsx` の `SLIDES` で決める。PowerPoint では、スライドを開くと動画が自動で始まり、終わると最後のコマで止まる。ナレーションの音は入れていない（話すのは発表者）。代わりに、各スライドのノートにその場面の原稿を入れてある。
+
+PowerPoint は動画を含んで約19MBあるため、コミットしていない。Google スライドに取り込むと埋め込みの動画が落ちるので、PowerPoint か Keynote で開く。

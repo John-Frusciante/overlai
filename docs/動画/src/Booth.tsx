@@ -27,7 +27,7 @@ const Legend = () => (
 );
 
 // 場面の並びと長さ。ここを入れ替えれば構成が変わる
-const SCENES: { id: string; d: number; next: "fade" | "slide"; el: (d: number) => ReactElement }[] = [
+export const SCENES: { id: string; d: number; next: "fade" | "slide"; el: (d: number) => ReactElement }[] = [
   { id: "hook", d: sec(5.7), next: "fade", el: () => <Hook /> },
   { id: "logo", d: sec(5.0), next: "fade", el: () => <Logo /> },
   {
