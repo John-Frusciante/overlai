@@ -140,7 +140,7 @@ export const FOOTAGE: Record<
     src: "footage/r6-personal.mp4",
     aspect: IPHONE,
     cuts: [
-      { from: 12.2, to: 14.3 }, // 悩みを打ち終える
+      { from: 11.3, to: 14.3 }, // 気になっていることを自由に書く
       { from: 15.2, to: 16.0 }, // 肌質の設定に悩みが入った
       { from: 17.0, to: 17.6 }, // ルーティンへ。AIが一言を書く
       { from: 20.8, to: 24.4 }, // AIのアドバイスが出る
