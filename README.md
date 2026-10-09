@@ -134,7 +134,7 @@ Issue は [GitHub Issues](https://github.com/John-Frusciante/overlai/issues) で
 | マイルストーン | 期限 | 内容 |
 | :--- | :--- | :--- |
 | [デモ提出](https://github.com/John-Frusciante/overlai/milestone/1) | 2026-09-10 | **完了**。エントリーまでに必要なもの |
-| [本選](https://github.com/John-Frusciante/overlai/milestone/3) | 2026-10-11 | ブース展示と連続デモに耐えるための整備。**#23 #24 #25 は 9/15 に完了**。10/8 に見つかった判定の不具合 #41〜#44 が残っている |
+| [本選](https://github.com/John-Frusciante/overlai/milestone/3) | 2026-10-11 | ブース展示と連続デモに耐えるための整備。**#23 #24 #25 は 9/15 に完了**。10/8 に見つかった判定の不具合 #41〜#44 は 10/9 に修正した |
 | [将来構想](https://github.com/John-Frusciante/overlai/milestone/2) | — | 登録経路の追加、ネイティブ化、家族共有 |
 
 **本選はブース展示で来場者が実機を触る。** 会場のネットワークで動くこと、

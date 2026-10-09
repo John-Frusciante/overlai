@@ -157,7 +157,7 @@ GEMINI_API_KEY     → Google Gemini (gemini-3.5-flash / gemini-3.6-flash)
 
 | 優先 | Issue | 何が起きていたか | どう直したか |
 | :---: | :---: | :--- | :--- |
-| `must` | [#41](https://github.com/John-Frusciante/overlai/issues/41) | 🟡デモのバファリン プレミアムDX が🔴になる（制酸剤 × シードのミノサイクリン。判定自体は表どおり） | 🟡の商品をカロナールAに替えた。デモの商品がシードと吸収阻害・相互作用を起こさないことを `tests/seed.test.ts` で見張る |
+| `must` | [#41](https://github.com/John-Frusciante/overlai/issues/41) | 🟡デモのバファリン プレミアムDX が🔴になる（制酸剤 × シードのミノサイクリン。判定自体は表どおり） | 🟡の商品をカロナールAに替えた。デモの商品がシードと吸収阻害・相互作用を起こさないことを `tests/seed.test.ts` で見張る。10/9 に実機でカロナールAの箱を撮り、🟡を確かめた |
 | `must` | [#42](https://github.com/John-Frusciante/overlai/issues/42) | イブプロフェンの理由に、在庫に無いワルファリンの添付文書名が出典として付く | 規則の出典は、組み合わせの両側がその規則に当てはまるときだけ名乗る（`lib/knowledge.ts` の `findInteractionRule` ほか） |
 | `should` | [#43](https://github.com/John-Frusciante/overlai/issues/43) | 表に無い吸収阻害・相互作用や、在庫に無い成分の重複が理由に残る | 理由を相手の在庫との組で裏取りし、色を残った理由にそろえる（`lib/verify.ts`。DEVELOPMENT.md §5.13 の方針を変えた） |
 | `should` | [#44](https://github.com/John-Frusciante/overlai/issues/44) | 同じ化粧水を在庫に入れて撮り直すと🔴→🟡になる | 判定プロンプトに「red の条件に当てはまれば、家に同じものがあっても red」を足した（修正前🟡 ×2 → 修正後🔴 ×4） |
@@ -228,7 +228,7 @@ GEMINI_API_KEY     → Google Gemini (gemini-3.5-flash / gemini-3.6-flash)
 | マイルストーン | 期限 | 状態 | 内容 |
 | :--- | :--- | :---: | :--- |
 | [デモ提出](https://github.com/John-Frusciante/overlai/milestone/1) | 2026-09-10 | **完了** | 開発・全テスト項目（TESTING.md §A〜§J）・デモ動画の撮影まで完了 |
-| [本選](https://github.com/John-Frusciante/overlai/milestone/3) | 2026-10-11 | 進行中 | エントリー完了（9/15）・書類審査通過（9/24）・東京会場。#23 #24 #25 すべて完了（#20 は Anthropic 廃止で閉じた）。ピッチ資料とパネルは送付済み。10/8 に見つかった判定の不具合 #41〜#44 は 10/9 に修正。残りは当日の準備と実機での目視 |
+| [本選](https://github.com/John-Frusciante/overlai/milestone/3) | 2026-10-11 | 進行中 | エントリー完了（9/15）・書類審査通過（9/24）・東京会場。#23 #24 #25 すべて完了（#20 は Anthropic 廃止で閉じた）。ピッチ資料とパネルは送付済み。10/8 に見つかった判定の不具合 #41〜#44 は 10/9 に修正し、カロナールAの🟡も実機で確かめた。残りは当日の準備 |
 | [将来構想](https://github.com/John-Frusciante/overlai/milestone/2) | — | — | #18 #19 #26 #27 — 登録経路の追加、ネイティブ化、家族共有 |
 
 **本選は東京会場（10/11）に決まった。** 期限もそれに合わせている。
