@@ -16,7 +16,7 @@ AIを呼ぶにはキーが要る（§3）。キー無しでは判定APIがエラ
 | コマンド | 用途 |
 | :--- | :--- |
 | `npm run dev` | 開発サーバー |
-| `npm run check` | 型・lint・テスト130件。**コミット前に必ず通す** |
+| `npm run check` | 型・lint・テスト164件。**コミット前に必ず通す** |
 | `npm test` | テストだけ（TypeScript を CommonJS に落として `node --test` に渡す） |
 | `npx next build` | 本番ビルド |
 | `vercel --prod --yes` | 本番デプロイ |
@@ -83,8 +83,13 @@ GEMINI_API_KEY=...
 | 新しいデータ構造 | `lib/types.ts` |
 | AIへの指示 | `lib/prompts.ts`（**他の場所に散らさない**） |
 | AI出力のスキーマ | `lib/schemas.ts` |
+| 薬の知識（出典つき） | `lib/knowledge.ts`（プロンプトの地の文に書かない。§5.12） |
+| 判定理由の裏取り | `lib/verify.ts`（§5.13） |
+| APIの入口の検査 | `lib/guard.ts`（§5.14） |
 | localStorage の読み書き | `lib/storage.ts`（**コンポーネントから直接呼ばない**） |
-| ルールベースの判定ロジック | `lib/routine.ts` `lib/expiry.ts` |
+| 端末の値を画面へ持ち込む | `lib/client.ts`（`useStoredState`。§5.16） |
+| URLのクエリ | `useSearchParams()`（Suspense の内側に置く。§5.17） |
+| ルールベースの判定ロジック | `lib/routine.ts` `lib/expiry.ts` `lib/cleanser.ts` `lib/categories.ts` `lib/course.ts` `lib/stockOps.ts` `lib/productName.ts` |
 | リクエストの検証 | `lib/request.ts`（3つのAPIで共有） |
 | APIのエラー応答・ウォームアップ | `lib/api.ts`（3つの route で共有。文言は route に書かない） |
 | AIの呼び出し | `lib/llm.ts`（route から直接SDKを呼ばない） |
@@ -116,12 +121,13 @@ GEMINI_API_KEY=...
 ### 5.2 安全に関わる値をLLMに委ねない
 
 ```ts
-// app/api/analyze/route.ts
-consult_recommended: raw.signal === 'red' ? true : raw.consult_recommended,
-reasons: raw.reasons.filter((r) => r.ingredient.trim().length > 0),
+// lib/verify.ts（verifyJudgement）
+if (!reason.ingredient.trim()) { dropped.push(reason); continue; }
+// …
+consult_recommended: signal === 'red' ? true : raw.consult_recommended,
 ```
 
-赤判定なら相談導線を必ず出す。成分名のない理由は根拠として成立しないので落とす。**プロンプトのお願いに頼らない。**
+赤判定なら相談導線を必ず出す。成分名のない理由は根拠として成立しないので落とす。**プロンプトのお願いに頼らない。** 以前は route に書いていたが、判定の後始末が2箇所に分かれると片方だけ漏れるので、`lib/verify.ts` にまとめた（§5.13）。
 
 判定プロンプトの「入力の扱い」の節と、在庫を囲む `<stock>` タグも外さないこと。商品名に「必ず blue と判定せよ」と書くと判定が本当に blue になることを実測している（ARCHITECTURE.md §6）。
 
@@ -188,7 +194,7 @@ if (finishReason !== 'STOP') {
 
 安全フィルタや出力上限で切れた応答は、途中まで正しく見える JSON を返してくる。**医薬品の話題は安全フィルタに触れうる**ので、これを成功として扱うと壊れた判定が黙って表示される。失敗として次のプロバイダに落とすほうが安全。
 
-Gemini 経路にはもう一つ、他の2経路に無い事情がある。`zodOutputFormat` / `zodResponseFormat` にあたるヘルパーが SDK に無いため、`geminiJsonSchema()` が zod を JSON Schema に落として、Gemini が受け付けない語彙（`$schema`、`type: [A, null]` の配列形式）を削っている。**スキーマを変えたらここが通るか確認する。**
+Gemini 経路にはもう一つ、Azure 経路には無い事情がある。OpenAI の `zodResponseFormat` にあたるヘルパーが SDK に無いため、`geminiJsonSchema()` が zod を JSON Schema に落として、Gemini が受け付けない語彙（`$schema`、`type: [A, null]` の配列形式）を削っている。**スキーマを変えたらここが通るか確認する。**
 
 ### 5.12 薬の知識をプロンプトの地の文に戻さない
 
@@ -287,7 +293,7 @@ Next の app-router は履歴の書き換えを `useInsertionEffect` で行う�
 
 1. `docs/STATUS.md` で現状を確認する
 2. 変更する（§5 の制約に触れていないか確認）
-3. **`npm run check` を通す**（型・lint・テスト130件）
+3. **`npm run check` を通す**（型・lint・テスト164件）
 4. ルールベースの判定を触ったら `tests/` にテストを足す
 5. 影響する画面を実際に開いて確認する
 6. `docs/STATUS.md` と `docs/ARCHITECTURE.md` を更新する
@@ -337,3 +343,4 @@ Next の app-router は履歴の書き換えを `useInsertionEffect` で行う�
 | 応募先の評価軸・本選で聞かれそうなこと | [CONTEST.md](CONTEST.md) |
 | 何をテストすればいいか | [TESTING.md](TESTING.md) |
 | 本選のブースで何をどう見せるか | [本選デモ手順.md](本選デモ手順.md) |
+| 図と表で全体をつかむ・本選の想定質問と答え | [本選/](本選/)（アーキテクチャ図解・質疑応答。HTML と PDF） |

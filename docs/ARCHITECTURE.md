@@ -8,11 +8,12 @@
 | 開発を始める・守るべき制約 | [DEVELOPMENT.md](DEVELOPMENT.md) |
 | 何を作るべきかの合意 | [設計仕様書](設計仕様書_Overlai_デモ版.md) |
 | 用語の意味 | [GLOSSARY.md](GLOSSARY.md) |
+| 図と表で全体をつかむ・本選の想定質問 | [本選/](本選/)（アーキテクチャ図解・質疑応答。HTML と PDF） |
 
 | 項目 | 内容 |
 | :--- | :--- |
-| 対象バージョン | 2026年9月9日時点の `main` |
-| 実装規模 | TypeScript 約3,000行（`app/` `components/` `lib/`） |
+| 対象バージョン | 2026年10月11日時点の `main` |
+| 実装規模 | TypeScript 約8,900行（`app/` `components/` `lib/`）。テストは約2,000行・164件 |
 | 公開URL | https://overlai-delta.vercel.app |
 | 稼働モード | **Azure OpenAI プロキシ（`gpt-5.1`）で実稼働**。失敗時は Gemini に自動フォールバック（§7 参照） |
 
@@ -48,7 +49,7 @@ graph TB
     subgraph vercel["Vercel / Next.js Route Handler"]
         API["/api/analyze"]
         MOCK["lib/mock.ts<br/>固定応答"]
-        API -.キー未設定時.-> MOCK
+        API -.demo指定時だけ.-> MOCK
     end
 
     subgraph providers["AIプロバイダ（lib/llm.ts が優先順に試す）"]
@@ -57,7 +58,7 @@ graph TB
     end
 
     P2 -->|"POST image + stock"| API
-    API -->|"キー設定時"| S1
+    API -->|"通常"| S1
     S1 --> S2
     S2 --> API
     API -->|"extraction + judgement<br/>+ provider"| P3
@@ -112,6 +113,8 @@ components/
   RoutineManager.tsx    ルーティンの区分の追加・削除（設定画面）
   CleanserMatchCard.tsx 洗浄基剤と肌質の相性表示
   JudgementCard.tsx     判定カード（3色・根拠アコーディオン・相談導線）
+  ConfirmRemove.tsx     在庫から外す前の確認（アラートの行の中で開く）
+  ui/                   Button / SectionHeader
 
 lib/
   types.ts              全データ構造の定義。AIの入出力契約でもある
@@ -129,10 +132,15 @@ lib/
   routine.ts            洗う／塗る順序のソートと成分バッティング（ルールベース）
   cleanser.ts           洗浄基剤の分類と肌質・頭皮との相性（ルールベース）
   expiry.ts             使用期限・開封後の酸化目安
+  course.ts             処方の終わる日（何日分から求める）
+  upkeep.ts             マイストックのアラート欄（同じ品を2行出さない）
+  stockOps.ts           買い替えたときの入れ替え
+  removal.ts            判定カードの「もう家に無い」→「元に戻す」
   request.ts            リクエスト入力の検証（3つのAPIで共有）
   api.ts                APIの応答の形（エラー応答・ウォームアップ。3つのAPIで共有）
   mapping.ts            店頭商品の分類 → 自宅在庫の分類への変換
-  image.ts              送信前リサイズ
+  image.ts              送信前リサイズ・ガイド枠の切り抜き
+  ui.ts                 カテゴリとシグナルの見た目（表示トークン）
   mock.ts               固定応答のフィクスチャ（`?demo=` と `/preview` 用）
 
 tests/                  自動テスト164件（node --test。追加の依存なし）
@@ -146,6 +154,13 @@ tests/                  自動テスト164件（node --test。追加の依存な
   request.test.ts       入力の検証
   image.test.ts         ガイド枠の切り抜きの計算
   guard.test.ts         入口の検査
+  course.test.ts        処方の終わる日（「飲み終わりましたか」をいつ聞くか）
+  expiry.test.ts        使用期限・開封後の目安
+  upkeep.test.ts        アラート欄で同じ品を2行出さないか
+  stockOps.test.ts      買い替えたときの入れ替え候補と引き継ぎ
+  removal.test.ts       「元に戻す」で判定と古さを一緒に戻すか
+  prompts.test.ts       商品と在庫をタグで囲んでいるか（AGENTS.md 制約14）
+  routing.test.ts       URLのクエリを描画中に window.location から読んでいないか（制約20）
 ```
 
 ### 意図的な集約
@@ -330,12 +345,13 @@ sequenceDiagram
 （本番実測: 1.7秒 → 2回目 0.4秒）。スキャン画面と在庫登録画面を開いた時点で空の `GET` を1回投げ（`useWarmUp`）、
 撮影の構図を決めているあいだに起こしておく。`GET` は 204 を返すだけで AI も入口の検査も通らない。
 
-### 4.4 構造化出力
+### 構造化出力
 
 出力形式は zod スキーマで強制する（`lib/schemas.ts`）。
 
 ```ts
-output_config: { format: zodOutputFormat(ExtractionSchema), effort: 'medium' }
+response_format: zodResponseFormat(ExtractionSchema, 'extraction')   // Azure
+responseJsonSchema: geminiJsonSchema(ExtractionSchema)               // Gemini
 ```
 
 これにより「JSONのみを返せ」「コードフェンス禁止」といったプロンプトでの整形依頼が**不要になる**。パース失敗は原理的に起こらない。
@@ -535,11 +551,13 @@ Anthropic 経路と、キー未設定時に黙って固定応答を返すモッ�
 
 先頭のプロバイダがどのエラーで失敗しても次に落ちる（レート制限・キー失効・5xx・スキーマ違反のすべて）。全滅したときだけ例外が route に届き、ユーザー向けの文言に変換される。
 
+本番でも切り替わりを確認している。2026年10月10日の再測定で、Azure が20秒で時間切れになり、Gemini が判定を返した（24.5秒。TESTING.md §H）。
+
 ### Gemini 経路の注意点
 
-他の2経路に無い事情がある。
+Azure 経路には無い事情がある。
 
-- **スキーマ変換が要る** — `zodOutputFormat` / `zodResponseFormat` にあたるヘルパーが SDK に無い。`geminiJsonSchema()` が zod を JSON Schema に落としたうえで、Gemini が受け付けない語彙（`$schema`、`type: [A, null]` の配列形式）を削る
+- **スキーマ変換が要る** — OpenAI の `zodResponseFormat` にあたるヘルパーが SDK に無い。`geminiJsonSchema()` が zod を JSON Schema に落としたうえで、Gemini が受け付けない語彙（`$schema`、`type: [A, null]` の配列形式）を削る
 - **途中終了を成功として扱わない** — 安全フィルタや出力上限で切れた応答を `finishReason !== 'STOP'` で検出して失敗にする。医薬品の話題は安全フィルタに触れうるので、黙って壊れた判定を返すより次のプロバイダに落とすほうが安全
 - **モデル一覧に載っていても使えるとは限らない** — `models.list` は55件返すが、`gemini-2.5-pro` と `gemini-2.5-flash` は新規プロジェクトには 404（*no longer available to new users*）を返す
 - **無料枠は 5 RPM**（モデル単位・プロジェクト単位）。公式ドキュメントに数字は載っておらず、429 の `QuotaFailure` から読み取るしかない。抽出と判定でモデルを分けているのは、クォータも分けるためでもある
@@ -664,6 +682,7 @@ SSR時点ではシードを初期値として描画し、そのあと localStora
 ```jsonc
 {
   "image": "data:image/jpeg;base64,...",  // 長辺1568px以下・最大5MB
+  "extraction": { /* ExtractionResult */ }, // 判定だけをやり直すとき。image の代わりに送る（ステップ1を飛ばす）
   "stock": [ /* StockItem[] */ ],          // 最大50件
   "demo": "yellow"                         // 固定応答を返す（キーがあっても効く）
 }
@@ -676,7 +695,9 @@ SSR時点ではシードを初期値として描画し、そのあと localStora
   "extraction": { /* ExtractionResult */ },
   "judgement":  { /* Judgement */ },
   "elapsed_ms": 4210,
-  "mocked": true    // 固定応答のとき（demo 指定）
+  "provider": "azure",   // 実際に応答したAI。フォールバックが起きると第一候補と変わる
+  "fell_back": false,    // 第一候補が失敗して次に落ちたか
+  "mocked": true         // 固定応答のときだけ付く（demo 指定）
 }
 ```
 
@@ -685,6 +706,7 @@ SSR時点ではシードを初期値として描画し、そのあと localStora
 | status | code | 発生条件 |
 | :---: | :--- | :--- |
 | 400 | `INVALID_IMAGE` | data URL が不正／サイズ超過／在庫データが不正 |
+| 400 | `EMPTY_STOCK` | 在庫が空（登録を促す案内を返す） |
 | 403 | `FORBIDDEN` | 別オリジンからの呼び出し（`lib/guard.ts`） |
 | 422 | `EXTRACTION_FAILED` | `ingredients` が空（全プロバイダで読み取れなかった） |
 | 429 | `RATE_LIMITED` | レート制限（上流のレート制限、または入口での連打の抑制） |
@@ -891,15 +913,15 @@ Tailwind の `@theme` に定義し、全画面で共有する。ニュートラ�
 | :--- | :--- |
 | 本物のAIパイプライン | **動作確認済み**（Azure `gpt-5.1`。🟡🔴とも実画像で検証） |
 | カメラの実機動作 | **確認済み**（背面カメラの起動を実機で確認） |
-| Gemini へのフォールバック | **動作確認済み**（実画像で抽出→判定を通した。約30秒。本番環境変数への登録は未了） |
-| エラー系の実挙動（429/500） | 実際に障害を起こさないと確認できないため未検証 |
+| Gemini へのフォールバック | **動作確認済み**（ローカルで抽出→判定が13.9〜30秒。本番にもキーを登録済みで、2026年10月10日に本番での切り替わりを確認した） |
+| エラー系の実挙動（429／500／無応答／オフライン） | **確認済み**（2026年9月15日。偽の上流で障害を起こして確かめた。TESTING.md §K） |
 | 薬物相互作用の判定 | **実装済み・確認済み**（添付文書に併用注意・禁忌のある10件。実APIで H-1〜H-5 を再測定） |
 | 判定理由の裏取り | **実装済み・確認済み**（辿れない成分名と表に無い組み合わせを落とし、出典リンクを付け、色を理由にそろえる） |
 | APIの入口の検査 | **実装済み**（本番ビルドで 403／429／200。実機の PWA が通ることも確認） |
 | ストックの書き出し・読み込み | **実装済み・確認済み** |
 | 撮影時の切り抜き | **実装済み・実機で確認済み** |
-| 自動テスト | **130件**（`npm test`。ルールベースの部分・シードの決まりごと・入口の検査・初期化の漏れ） |
-| 在庫の追加・編集・削除 | **実装済み**（カメラ読み取り＋手入力。編集は `/stock/new?id=`、削除は編集モードから） |
+| 自動テスト | **164件**（`npm test`。ルールベースの部分・判定理由の裏取り・シードの決まりごと・入口の検査・初期化の漏れ） |
+| 在庫の追加・編集・削除 | **実装済み**（カメラ読み取り＋手入力。編集は `/stock/new?id=`。編集・削除は各カードから） |
 | カテゴリ別の折りたたみ | **実装済み**（開閉状態は localStorage に保存） |
 | JAHIS QR・レシート登録 | 未実装（登録経路としては優先度が低い） |
 | 塗る／洗う順序ナビ | **実装済み**（ルールベース・§3.5） |
@@ -925,7 +947,7 @@ Tailwind の `@theme` に定義し、全画面で共有する。ニュートラ�
 ```bash
 npm install
 npm run dev              # .env.local のキーで起動（キー無しでは判定APIがエラーを返す）
-npm run check            # 型チェック + lint + テスト130件
+npm run check            # 型チェック + lint + テスト164件
 npm test                 # テストだけ
 npx next build           # 本番ビルド
 vercel --prod --yes      # デプロイ
@@ -939,4 +961,4 @@ vercel --prod --yes      # デプロイ
 
 ---
 
-*Overlai 技術ドキュメント ／ 2026年9月9日*
+*Overlai 技術ドキュメント ／ 初版 2026年9月9日・最終更新 2026年10月11日*

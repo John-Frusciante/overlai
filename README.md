@@ -58,6 +58,7 @@
 | 応募先の評価軸 | [docs/CONTEST.md](docs/CONTEST.md) |
 | 何をテストすればいいか | [docs/TESTING.md](docs/TESTING.md) |
 | 本選のブースで何をどう見せるか | [docs/本選デモ手順.md](docs/本選デモ手順.md) |
+| 本選で聞かれそうな質問と答え・構成の図解 | [docs/本選/](docs/本選/)（HTML と PDF） |
 
 **実装前に [docs/DEVELOPMENT.md §5「壊してはいけない制約」](docs/DEVELOPMENT.md) を読むこと。** 医療に隣接する領域のため、安全設計に関わる決定がいくつかある。
 
@@ -110,9 +111,9 @@ app/
   api/extract/route.ts  成分抽出のみ（在庫登録用）
   api/routine/route.ts  ルーティンの解説（順序はルール、言葉だけAI）
 lib/llm.ts              AIプロバイダの抽象とフォールバック（Azure / Gemini）
-components/             BottomNav / StockList / CategoryManager / RoutineManager / JudgementCard / CleanserMatchCard
+components/             BottomNav / StockList / CategoryManager / RoutineManager / JudgementCard / CleanserMatchCard / ConfirmRemove
 components/ui/          Button / SectionHeader
-lib/                    types・schemas・prompts・storage・routine・expiry・cleanser ほか
+lib/                    types・schemas・prompts・knowledge・verify・guard・storage・routine・expiry・cleanser ほか
 docs/                   全ドキュメント
 ```
 
@@ -135,7 +136,7 @@ Issue は [GitHub Issues](https://github.com/John-Frusciante/overlai/issues) で
 | :--- | :--- | :--- |
 | [デモ提出](https://github.com/John-Frusciante/overlai/milestone/1) | 2026-09-10 | **完了**。エントリーまでに必要なもの |
 | [本選](https://github.com/John-Frusciante/overlai/milestone/3) | 2026-10-11 | ブース展示と連続デモに耐えるための整備。**#23 #24 #25 は 9/15 に完了**。10/8 に見つかった判定の不具合 #41〜#44 は 10/9 に修正した |
-| [将来構想](https://github.com/John-Frusciante/overlai/milestone/2) | — | 登録経路の追加、ネイティブ化、家族共有 |
+| [将来構想](https://github.com/John-Frusciante/overlai/milestone/2) | — | 登録経路の追加、ネイティブ化、家族共有、同時に判定が来たときの上限（#45） |
 
 **本選はブース展示で来場者が実機を触る。** 会場のネットワークで動くこと、
 連続して触られても崩れないことが、そのマイルストーンの判断基準になる。
@@ -159,11 +160,12 @@ Issue は [GitHub Issues](https://github.com/John-Frusciante/overlai/issues) で
 
 | 提出物 | 場所 |
 | :--- | :--- |
-| 作品概要書 | [docs/Overlai_作品概要書.pdf](docs/Overlai_作品概要書.pdf)（A4・3ページ） |
+| 作品概要書 | [docs/Overlai_作品概要書.pdf](docs/Overlai_作品概要書.pdf)（A4・4ページ） |
 | デモ動画・ピッチ動画 | 撮影手順は [docs/TESTING.md](docs/TESTING.md)、台本は[企画書の付録](docs/企画書_Overlai_ユメカタリ2026.md) |
 | 本選の1分ピッチ | [docs/ピッチ/](docs/ピッチ/)（`build.py` で pptx を生成。PDF も同じ場所） |
 | 本選のブースパネル | [docs/パネル/Overlai_ブースパネル.pdf](docs/パネル/Overlai_ブースパネル.pdf)（A4縦。運営がA1に拡大） |
 | 本選のブース動画 | [docs/動画/](docs/動画/)（Remotion で組む。書き出した mp4 と録画の元ファイルはコミットしていない） |
+| 本選の質疑応答・構成の図解 | [docs/本選/](docs/本選/)（想定質問120問とアーキテクチャ図解。HTML と PDF） |
 | 公開URL | https://overlai-delta.vercel.app |
 
 日程と評価軸は [docs/CONTEST.md](docs/CONTEST.md) にまとめてある。

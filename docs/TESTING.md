@@ -9,7 +9,7 @@
 
 ## 0. まず `npm run check`（30秒）
 
-コードを触ったら最初にこれを通す。型・lint・自動テスト（130件）がまとめて走る。
+コードを触ったら最初にこれを通す。型・lint・自動テスト（164件）がまとめて走る。
 
 ```bash
 npm run check
@@ -23,7 +23,7 @@ npm run check
 | ファイル | 何を確かめるか |
 | :--- | :--- |
 | `tests/knowledge.test.ts` | 全項目に出典が付いているか。代表的な組み合わせを引けるか |
-| `tests/verify.test.ts` | 辿れない理由を落とすか。シグナルを書き換えないか |
+| `tests/verify.test.ts` | 辿れない理由・成り立たない組み合わせを落とすか。色を理由にそろえるか（理由の残らない🔴は下げないか） |
 | `tests/routine.test.ts` | 剤形の並び順。手で決めた並びの優先。区分の名前の検証 |
 | `tests/cleanser.test.ts` | 肌質5値 × 頭皮4値 × 系統4種の**全組み合わせ**に判定が出るか |
 | `tests/seed.test.ts` | 処方の内服に NSAIDs が無いか。🟡デモを崩す薬が入っていないか |
@@ -31,6 +31,12 @@ npm run check
 | `tests/image.test.ts` | ガイド枠を映像の座標へ移す計算 |
 | `tests/guard.test.ts` | 別オリジン・curl を断るか。開発中は素通りするか |
 | `tests/routing.test.ts` | URLのクエリを描画中に `window.location` から読んでいないか |
+| `tests/storage.test.ts` | 見本に戻すとき、鍵の消し漏れが無いか |
+| `tests/productName.test.ts` | 読み取った商品名で、手で入れた名前を上書きしないか |
+| `tests/course.test.ts` `tests/upkeep.test.ts` | 「飲み終わりましたか」をいつ聞くか。同じ品を2行出さないか |
+| `tests/expiry.test.ts` | 使用期限・開封後の目安（今日を固定して確かめる） |
+| `tests/stockOps.test.ts` `tests/removal.test.ts` | 買い替えの入れ替え候補。「元に戻す」で判定と古さを一緒に戻すか |
+| `tests/prompts.test.ts` | 判定の入力（商品・在庫）をタグで囲んでいるか |
 
 **テストで確かめられないもの**は下の A 以降に並べてある。実機・実物・人間の判断が要るもの、
 そしてAIの出力（判定の中身）はここには入らない。
@@ -653,7 +659,7 @@ npm run dev
 | Anthropic Claude 経路 | 2026年9月15日に廃止（コードごと削除。#20 は閉じた） |
 | Google Gemini 経路 | ✅ ローカルで確認（抽出→判定が13.9秒で完走。成分名の誤読なし） |
 | プロバイダのフォールバック | ✅ ローカルで確認（azure → gemini → 例外の順に落ちる） |
-| 本番での Gemini 発火 | **確認不可** — Azure が動く限り呼ばれない作りのため |
+| 本番での Gemini 発火 | ✅ 2026年10月10日に確認（§H。Azure が20秒で時間切れ → Gemini が判定を返して24.5秒） |
 | ルーティンの解説（`/api/routine`） | ✅ ローカルで確認（Azure 経路 6.5秒。肌質・頭皮が文面に反映される） |
 | 解説のキャッシュが効いているか | ✅ 確認済み（リロードで `/api/routine` を呼ばない。服薬チェックでも再生成されない） |
 | 服薬設定のUI | ✅ 確認済み（§G-1 の6項目） |
