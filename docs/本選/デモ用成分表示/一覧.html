@@ -1,0 +1,106 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Overlai デモ用 成分表示</title>
+<style>
+:root{--bg:#eef0f4;--ink:#111827;--muted:#566076;--card:#ffffff;--line:#111827;--blue:#2563eb;--yellow:#b45309;--red:#dc2626}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP","Yu Gothic",sans-serif;line-height:1.7}
+.wrap{max-width:820px;margin:0 auto;padding-inline:16px;padding-block:24px 64px}
+h1{font-size:22px;margin:0 0 6px}
+.lead{color:var(--muted);font-size:14px;margin:0 0 8px}
+.item{margin-top:36px}
+.item h2{font-size:17px;margin:0 0 2px}
+.item .exp{font-size:14px;color:var(--muted);margin:0 0 10px}
+.exp b.b{color:var(--blue)}.exp b.y{color:var(--yellow)}.exp b.r{color:var(--red)}
+/* 成分表示そのもの。白地に黒で、箱の裏の表示に寄せる。色は固定（どのテーマでも読み取りやすいように） */
+.label{background:#fff;color:#000;border:2px solid #000;padding:22px 24px;font-size:21px;line-height:1.75;border-radius:4px}
+.label .name{font-size:15px;color:#333;margin:0 0 8px}
+.label h3{font-size:22px;margin:0 0 8px;padding:2px 10px;background:#000;color:#fff;display:inline-block}
+.label table{border-collapse:collapse;width:100%;margin:6px 0 10px;font-size:21px}
+.label th,.label td{border:1px solid #000;padding:5px 10px;text-align:left}
+.label th{background:#e5e7eb;font-weight:700}
+.label td.q{text-align:right;white-space:nowrap}
+.label p{margin:6px 0}
+.label .small{font-size:16px;color:#222}
+.src{font-size:12px;color:var(--muted);margin:6px 0 0}
+</style>
+<div class="wrap">
+  <h1>デモ用 成分表示</h1>
+  <p class="lead">実物が手元に無いときの予備。画面に映してスマホで撮るか、同じフォルダの PNG を「画像を選ぶ」で使う。<b>写真ではなく、販売元・PMDA の成分表示を書き写したもの</b>なので、聞かれたらそう答える。色は見本の在庫11件のとき。10/11 の昼に、PNG を1枚ずつ本番の判定に通して確かめた（カロナールA＝黄、百草丸＝青、ストナ＝赤、スキンコンディショナー＝赤）。</p>
+
+  <section class="item">
+    <h2>カロナールA</h2>
+    <p class="exp">見込み：<b class="y">黄</b>（家のイブA錠と同じ解熱鎮痛の働き）</p>
+    <div class="label" id="l1">
+      <p class="name">カロナールA　第2類医薬品　解熱鎮痛薬</p>
+      <h3>成分・分量</h3>
+      <p>本剤は白色の素錠で、1錠中に次の成分を含有しています。</p>
+      <table><tr><th>成分</th><th>分量</th></tr><tr><td>アセトアミノフェン</td><td class="q">300mg</td></tr></table>
+      <p>添加物：セルロース、部分アルファー化デンプン、ポリビニルアルコール（部分けん化物）、ステアリン酸Mg、l-メントール、香料、乳糖</p>
+    </div>
+    <p class="src">出典：販売ページ掲載の成分・分量（第一三共ヘルスケア カロナールA）</p>
+  </section>
+
+  <section class="item">
+    <h2>御岳百草丸</h2>
+    <p class="exp">見込み：<b class="b">青</b> →「買ったので在庫に入れる」のあと、もう一度撮ると <b class="y">黄</b></p>
+    <div class="label" id="l2">
+      <p class="name">御岳百草丸　第2類医薬品　胃腸薬</p>
+      <h3>成分・分量</h3>
+      <p>60粒（成人の1日服用量）中に次の成分を含んでいます。</p>
+      <table><tr><th>成分</th><th>分量</th></tr>
+        <tr><td>オウバクエキス</td><td class="q">1600mg（黄柏2240mg）</td></tr>
+        <tr><td>コウボク末</td><td class="q">700mg</td></tr>
+        <tr><td>ゲンノショウコ末</td><td class="q">500mg</td></tr>
+        <tr><td>ビャクジュツ末</td><td class="q">500mg</td></tr>
+        <tr><td>センブリ末</td><td class="q">35mg</td></tr></table>
+      <p>添加物：薬用炭、ヒドロキシプロピルセルロース、ポリオキシエチレン(105)ポリオキシプロピレン(5)グリコール</p>
+    </div>
+    <p class="src">出典：PMDA 一般用医薬品 添付文書情報（御岳百草丸・長野県製薬）</p>
+  </section>
+
+  <section class="item">
+    <h2>ストナジェルサイナスEX</h2>
+    <p class="exp">見込み：<b class="r">赤</b>（処方のフェキソフェナジンと抗ヒスタミンが重なる）</p>
+    <div class="label" id="l3">
+      <p class="name">ストナジェルサイナスEX　指定第2類医薬品　かぜ薬</p>
+      <h3>成分・分量</h3>
+      <p>6カプセル中に次の成分を含んでいます。</p>
+      <table><tr><th>成分</th><th>分量</th></tr>
+        <tr><td>ベラドンナ総アルカロイド</td><td class="q">0.6mg</td></tr>
+        <tr><td>ジフェニルピラリン塩酸塩</td><td class="q">4mg</td></tr>
+        <tr><td>アセトアミノフェン</td><td class="q">900mg</td></tr>
+        <tr><td>dl-メチルエフェドリン塩酸塩</td><td class="q">60mg</td></tr>
+        <tr><td>ジヒドロコデインリン酸塩</td><td class="q">24mg</td></tr>
+        <tr><td>ノスカピン</td><td class="q">48mg</td></tr>
+        <tr><td>アンブロキソール塩酸塩</td><td class="q">45mg</td></tr>
+        <tr><td>無水カフェイン</td><td class="q">75mg</td></tr>
+        <tr><td>リボフラビン（ビタミンB2）</td><td class="q">12mg</td></tr></table>
+      <p>添加物：ラウリル硫酸Na、ポリソルベート80、プロピレングリコール脂肪酸エステル、グリセリン脂肪酸エステル、ゼラチン、コハク化ゼラチン、グリセリン、D-ソルビトール、酸化チタン、パラベン</p>
+    </div>
+    <p class="src">出典：PMDA 一般用医薬品 添付文書情報（ストナジェルサイナスEX・佐藤製薬）。検索結果の要約から取り、原文とは照合できていない</p>
+  </section>
+
+  <section class="item">
+    <h2>肌ラボ 薬用 極潤 スキンコンディショナー（販売名：ハダラボ薬用化粧水b）</h2>
+    <p class="exp">見込み：<b class="r">赤</b>（顔に塗っている処方のステロイド軟膏 × エタノール・メントール・カンフル）</p>
+    <div class="label" id="l4">
+      <p class="name">肌ラボ 薬用 極潤 スキンコンディショナー　医薬部外品　化粧水</p>
+      <h3>成分</h3>
+      <p><b>有効成分：</b>グリチルリチン酸2K、イプシロン-アミノカプロン酸</p>
+      <p><b>その他の成分：</b>ヨクイニンエキス、ドクダミエキス、カモミラエキス（1）、ヒアルロン酸Na-2、スクワラン、dl-カンフル、BG、トリ2-エチルヘキサン酸グリセリル、l-メントール、POE硬化ヒマシ油、セスキオレイン酸ソルビタン、EDTA-2Na、無水エタノール、エタノール</p>
+    </div>
+    <p class="src">出典：販売ページ掲載の成分（ロート製薬）</p>
+  </section>
+
+  <section class="item">
+    <h2>肌ラボ 極潤 ヒアルロン液（販売名：ハダラボモイスト化粧水d）</h2>
+    <p class="exp"><b class="r">青のデモには使わない。</b>10/11 に本番へ通すと赤が出た（防腐剤のフェノキシエタノールを刺激の理由に挙げ、検算も通してしまう）。青は御岳百草丸で見せる</p>
+    <div class="label" id="l5">
+      <p class="name">肌ラボ 極潤 ヒアルロン液　化粧品　化粧水</p>
+      <h3>全成分</h3>
+      <p>水、BG、ペンチレングリコール、ヒアルロン酸Na、加水分解ヒアルロン酸、アセチルヒアルロン酸Na、乳酸球菌／ヒアルロン酸発酵液、DPG、PPG-10メチルグルコース、ジグリセリン、ヒドロキシエチルセルロース、EDTA-2Na、コハク酸2Na、コハク酸、フェノキシエタノール</p>
+    </div>
+    <p class="src">出典：販売ページ掲載の成分（ロート製薬）</p>
+  </section>
+</div>
